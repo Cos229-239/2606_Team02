@@ -21,6 +21,7 @@ public:
 	int32 GetStartScreenButtonAction(const FVector2D& ScreenPosition) const;
 
 	void SetMana(int32 NewMana);
+	void SetGroveRestorationPercent(int32 NewPercent);
 	void SetCameraManager(AMysticCameraManager* NewCameraManager);
 	void SetSaveStatusMessage(const FString& NewStatusMessage);
 	void SetTutorialPrompt(const FString& NewPromptText, bool bNewVisible, bool bNewShowNextButton);
@@ -31,6 +32,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Demo")
 	void ShowDemoFeedback(const FString& NewFeedbackText, float DurationSeconds = 1.6f);
+
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Demo")
+	void ShowButtonFlash(const FString& NewFlashText, float DurationSeconds = 0.18f);
 
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Demo")
 	void ClearDemoFeedback();
@@ -46,6 +50,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Demo")
 	bool bDemoFeedbackVisible = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Demo")
+	bool bButtonFlashVisible = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Demo")
+	int32 GroveRestorationPercent = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Tutorial")
 	FString TutorialPromptText;
@@ -66,6 +76,7 @@ private:
 	void DrawUtilityButton(const FString& Text, const FVector4& Rect);
 	void DrawStartScreen();
 	void DrawDemoFeedback();
+	void DrawButtonFlash();
 	void DrawTutorialPrompt();
 	void DrawReadableLabel(const FString& Text, const FVector& WorldLocation, float Width, float Height, float Scale);
 	void DrawOverviewLabels();
@@ -73,8 +84,10 @@ private:
 	AActor* FindActorByLabel(const FString& Label) const;
 
 	int32 Mana = 0;
+	FString ButtonFlashText;
 	FString SaveStatusMessage;
 	double DemoFeedbackHideTime = 0.0;
+	double ButtonFlashHideTime = 0.0;
 	FVector4 LastBackButtonRect = FVector4(24.0f, 92.0f, 148.0f, 56.0f);
 	bool bHasDrawnBackButton = false;
 	TWeakObjectPtr<AMysticCameraManager> CameraManager;

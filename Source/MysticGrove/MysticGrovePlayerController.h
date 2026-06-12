@@ -49,6 +49,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Demo")
 	FString GetWeek1DemoStateSummary() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Core Loop")
+	int32 GetGroveRestorationPercent() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Core Loop")
+	void RefreshGroveRestorationHud();
+
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Core Loop")
+	void UpdateGroveRestorationVisuals();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Tutorial")
 	bool bHasCompletedTutorial = false;
 
@@ -132,12 +141,14 @@ private:
 	bool HandleTutorialButtonPress(const FVector2D& ScreenPosition);
 	bool ShouldShowTutorialNextButton() const;
 	void ShowDemoFeedback(const FString& FeedbackText, float DurationSeconds = 1.6f);
+	void ShowButtonFlash(const FString& FlashText);
 	void PlayDemoSound(USoundBase* Sound) const;
 	AMysticBuildingInteractable* FindBuildingByType(EMysticBuildingType BuildingType) const;
 	void ApplyDefaultSaveValues();
 	void ApplySaveGameValues(const UMysticGroveSaveGame* SaveGame);
 	void FillSaveGameValues(UMysticGroveSaveGame* SaveGame) const;
 	void UpdateFlowerGroveFairyBonus();
+	void SetProgressionActorVisibility(const FString& TargetActorLabel, bool bShouldShow);
 
 	UPROPERTY()
 	TObjectPtr<AMysticCameraManager> CameraManager;

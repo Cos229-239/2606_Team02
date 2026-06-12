@@ -25,9 +25,16 @@ void AMysticHud::DrawHUD()
 	{
 		ClearDemoFeedback();
 	}
+	if (bButtonFlashVisible && GetWorld() && GetWorld()->GetTimeSeconds() >= ButtonFlashHideTime)
+	{
+		bButtonFlashVisible = false;
+		ButtonFlashText.Empty();
+		ButtonFlashHideTime = 0.0;
+	}
 
-	DrawRect(PanelColor, 24.0f, 24.0f, 210.0f, 54.0f);
+	DrawRect(PanelColor, 24.0f, 24.0f, 292.0f, 84.0f);
 	DrawText(FString::Printf(TEXT("Mana: %d"), Mana), TextColor, 42.0f, 42.0f, Font, 1.35f);
+	DrawText(FString::Printf(TEXT("Grove Restoration: %d%%"), GroveRestorationPercent), FLinearColor::White, 42.0f, 72.0f, Font, 0.9f);
 	if (!bShowStartScreen)
 	{
 		DrawUtilityButton(TEXT("Save"), GetUtilityButtonRect(1));
@@ -44,6 +51,7 @@ void AMysticHud::DrawHUD()
 	}
 
 	DrawDemoFeedback();
+	DrawButtonFlash();
 	DrawStartScreen();
 
 	bHasDrawnBackButton = false;
@@ -96,6 +104,11 @@ void AMysticHud::SetMana(int32 NewMana)
 	Mana = NewMana;
 }
 
+void AMysticHud::SetGroveRestorationPercent(int32 NewPercent)
+{
+	GroveRestorationPercent = FMath::Clamp(NewPercent, 0, 100);
+}
+
 void AMysticHud::SetCameraManager(AMysticCameraManager* NewCameraManager)
 {
 	CameraManager = NewCameraManager;
@@ -123,6 +136,13 @@ void AMysticHud::ShowDemoFeedback(const FString& NewFeedbackText, float Duration
 	DemoFeedbackText = NewFeedbackText;
 	bDemoFeedbackVisible = !DemoFeedbackText.IsEmpty();
 	DemoFeedbackHideTime = GetWorld() ? GetWorld()->GetTimeSeconds() + FMath::Max(DurationSeconds, 0.1f) : 0.0;
+}
+
+void AMysticHud::ShowButtonFlash(const FString& NewFlashText, float DurationSeconds)
+{
+	ButtonFlashText = NewFlashText;
+	bButtonFlashVisible = true;
+	ButtonFlashHideTime = GetWorld() ? GetWorld()->GetTimeSeconds() + FMath::Max(DurationSeconds, 0.08f) : 0.0;
 }
 
 void AMysticHud::ClearDemoFeedback()
@@ -285,6 +305,27 @@ void AMysticHud::DrawDemoFeedback()
 	DrawRect(BorderColor, X - 2.0f, Y - 2.0f, Width + 4.0f, 48.0f);
 	DrawRect(PanelColor, X, Y, Width, 44.0f);
 	DrawText(DemoFeedbackText, TextColor, X + 22.0f, Y + 12.0f, Font, 1.05f);
+}
+
+void AMysticHud::DrawButtonFlash()
+{
+	if (!Canvas || !GEngine || !bButtonFlashVisible)
+	{
+		return;
+	}
+
+	const float Width = FMath::Min(260.0f, Canvas->SizeX - 48.0f);
+	const float X = (Canvas->SizeX - Width) * 0.5f;
+	const float Y = Canvas->SizeY - 86.0f;
+	const FLinearColor FlashColor(0.86f, 0.62f, 0.20f, 0.34f);
+	const FLinearColor TextColor(1.0f, 0.92f, 0.62f, 1.0f);
+	UFont* Font = GEngine->GetSmallFont();
+
+	DrawRect(FlashColor, X, Y, Width, 44.0f);
+	if (!ButtonFlashText.IsEmpty())
+	{
+		DrawText(ButtonFlashText, TextColor, X + 18.0f, Y + 12.0f, Font, 0.9f);
+	}
 }
 
 void AMysticHud::DrawUtilityButton(const FString& Text, const FVector4& Rect)

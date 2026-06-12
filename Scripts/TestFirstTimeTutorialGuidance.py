@@ -74,12 +74,12 @@ def main():
             raise RuntimeError(f"Milestone 9 missing tutorial widget property {property_name}.") from exc
 
     # Text helper should expose the actual prototype instructions without needing PIE.
-    assert_contains(controller_cdo.get_tutorial_prompt_for_step(0), "Welcome to Mystic Grove", "Step 0 text is wrong.")
-    assert_contains(controller_cdo.get_tutorial_prompt_for_step(1), "Tap the Flower Grove", "Step 1 text is wrong.")
+    assert_contains(controller_cdo.get_tutorial_prompt_for_step(0), "The grove has lost its magic", "Step 0 text is wrong.")
+    assert_contains(controller_cdo.get_tutorial_prompt_for_step(1), "Tap Flower Grove", "Step 1 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(2), "Wait for Stored Mana", "Step 2 text is wrong.")
-    assert_contains(controller_cdo.get_tutorial_prompt_for_step(3), "Press Collect Mana", "Step 3 text is wrong.")
-    assert_contains(controller_cdo.get_tutorial_prompt_for_step(4), "Tap the Sacred Koi Pond", "Step 4 text is wrong.")
-    assert_contains(controller_cdo.get_tutorial_prompt_for_step(5), "Press Restore", "Step 5 text is wrong.")
+    assert_contains(controller_cdo.get_tutorial_prompt_for_step(3), "Collect Mana", "Step 3 text is wrong.")
+    assert_contains(controller_cdo.get_tutorial_prompt_for_step(4), "Tap Sacred Pond", "Step 4 text is wrong.")
+    assert_contains(controller_cdo.get_tutorial_prompt_for_step(5), "Restore the Pond", "Step 5 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(6), "Tap the Fairy House", "Step 6 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(7), "View Luna", "Step 7 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(8), "Tutorial complete", "Step 8 text is wrong.")

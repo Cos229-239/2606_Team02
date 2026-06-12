@@ -190,17 +190,17 @@ FString AMysticGrovePlayerController::GetTutorialPromptForStep(int32 Step) const
 	switch (Step)
 	{
 	case 0:
-		return TEXT("Welcome to Mystic Grove");
+		return TEXT("The grove has lost its magic. Grow flowers to collect mana, then use mana to restore the Sacred Pond.");
 	case 1:
-		return TEXT("Tap the Flower Grove to collect mana.");
+		return TEXT("Step 1: Tap Flower Grove.");
 	case 2:
-		return TEXT("Wait for Stored Mana to increase.");
+		return TEXT("Step 2: Wait for Stored Mana to increase.");
 	case 3:
-		return TEXT("Press Collect Mana.");
+		return TEXT("Step 2: Collect Mana.");
 	case 4:
-		return TEXT("Tap the Sacred Koi Pond.");
+		return TEXT("Step 3: Tap Sacred Pond.");
 	case 5:
-		return TEXT("Press Restore to purify the pond.");
+		return TEXT("Step 4: Restore the Pond.");
 	case 6:
 		return TEXT("Tap the Fairy House.");
 	case 7:
@@ -377,6 +377,14 @@ void AMysticGrovePlayerController::ShowDemoFeedback(const FString& FeedbackText,
 	}
 }
 
+void AMysticGrovePlayerController::ShowButtonFlash(const FString& FlashText)
+{
+	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
+	{
+		MysticHud->ShowButtonFlash(FlashText);
+	}
+}
+
 void AMysticGrovePlayerController::PlayDemoSound(USoundBase* Sound) const
 {
 	if (Sound)
@@ -388,8 +396,11 @@ void AMysticGrovePlayerController::PlayDemoSound(USoundBase* Sound) const
 void AMysticGrovePlayerController::PlayFromStartScreen()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Play"));
 	LoadMysticGroveGame();
 	UpdateFairyAssignmentBonuses();
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 	RefreshTutorialPrompt();
 	HideStartScreen();
 
@@ -413,6 +424,54 @@ void AMysticGrovePlayerController::QuitMysticGrove()
 FString AMysticGrovePlayerController::GetWeek1DemoStateSummary() const
 {
 	return TEXT("Start Screen: Play Reset Save Quit\nFeedback Popups: Mana Purity Upgrade Not Enough Mana\nSave Load: local MysticGrove_SaveSlot");
+}
+
+int32 AMysticGrovePlayerController::GetGroveRestorationPercent() const
+{
+	if (const AMysticBuildingInteractable* SacredPond = FindBuildingByType(EMysticBuildingType::SacredPond))
+	{
+		return FMath::Clamp(SacredPond->SacredPondWaterPurity, 0, 100);
+	}
+
+	return 15;
+}
+
+void AMysticGrovePlayerController::RefreshGroveRestorationHud()
+{
+	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
+	{
+		MysticHud->SetGroveRestorationPercent(GetGroveRestorationPercent());
+	}
+}
+
+void AMysticGrovePlayerController::SetProgressionActorVisibility(const FString& TargetActorLabel, bool bShouldShow)
+{
+#if WITH_EDITOR
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (Actor && Actor->GetActorLabel() == TargetActorLabel)
+		{
+			Actor->SetActorHiddenInGame(!bShouldShow);
+			Actor->SetActorEnableCollision(bShouldShow);
+			return;
+		}
+	}
+#endif
+}
+
+void AMysticGrovePlayerController::UpdateGroveRestorationVisuals()
+{
+	const int32 Restoration = GetGroveRestorationPercent();
+	SetProgressionActorVisibility(TEXT("Core Loop Extra Flowers 25"), Restoration >= 25);
+	SetProgressionActorVisibility(TEXT("Core Loop Pond Glow 50"), Restoration >= 50);
+	SetProgressionActorVisibility(TEXT("Core Loop Fairy Lights 75"), Restoration >= 75);
+	SetProgressionActorVisibility(TEXT("Core Loop Ancient Tree Glow 100"), Restoration >= 100);
 }
 
 void AMysticGrovePlayerController::BeginPlay()
@@ -446,6 +505,8 @@ void AMysticGrovePlayerController::BeginPlay()
 
 	LoadMysticGroveGame();
 	UpdateFairyAssignmentBonuses();
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 	RefreshTutorialPrompt();
 	ShowStartScreen();
 }
@@ -479,6 +540,8 @@ bool AMysticGrovePlayerController::LoadMysticGroveGame()
 	if (!UGameplayStatics::DoesSaveGameExist(MysticGroveSaveSlotName, 0))
 	{
 		ApplyDefaultSaveValues();
+		RefreshGroveRestorationHud();
+		UpdateGroveRestorationVisuals();
 		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 		{
 			MysticHud->SetSaveStatusMessage(TEXT("No Save Found"));
@@ -493,6 +556,8 @@ bool AMysticGrovePlayerController::LoadMysticGroveGame()
 	if (!SaveGame)
 	{
 		ApplyDefaultSaveValues();
+		RefreshGroveRestorationHud();
+		UpdateGroveRestorationVisuals();
 		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 		{
 			MysticHud->SetSaveStatusMessage(TEXT("Load Failed"));
@@ -501,6 +566,8 @@ bool AMysticGrovePlayerController::LoadMysticGroveGame()
 	}
 
 	ApplySaveGameValues(SaveGame);
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
 		MysticHud->SetSaveStatusMessage(TEXT("Game Loaded"));
@@ -516,6 +583,8 @@ void AMysticGrovePlayerController::ResetMysticGroveSave()
 	}
 
 	ApplyDefaultSaveValues();
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
 		MysticHud->SetSaveStatusMessage(TEXT("Save Reset"));
@@ -646,6 +715,7 @@ void AMysticGrovePlayerController::HandleStartScreenPlayRequested()
 void AMysticGrovePlayerController::HandleStartScreenResetSaveRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Reset Save"));
 	ResetMysticGroveSave();
 	HideStartScreen();
 	ShowDemoFeedback(TEXT("Save Reset"));
@@ -663,6 +733,7 @@ void AMysticGrovePlayerController::HandleStartScreenQuitRequested()
 void AMysticGrovePlayerController::HandleTutorialNextRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Next"));
 	if (TutorialStep == 0)
 	{
 		SetTutorialStep(1);
@@ -676,6 +747,7 @@ void AMysticGrovePlayerController::HandleTutorialNextRequested()
 void AMysticGrovePlayerController::HandleTutorialSkipRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Skip"));
 	SkipTutorial();
 }
 
@@ -707,10 +779,12 @@ void AMysticGrovePlayerController::HandleScreenPress(const FVector2D& ScreenPosi
 		switch (MysticHud->GetStartScreenButtonAction(ScreenPosition))
 		{
 		case 1:
+			ShowButtonFlash(TEXT("Play"));
 			PlayFromStartScreen();
 			return;
 		case 2:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Reset Save"));
 			ResetMysticGroveSave();
 			MysticHud->SetStartScreenVisible(false);
 			ShowDemoFeedback(TEXT("Save Reset"));
@@ -726,6 +800,7 @@ void AMysticGrovePlayerController::HandleScreenPress(const FVector2D& ScreenPosi
 		{
 		case 1:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Next"));
 			if (TutorialStep == 0)
 			{
 				SetTutorialStep(1);
@@ -737,6 +812,7 @@ void AMysticGrovePlayerController::HandleScreenPress(const FVector2D& ScreenPosi
 			return;
 		case 2:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Skip"));
 			SkipTutorial();
 			return;
 		default:
@@ -747,14 +823,17 @@ void AMysticGrovePlayerController::HandleScreenPress(const FVector2D& ScreenPosi
 		{
 		case 1:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Save"));
 			SaveMysticGroveGame();
 			return;
 		case 2:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Load"));
 			LoadMysticGroveGame();
 			return;
 		case 3:
 			PlayDemoSound(ButtonClickSound);
+			ShowButtonFlash(TEXT("Reset Save"));
 			ResetMysticGroveSave();
 			ShowDemoFeedback(TEXT("Save Reset"));
 			return;
@@ -815,6 +894,7 @@ void AMysticGrovePlayerController::HandleOpenBuildingScreenDelay()
 void AMysticGrovePlayerController::HandleBuildingScreenBackRequested()
 {
 	PlayDemoSound(BackButtonSound);
+	ShowButtonFlash(TEXT("Back"));
 	if (bShowingFairyAssignmentPanel)
 	{
 		bShowingFairyAssignmentPanel = false;
@@ -828,6 +908,7 @@ void AMysticGrovePlayerController::HandleBuildingScreenBackRequested()
 void AMysticGrovePlayerController::HandleBuildingScreenFirstActionRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Action"));
 	if (bShowingFairyAssignmentPanel)
 	{
 		AssignLunaToTask(TEXT("Flower Grove"));
@@ -855,6 +936,7 @@ void AMysticGrovePlayerController::HandleBuildingScreenFirstActionRequested()
 void AMysticGrovePlayerController::HandleBuildingScreenSecondActionRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Action"));
 	if (bShowingFairyAssignmentPanel)
 	{
 		AssignLunaToTask(TEXT("Sacred Koi Pond"));
@@ -869,6 +951,7 @@ void AMysticGrovePlayerController::HandleBuildingScreenSecondActionRequested()
 void AMysticGrovePlayerController::HandleBuildingScreenThirdActionRequested()
 {
 	PlayDemoSound(ButtonClickSound);
+	ShowButtonFlash(TEXT("Action"));
 	if (bShowingFairyAssignmentPanel)
 	{
 		AssignLunaToTask(TEXT("Unassigned"));
@@ -1162,6 +1245,7 @@ void AMysticGrovePlayerController::CollectFlowerGroveMana()
 	TotalMana += ManaToCollect;
 	PlayDemoSound(CollectManaSound);
 	ShowDemoFeedback(FString::Printf(TEXT("+%d Mana"), ManaToCollect));
+	ShowButtonFlash(TEXT("Collect Mana"));
 
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
@@ -1190,11 +1274,14 @@ void AMysticGrovePlayerController::RestoreSacredPond()
 		TotalMana = SacredPond->LastRestoreRemainingMana;
 		const int32 PurityGained = SacredPond->SacredPondWaterPurity - PreviousPurity;
 		PlayDemoSound(RestorePondSound);
-		ShowDemoFeedback(FString::Printf(TEXT("+%d Purity"), PurityGained));
+		ShowDemoFeedback(FString::Printf(TEXT("Water Purity +%d%%"), PurityGained));
+		ShowButtonFlash(TEXT("Restore"));
 		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 		{
 			MysticHud->SetMana(TotalMana);
 		}
+		RefreshGroveRestorationHud();
+		UpdateGroveRestorationVisuals();
 		SaveMysticGroveGame();
 	}
 	else
@@ -1221,6 +1308,7 @@ void AMysticGrovePlayerController::UpgradeFlowerGrove()
 		TotalMana = FlowerGrove->LastUpgradeRemainingMana;
 		PlayDemoSound(UpgradeFlowerSound);
 		ShowDemoFeedback(TEXT("Flower Grove Level Up"));
+		ShowButtonFlash(TEXT("Upgrade Flower"));
 		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 		{
 			MysticHud->SetMana(TotalMana);
@@ -1299,6 +1387,8 @@ void AMysticGrovePlayerController::ApplyDefaultSaveValues()
 	{
 		MysticHud->SetMana(TotalMana);
 	}
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 
 	RefreshCurrentBuildingScreen();
 }
@@ -1353,6 +1443,8 @@ void AMysticGrovePlayerController::ApplySaveGameValues(const UMysticGroveSaveGam
 	{
 		MysticHud->SetMana(TotalMana);
 	}
+	RefreshGroveRestorationHud();
+	UpdateGroveRestorationVisuals();
 
 	RefreshCurrentBuildingScreen();
 }
