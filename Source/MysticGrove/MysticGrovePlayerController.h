@@ -10,6 +10,7 @@ class AMysticHud;
 class UMysticGroveSaveGame;
 class UMysticBuildingScreenWidget;
 class UMysticStartScreenWidget;
+class UMysticTutorialPromptWidget;
 class USoundBase;
 class UUserWidget;
 
@@ -91,9 +92,17 @@ private:
 	UFUNCTION()
 	void HandleStartScreenQuitRequested();
 
+	UFUNCTION()
+	void HandleTutorialNextRequested();
+
+	UFUNCTION()
+	void HandleTutorialSkipRequested();
+
 	void HandleOpenBuildingScreenDelay();
 	void ShowStartScreen();
 	void HideStartScreen();
+	void ShowTutorialPromptWidget();
+	void HideTutorialPromptWidget();
 	void HandlePrimaryPressed();
 	void HandleTouchPressed(const ETouchIndex::Type FingerIndex, const FVector Location);
 	void HandleReturnPressed();
@@ -134,6 +143,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UMysticStartScreenWidget> CurrentStartScreen;
+
+	UPROPERTY()
+	TObjectPtr<UMysticTutorialPromptWidget> CurrentTutorialPrompt;
 
 	UPROPERTY()
 	TObjectPtr<AMysticBuildingInteractable> PendingBuilding;

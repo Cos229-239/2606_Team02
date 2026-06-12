@@ -251,6 +251,7 @@ Script/
 # Project documentation
 !README.md
 !docs/**
+docs/superpowers/
 
 # GitHub Actions workflows (definitions only)
 !.github/workflows/*.yml

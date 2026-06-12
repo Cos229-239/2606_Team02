@@ -61,6 +61,18 @@ def main():
         except Exception as exc:
             raise RuntimeError(f"Milestone 9 missing player controller tutorial property {property_name}.") from exc
 
+    try:
+        tutorial_widget_class = unreal.MysticTutorialPromptWidget
+    except AttributeError as exc:
+        raise RuntimeError("Milestone 9 tutorial prompt needs a real clickable MysticTutorialPromptWidget.") from exc
+
+    tutorial_widget_cdo = unreal.get_default_object(tutorial_widget_class)
+    for property_name in ["prompt_text", "show_next_button", "on_next_requested", "on_skip_requested"]:
+        try:
+            tutorial_widget_cdo.get_editor_property(property_name)
+        except Exception as exc:
+            raise RuntimeError(f"Milestone 9 missing tutorial widget property {property_name}.") from exc
+
     # Text helper should expose the actual prototype instructions without needing PIE.
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(0), "Welcome to Mystic Grove", "Step 0 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(1), "Tap the Flower Grove", "Step 1 text is wrong.")

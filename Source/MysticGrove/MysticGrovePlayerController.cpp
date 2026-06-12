@@ -14,6 +14,7 @@
 #include "MysticGroveSaveGame.h"
 #include "MysticHud.h"
 #include "MysticStartScreenWidget.h"
+#include "MysticTutorialPromptWidget.h"
 #include "Sound/SoundBase.h"
 
 namespace
@@ -220,7 +221,19 @@ void AMysticGrovePlayerController::RefreshTutorialPrompt()
 {
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
-		MysticHud->SetTutorialPrompt(GetTutorialPromptForStep(TutorialStep), !bHasCompletedTutorial, ShouldShowTutorialNextButton());
+		MysticHud->SetTutorialPrompt(GetTutorialPromptForStep(TutorialStep), false, false);
+	}
+
+	if (bHasCompletedTutorial)
+	{
+		HideTutorialPromptWidget();
+		return;
+	}
+
+	ShowTutorialPromptWidget();
+	if (CurrentTutorialPrompt)
+	{
+		CurrentTutorialPrompt->SetPrompt(GetTutorialPromptForStep(TutorialStep), ShouldShowTutorialNextButton());
 	}
 }
 
@@ -325,7 +338,9 @@ void AMysticGrovePlayerController::PlayFromStartScreen()
 		MysticHud->SetMana(TotalMana);
 	}
 
-	SetInputMode(FInputModeGameOnly());
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
 	bShowMouseCursor = true;
 }
 
@@ -527,6 +542,42 @@ void AMysticGrovePlayerController::HideStartScreen()
 	CurrentStartScreen = nullptr;
 }
 
+void AMysticGrovePlayerController::ShowTutorialPromptWidget()
+{
+	if (CurrentTutorialPrompt)
+	{
+		return;
+	}
+
+	CurrentTutorialPrompt = CreateWidget<UMysticTutorialPromptWidget>(this, UMysticTutorialPromptWidget::StaticClass());
+	if (!CurrentTutorialPrompt)
+	{
+		return;
+	}
+
+	CurrentTutorialPrompt->OnNextRequested.AddDynamic(this, &AMysticGrovePlayerController::HandleTutorialNextRequested);
+	CurrentTutorialPrompt->OnSkipRequested.AddDynamic(this, &AMysticGrovePlayerController::HandleTutorialSkipRequested);
+	CurrentTutorialPrompt->AddToViewport(80);
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
+}
+
+void AMysticGrovePlayerController::HideTutorialPromptWidget()
+{
+	if (!CurrentTutorialPrompt)
+	{
+		return;
+	}
+
+	CurrentTutorialPrompt->OnNextRequested.RemoveDynamic(this, &AMysticGrovePlayerController::HandleTutorialNextRequested);
+	CurrentTutorialPrompt->OnSkipRequested.RemoveDynamic(this, &AMysticGrovePlayerController::HandleTutorialSkipRequested);
+	CurrentTutorialPrompt->RemoveFromParent();
+	CurrentTutorialPrompt = nullptr;
+}
+
 void AMysticGrovePlayerController::HandleStartScreenPlayRequested()
 {
 	PlayFromStartScreen();
@@ -538,13 +589,34 @@ void AMysticGrovePlayerController::HandleStartScreenResetSaveRequested()
 	ResetMysticGroveSave();
 	HideStartScreen();
 	ShowDemoFeedback(TEXT("Save Reset"));
-	SetInputMode(FInputModeGameOnly());
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
 	bShowMouseCursor = true;
 }
 
 void AMysticGrovePlayerController::HandleStartScreenQuitRequested()
 {
 	QuitMysticGrove();
+}
+
+void AMysticGrovePlayerController::HandleTutorialNextRequested()
+{
+	PlayDemoSound(ButtonClickSound);
+	if (TutorialStep == 0)
+	{
+		SetTutorialStep(1);
+	}
+	else if (TutorialStep == 8)
+	{
+		CompleteTutorial();
+	}
+}
+
+void AMysticGrovePlayerController::HandleTutorialSkipRequested()
+{
+	PlayDemoSound(ButtonClickSound);
+	SkipTutorial();
 }
 
 void AMysticGrovePlayerController::HandleReturnPressed()
