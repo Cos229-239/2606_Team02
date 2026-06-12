@@ -33,7 +33,7 @@ private:
 	TSharedPtr<class STextBlock> PromptTextBlock;
 	TSharedPtr<class SBox> NextButtonBox;
 
-	FReply HandleNextClicked();
-	FReply HandleSkipClicked();
+	void HandleNextPressed();
+	void HandleSkipPressed();
 	void RefreshSlateContent();
 };

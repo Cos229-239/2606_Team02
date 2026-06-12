@@ -15,14 +15,14 @@ TSharedRef<SWidget> UMysticTutorialPromptWidget::RebuildWidget()
 	const FLinearColor ButtonColor(0.025f, 0.035f, 0.07f, 1.0f);
 	const FLinearColor GoldText(1.0f, 0.86f, 0.34f, 1.0f);
 
-	auto MakePromptButton = [&](const FText& Label, FOnClicked OnClicked)
+	auto MakePromptButton = [&](const FText& Label, FSimpleDelegate OnPressed)
 	{
 		return SNew(SBox)
 			.WidthOverride(112.0f)
 			.HeightOverride(42.0f)
 			[
 				SNew(SButton)
-				.OnClicked(OnClicked)
+				.OnPressed(OnPressed)
 				.ClickMethod(EButtonClickMethod::MouseDown)
 				.TouchMethod(EButtonTouchMethod::Down)
 				.ButtonColorAndOpacity(ButtonColor)
@@ -68,13 +68,13 @@ TSharedRef<SWidget> UMysticTutorialPromptWidget::RebuildWidget()
 					[
 						SAssignNew(NextButtonBox, SBox)
 						[
-							MakePromptButton(FText::FromString(TEXT("Next")), BIND_UOBJECT_DELEGATE(FOnClicked, HandleNextClicked))
+							MakePromptButton(FText::FromString(TEXT("Next")), FSimpleDelegate::CreateUObject(this, &UMysticTutorialPromptWidget::HandleNextPressed))
 						]
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
-						MakePromptButton(FText::FromString(TEXT("Skip")), BIND_UOBJECT_DELEGATE(FOnClicked, HandleSkipClicked))
+						MakePromptButton(FText::FromString(TEXT("Skip")), FSimpleDelegate::CreateUObject(this, &UMysticTutorialPromptWidget::HandleSkipPressed))
 					]
 				]
 			]
@@ -99,16 +99,14 @@ void UMysticTutorialPromptWidget::SetPrompt(const FString& NewPromptText, bool b
 	RefreshSlateContent();
 }
 
-FReply UMysticTutorialPromptWidget::HandleNextClicked()
+void UMysticTutorialPromptWidget::HandleNextPressed()
 {
 	OnNextRequested.Broadcast();
-	return FReply::Handled();
 }
 
-FReply UMysticTutorialPromptWidget::HandleSkipClicked()
+void UMysticTutorialPromptWidget::HandleSkipPressed()
 {
 	OnSkipRequested.Broadcast();
-	return FReply::Handled();
 }
 
 void UMysticTutorialPromptWidget::RefreshSlateContent()
