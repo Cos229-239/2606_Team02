@@ -84,6 +84,25 @@ def main():
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(7), "View Luna", "Step 7 text is wrong.")
     assert_contains(controller_cdo.get_tutorial_prompt_for_step(8), "Tutorial complete", "Step 8 text is wrong.")
 
+    controller_cdo.set_editor_property("has_completed_tutorial", False)
+    controller_cdo.set_editor_property("tutorial_step", 0)
+    assert_equal(
+        controller_cdo.get_tutorial_button_action_for_point(unreal.Vector2D(700.0, 634.0), unreal.Vector2D(1280.0, 720.0)),
+        1,
+        "Tutorial Next fallback hitbox should work."
+    )
+    assert_equal(
+        controller_cdo.get_tutorial_button_action_for_point(unreal.Vector2D(820.0, 634.0), unreal.Vector2D(1280.0, 720.0)),
+        2,
+        "Tutorial Skip fallback hitbox should work."
+    )
+    controller_cdo.set_editor_property("tutorial_step", 1)
+    assert_equal(
+        controller_cdo.get_tutorial_button_action_for_point(unreal.Vector2D(700.0, 634.0), unreal.Vector2D(1280.0, 720.0)),
+        0,
+        "Tutorial Next fallback should only be active when Next is visible."
+    )
+
     save_game.set_editor_property("has_completed_tutorial", True)
     save_game.set_editor_property("tutorial_step", 8)
     if not unreal.GameplayStatics.save_game_to_slot(save_game, SAVE_SLOT, 0):

@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Tutorial")
 	FString GetTutorialPromptForStep(int32 Step) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Tutorial")
+	int32 GetTutorialButtonActionForPoint(const FVector2D& ScreenPosition, const FVector2D& ViewportSize) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Demo")
 	void PlayFromStartScreen();
 
@@ -126,6 +129,7 @@ private:
 	void AdvanceTutorialFromAction(const FString& ActionName);
 	void SkipTutorial();
 	void CompleteTutorial();
+	bool HandleTutorialButtonPress(const FVector2D& ScreenPosition);
 	bool ShouldShowTutorialNextButton() const;
 	void ShowDemoFeedback(const FString& FeedbackText, float DurationSeconds = 1.6f);
 	void PlayDemoSound(USoundBase* Sound) const;

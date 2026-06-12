@@ -212,6 +212,42 @@ FString AMysticGrovePlayerController::GetTutorialPromptForStep(int32 Step) const
 	}
 }
 
+int32 AMysticGrovePlayerController::GetTutorialButtonActionForPoint(const FVector2D& ScreenPosition, const FVector2D& ViewportSize) const
+{
+	if (bHasCompletedTutorial || ViewportSize.X <= 0.0f || ViewportSize.Y <= 0.0f)
+	{
+		return 0;
+	}
+
+	const float PanelWidth = FMath::Min(560.0f, ViewportSize.X - 48.0f);
+	const float PanelHeight = 132.0f;
+	const float PanelX = (ViewportSize.X - PanelWidth) * 0.5f;
+	const float PanelY = ViewportSize.Y - PanelHeight - 36.0f;
+	const float ButtonWidth = 112.0f;
+	const float ButtonHeight = 42.0f;
+	const float ButtonY = PanelY + PanelHeight - 16.0f - ButtonHeight;
+	const float SkipX = PanelX + PanelWidth - 20.0f - ButtonWidth;
+	const float NextX = SkipX - 10.0f - ButtonWidth;
+
+	auto IsInside = [&ScreenPosition](float X, float Y, float Width, float Height)
+	{
+		return ScreenPosition.X >= X && ScreenPosition.X <= X + Width
+			&& ScreenPosition.Y >= Y && ScreenPosition.Y <= Y + Height;
+	};
+
+	if (ShouldShowTutorialNextButton() && IsInside(NextX, ButtonY, ButtonWidth, ButtonHeight))
+	{
+		return 1;
+	}
+
+	if (IsInside(SkipX, ButtonY, ButtonWidth, ButtonHeight))
+	{
+		return 2;
+	}
+
+	return 0;
+}
+
 bool AMysticGrovePlayerController::ShouldShowTutorialNextButton() const
 {
 	return !bHasCompletedTutorial && (TutorialStep == 0 || TutorialStep == 8);
@@ -307,6 +343,30 @@ void AMysticGrovePlayerController::CompleteTutorial()
 	TutorialStep = 8;
 	RefreshTutorialPrompt();
 	SaveMysticGroveGame();
+}
+
+bool AMysticGrovePlayerController::HandleTutorialButtonPress(const FVector2D& ScreenPosition)
+{
+	if (!CurrentTutorialPrompt || bHasCompletedTutorial)
+	{
+		return false;
+	}
+
+	int32 ViewportX = 0;
+	int32 ViewportY = 0;
+	GetViewportSize(ViewportX, ViewportY);
+
+	switch (GetTutorialButtonActionForPoint(ScreenPosition, FVector2D(static_cast<float>(ViewportX), static_cast<float>(ViewportY))))
+	{
+	case 1:
+		HandleTutorialNextRequested();
+		return true;
+	case 2:
+		HandleTutorialSkipRequested();
+		return true;
+	default:
+		return false;
+	}
 }
 
 void AMysticGrovePlayerController::ShowDemoFeedback(const FString& FeedbackText, float DurationSeconds)
@@ -637,6 +697,11 @@ void AMysticGrovePlayerController::HandleReturnPressed()
 
 void AMysticGrovePlayerController::HandleScreenPress(const FVector2D& ScreenPosition, bool bUseCursorTrace)
 {
+	if (HandleTutorialButtonPress(ScreenPosition))
+	{
+		return;
+	}
+
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
 		switch (MysticHud->GetStartScreenButtonAction(ScreenPosition))

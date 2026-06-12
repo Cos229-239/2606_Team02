@@ -23,6 +23,8 @@ TSharedRef<SWidget> UMysticTutorialPromptWidget::RebuildWidget()
 			[
 				SNew(SButton)
 				.OnClicked(OnClicked)
+				.ClickMethod(EButtonClickMethod::MouseDown)
+				.TouchMethod(EButtonTouchMethod::Down)
 				.ButtonColorAndOpacity(ButtonColor)
 				.ContentPadding(FMargin(14.0f, 8.0f))
 				[
