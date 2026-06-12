@@ -204,6 +204,28 @@ firestore-debug.log
 
 
 ###############################################################################
+# UNREAL ENGINE GENERATED FILES
+###############################################################################
+
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+Script/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Keep user-authored project scripts, but ignore Unreal generated script folders.
+!Scripts/
+!Scripts/**
+
+
+###############################################################################
 # EXCEPTIONS (UN-IGNORE RULES)
 #
 # VERY IMPORTANT:
