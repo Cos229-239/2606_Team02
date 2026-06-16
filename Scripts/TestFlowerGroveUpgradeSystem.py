@@ -68,7 +68,7 @@ def main():
 
     flower.set_editor_property("stored_mana", 0.0)
     flower.set_editor_property("flower_grove_level", 1)
-    flower.set_editor_property("upgrade_cost", 50)
+    flower.set_editor_property("upgrade_cost", 25)
     flower.set_editor_property("base_mana_production_rate", 5.0)
     flower.set_editor_property("mana_production_rate", 5.0)
     flower.set_editor_property("max_stored_mana", 100)
@@ -90,12 +90,12 @@ def main():
 
     upgraded, remaining_mana, message = call_upgrade(flower, 100)
     assert_equal(upgraded, True, "Upgrade should succeed with enough mana.")
-    assert_equal(remaining_mana, 50, "Upgrade should subtract the current 50 mana cost.")
+    assert_equal(remaining_mana, 75, "Upgrade should subtract the current 25 mana cost.")
     assert_equal(flower.get_editor_property("flower_grove_level"), 2, "Upgrade should increase Flower Grove level.")
     assert_close(flower.get_editor_property("base_mana_production_rate"), 7.0, "Upgrade should increase base production by 2.")
     assert_close(flower.get_editor_property("mana_production_rate"), 7.0, "Legacy production rate should stay in sync.")
     assert_equal(flower.get_editor_property("max_stored_mana"), 125, "Upgrade should increase max stored mana by 25.")
-    assert_equal(flower.get_editor_property("upgrade_cost"), 100, "Upgrade cost should increase by 50.")
+    assert_equal(flower.get_editor_property("upgrade_cost"), 38, "Upgrade cost should scale by 1.5x rounded up.")
     assert_close(flower.get_total_mana_production_rate(), 10.0, "Total production should include upgraded base plus Luna bonus.")
 
     flower.set_editor_property("stored_mana", 0.0)
@@ -118,7 +118,7 @@ def main():
         raise RuntimeError("Could not load Flower Grove upgrade test data.")
 
     assert_equal(loaded.get_editor_property("flower_grove_level"), 2, "Saved Flower Grove level should load correctly.")
-    assert_equal(loaded.get_editor_property("flower_grove_upgrade_cost"), 100, "Saved upgrade cost should load correctly.")
+    assert_equal(loaded.get_editor_property("flower_grove_upgrade_cost"), 38, "Saved upgrade cost should load correctly.")
     assert_close(loaded.get_editor_property("flower_grove_base_mana_production_rate"), 7.0, "Saved base production should load correctly.")
     assert_equal(loaded.get_editor_property("flower_grove_max_stored_mana"), 125, "Saved max stored mana should load correctly.")
     assert_close(loaded.get_editor_property("flower_grove_stored_mana"), 100.0, "Saved stored mana should load correctly.")

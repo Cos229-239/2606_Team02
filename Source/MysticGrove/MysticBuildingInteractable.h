@@ -124,6 +124,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Flower Grove")
 	float FairyBonusManaProduction = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Flower Grove")
+	int32 ActivePlots = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Flower Grove")
+	int32 MaxPlots = 5;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mystic Grove|Flower Grove")
+	int32 LastPlotUnlockRemainingMana = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mystic Grove|Flower Grove")
+	FString LastPlotUnlockMessage;
+
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Flower Grove")
 	void GenerateManaForSeconds(float Seconds);
 
@@ -135,6 +147,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Flower Grove")
 	bool UpgradeFlowerGroveWithMana(int32 AvailableMana);
+
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Flower Grove")
+	int32 GetNextPlotUnlockCost() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Flower Grove")
+	bool UnlockNextFlowerPlotWithMana(int32 AvailableMana);
 
 	UFUNCTION(BlueprintCallable, Category = "Mystic Grove|Sacred Pond")
 	bool RestoreSacredPondWithMana(int32 AvailableMana);

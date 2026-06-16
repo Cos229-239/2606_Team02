@@ -167,7 +167,7 @@ void GetActionLabels(const AMysticBuildingInteractable* Building, FText& OutFirs
 	{
 		OutFirstAction = FText::FromString(TEXT("Collect Mana"));
 		OutSecondAction = FText::FromString(TEXT("Upgrade Flower"));
-		OutThirdAction = FText::FromString(TEXT("Unlock Plot"));
+		OutThirdAction = Building->ActivePlots >= Building->MaxPlots ? FText::GetEmpty() : FText::FromString(TEXT("Unlock Plot"));
 	}
 }
 }
@@ -474,6 +474,30 @@ void AMysticGrovePlayerController::UpdateGroveRestorationVisuals()
 	SetProgressionActorVisibility(TEXT("Core Loop Ancient Tree Glow 100"), Restoration >= 100);
 }
 
+void AMysticGrovePlayerController::UpdateFlowerGrovePlotVisuals()
+{
+	const AMysticBuildingInteractable* FlowerGrove = FindBuildingByType(EMysticBuildingType::FlowerGrove);
+	if (!FlowerGrove)
+	{
+		return;
+	}
+
+	SetProgressionActorVisibility(TEXT("Flower Grove Locked Plot 04"), FlowerGrove->ActivePlots < 4);
+	SetProgressionActorVisibility(TEXT("Flower Grove Locked Plot 05"), FlowerGrove->ActivePlots < 5);
+	SetProgressionActorVisibility(TEXT("Flower Grove Active Plot Glow 04"), FlowerGrove->ActivePlots >= 4);
+	SetProgressionActorVisibility(TEXT("Flower Grove Active Plot Glow 05"), FlowerGrove->ActivePlots >= 5);
+}
+
+void AMysticGrovePlayerController::ShowFlowerGroveLevelPulse()
+{
+	SetProgressionActorVisibility(TEXT("Flower Grove Level Up Pulse"), true);
+	FTimerHandle PulseTimerHandle;
+	GetWorldTimerManager().SetTimer(PulseTimerHandle, [this]()
+	{
+		SetProgressionActorVisibility(TEXT("Flower Grove Level Up Pulse"), false);
+	}, 0.65f, false);
+}
+
 void AMysticGrovePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -507,6 +531,7 @@ void AMysticGrovePlayerController::BeginPlay()
 	UpdateFairyAssignmentBonuses();
 	RefreshGroveRestorationHud();
 	UpdateGroveRestorationVisuals();
+	UpdateFlowerGrovePlotVisuals();
 	RefreshTutorialPrompt();
 	ShowStartScreen();
 }
@@ -955,6 +980,12 @@ void AMysticGrovePlayerController::HandleBuildingScreenThirdActionRequested()
 	if (bShowingFairyAssignmentPanel)
 	{
 		AssignLunaToTask(TEXT("Unassigned"));
+		return;
+	}
+
+	if (PendingBuilding && PendingBuilding->BuildingType == EMysticBuildingType::FlowerGrove)
+	{
+		UnlockFlowerGrovePlot();
 	}
 }
 void AMysticGrovePlayerController::OpenBuildingScreen(AMysticBuildingInteractable* Building)
@@ -1144,15 +1175,24 @@ FText AMysticGrovePlayerController::GetFlowerGroveStatsText() const
 		return FText::FromString(TEXT("Mana Production: +5/sec\nStored Mana: 0 / 100"));
 	}
 
-	return FText::FromString(FString::Printf(
-		TEXT("Base Production: +%d/sec\nFairy Bonus: +%d/sec\nTotal Production: +%d/sec\nStored Mana: %d / %d\nUpgrade Cost: %d mana"),
+	FString Stats = FString::Printf(
+		TEXT("Stored Mana: %d / %d\nBase Production: +%d/sec\nFairy Bonus: +%d/sec\nTotal Production: +%d/sec\nActive Plots: %d / %d\nUpgrade Cost: %d Mana\nUnlock Plot Cost: %s"),
+		FMath::FloorToInt(FlowerGrove->StoredMana),
+		FlowerGrove->MaxStoredMana,
 		FMath::FloorToInt(FlowerGrove->BaseManaProductionRate),
 		FMath::FloorToInt(FlowerGrove->FairyBonusManaProduction),
 		FMath::FloorToInt(FlowerGrove->GetTotalManaProductionRate()),
-		FMath::FloorToInt(FlowerGrove->StoredMana),
-		FlowerGrove->MaxStoredMana,
-		FlowerGrove->UpgradeCost
-	));
+		FlowerGrove->ActivePlots,
+		FlowerGrove->MaxPlots,
+		FlowerGrove->UpgradeCost,
+		FlowerGrove->GetNextPlotUnlockCost() > 0 ? *FString::Printf(TEXT("%d Mana"), FlowerGrove->GetNextPlotUnlockCost()) : TEXT("All plots unlocked")
+	);
+	if (!CurrentBuildingStatusMessage.IsEmpty())
+	{
+		Stats += FString::Printf(TEXT("\n\n%s"), *CurrentBuildingStatusMessage);
+	}
+
+	return FText::FromString(Stats);
 }
 
 FText AMysticGrovePlayerController::GetSacredPondStatsText() const
@@ -1307,8 +1347,9 @@ void AMysticGrovePlayerController::UpgradeFlowerGrove()
 	{
 		TotalMana = FlowerGrove->LastUpgradeRemainingMana;
 		PlayDemoSound(UpgradeFlowerSound);
-		ShowDemoFeedback(TEXT("Flower Grove Level Up"));
+		ShowDemoFeedback(TEXT("Flower Grove upgraded!"));
 		ShowButtonFlash(TEXT("Upgrade Flower"));
+		ShowFlowerGroveLevelPulse();
 		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 		{
 			MysticHud->SetMana(TotalMana);
@@ -1318,6 +1359,38 @@ void AMysticGrovePlayerController::UpgradeFlowerGrove()
 	else
 	{
 		ShowDemoFeedback(CurrentBuildingStatusMessage.IsEmpty() ? TEXT("Not enough mana") : CurrentBuildingStatusMessage);
+	}
+
+	RefreshCurrentBuildingScreen();
+}
+
+void AMysticGrovePlayerController::UnlockFlowerGrovePlot()
+{
+	AMysticBuildingInteractable* FlowerGrove = PendingBuilding;
+	if (!FlowerGrove || FlowerGrove->BuildingType != EMysticBuildingType::FlowerGrove)
+	{
+		return;
+	}
+
+	const bool bUnlocked = FlowerGrove->UnlockNextFlowerPlotWithMana(TotalMana);
+	CurrentBuildingStatusMessage = FlowerGrove->LastPlotUnlockMessage;
+
+	if (bUnlocked)
+	{
+		TotalMana = FlowerGrove->LastPlotUnlockRemainingMana;
+		PlayDemoSound(UpgradeFlowerSound);
+		ShowDemoFeedback(TEXT("New flower plot unlocked!"));
+		ShowButtonFlash(TEXT("Unlock Plot"));
+		UpdateFlowerGrovePlotVisuals();
+		if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
+		{
+			MysticHud->SetMana(TotalMana);
+		}
+		SaveMysticGroveGame();
+	}
+	else
+	{
+		ShowDemoFeedback(CurrentBuildingStatusMessage.IsEmpty() ? TEXT("Not enough mana.") : CurrentBuildingStatusMessage);
 	}
 
 	RefreshCurrentBuildingScreen();
@@ -1355,7 +1428,10 @@ void AMysticGrovePlayerController::ApplyDefaultSaveValues()
 		FlowerGrove->MaxStoredMana = 100;
 		FlowerGrove->BaseManaProductionRate = 5.0f;
 		FlowerGrove->ManaProductionRate = 5.0f;
-		FlowerGrove->UpgradeCost = 50;
+		FlowerGrove->FairyBonusManaProduction = 0.0f;
+		FlowerGrove->UpgradeCost = 25;
+		FlowerGrove->ActivePlots = 3;
+		FlowerGrove->MaxPlots = 5;
 	}
 
 	if (AMysticBuildingInteractable* SacredPond = FindBuildingByType(EMysticBuildingType::SacredPond))
@@ -1382,6 +1458,7 @@ void AMysticGrovePlayerController::ApplyDefaultSaveValues()
 	}
 
 	UpdateFairyAssignmentBonuses();
+	UpdateFlowerGrovePlotVisuals();
 
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
@@ -1414,6 +1491,9 @@ void AMysticGrovePlayerController::ApplySaveGameValues(const UMysticGroveSaveGam
 		FlowerGrove->BaseManaProductionRate = SaveGame->FlowerGroveBaseManaProductionRate;
 		FlowerGrove->ManaProductionRate = FlowerGrove->BaseManaProductionRate;
 		FlowerGrove->UpgradeCost = SaveGame->FlowerGroveUpgradeCost;
+		FlowerGrove->FairyBonusManaProduction = SaveGame->FlowerGroveFairyBonusProduction;
+		FlowerGrove->ActivePlots = SaveGame->FlowerGroveActivePlots;
+		FlowerGrove->MaxPlots = SaveGame->FlowerGroveMaxPlots;
 	}
 
 	if (AMysticBuildingInteractable* SacredPond = FindBuildingByType(EMysticBuildingType::SacredPond))
@@ -1438,6 +1518,7 @@ void AMysticGrovePlayerController::ApplySaveGameValues(const UMysticGroveSaveGam
 	}
 
 	UpdateFairyAssignmentBonuses();
+	UpdateFlowerGrovePlotVisuals();
 
 	if (AMysticHud* MysticHud = Cast<AMysticHud>(GetHUD()))
 	{
@@ -1467,6 +1548,9 @@ void AMysticGrovePlayerController::FillSaveGameValues(UMysticGroveSaveGame* Save
 		SaveGame->FlowerGroveManaProductionRate = FlowerGrove->BaseManaProductionRate;
 		SaveGame->FlowerGroveBaseManaProductionRate = FlowerGrove->BaseManaProductionRate;
 		SaveGame->FlowerGroveUpgradeCost = FlowerGrove->UpgradeCost;
+		SaveGame->FlowerGroveFairyBonusProduction = FlowerGrove->FairyBonusManaProduction;
+		SaveGame->FlowerGroveActivePlots = FlowerGrove->ActivePlots;
+		SaveGame->FlowerGroveMaxPlots = FlowerGrove->MaxPlots;
 	}
 
 	if (const AMysticBuildingInteractable* SacredPond = FindBuildingByType(EMysticBuildingType::SacredPond))

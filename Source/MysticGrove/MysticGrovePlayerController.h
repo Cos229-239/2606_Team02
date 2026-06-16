@@ -128,6 +128,7 @@ private:
 	FText GetSacredPondStatsText() const;
 	void CollectFlowerGroveMana();
 	void UpgradeFlowerGrove();
+	void UnlockFlowerGrovePlot();
 	void RestoreSacredPond();
 	void ShowFairyAssignmentPanel();
 	void AssignLunaToTask(const FString& NewAssignedTask);
@@ -149,6 +150,8 @@ private:
 	void FillSaveGameValues(UMysticGroveSaveGame* SaveGame) const;
 	void UpdateFlowerGroveFairyBonus();
 	void SetProgressionActorVisibility(const FString& TargetActorLabel, bool bShouldShow);
+	void UpdateFlowerGrovePlotVisuals();
+	void ShowFlowerGroveLevelPulse();
 
 	UPROPERTY()
 	TObjectPtr<AMysticCameraManager> CameraManager;

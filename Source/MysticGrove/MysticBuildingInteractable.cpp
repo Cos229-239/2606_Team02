@@ -14,7 +14,7 @@ AMysticBuildingInteractable::AMysticBuildingInteractable()
 	ManaProductionRate = 5.0f;
 	BaseManaProductionRate = 5.0f;
 	FlowerGroveLevel = 1;
-	UpgradeCost = 50;
+	UpgradeCost = 25;
 	LastUpgradeRemainingMana = 0;
 	LastUpgradeMessage = TEXT("");
 	SacredPondWaterPurity = 15;
@@ -35,6 +35,10 @@ AMysticBuildingInteractable::AMysticBuildingInteractable()
 	FairyWorkBonus = 3.0f;
 	bFairyIsAssigned = true;
 	FairyBonusManaProduction = 0.0f;
+	ActivePlots = 3;
+	MaxPlots = 5;
+	LastPlotUnlockRemainingMana = 0;
+	LastPlotUnlockMessage = TEXT("");
 
 	UStaticMeshComponent* Mesh = GetStaticMeshComponent();
 	if (Mesh)
@@ -92,10 +96,55 @@ bool AMysticBuildingInteractable::UpgradeFlowerGroveWithMana(int32 AvailableMana
 	FlowerGroveLevel += 1;
 	BaseManaProductionRate += 2.0f;
 	ManaProductionRate = BaseManaProductionRate;
-	MaxStoredMana += 25;
-	UpgradeCost += 50;
+	if (FlowerGroveLevel % 2 == 0)
+	{
+		MaxStoredMana += 25;
+	}
+	UpgradeCost = FMath::CeilToInt(static_cast<float>(UpgradeCost) * 1.5f);
 	StoredMana = FMath::Clamp(StoredMana, 0.0f, static_cast<float>(MaxStoredMana));
-	LastUpgradeMessage = TEXT("Flower upgraded");
+	LastUpgradeMessage = TEXT("Flower Grove upgraded!");
+	return true;
+}
+
+int32 AMysticBuildingInteractable::GetNextPlotUnlockCost() const
+{
+	if (BuildingType != EMysticBuildingType::FlowerGrove || ActivePlots >= MaxPlots)
+	{
+		return 0;
+	}
+
+	return ActivePlots <= 3 ? 50 : 100;
+}
+
+bool AMysticBuildingInteractable::UnlockNextFlowerPlotWithMana(int32 AvailableMana)
+{
+	LastPlotUnlockRemainingMana = AvailableMana;
+	LastPlotUnlockMessage = TEXT("");
+
+	if (BuildingType != EMysticBuildingType::FlowerGrove)
+	{
+		LastPlotUnlockMessage = TEXT("Plots can only be unlocked at the Flower Grove");
+		return false;
+	}
+
+	if (ActivePlots >= MaxPlots)
+	{
+		LastPlotUnlockMessage = TEXT("All plots unlocked.");
+		return false;
+	}
+
+	const int32 UnlockCost = GetNextPlotUnlockCost();
+	if (AvailableMana < UnlockCost)
+	{
+		LastPlotUnlockMessage = TEXT("Not enough mana.");
+		return false;
+	}
+
+	LastPlotUnlockRemainingMana = AvailableMana - UnlockCost;
+	ActivePlots = FMath::Clamp(ActivePlots + 1, 0, MaxPlots);
+	BaseManaProductionRate += 2.0f;
+	ManaProductionRate = BaseManaProductionRate;
+	LastPlotUnlockMessage = TEXT("New flower plot unlocked!");
 	return true;
 }
 void AMysticBuildingInteractable::UpdateFairyWorkerBonusFromHouse(const AMysticBuildingInteractable* FairyHouse)

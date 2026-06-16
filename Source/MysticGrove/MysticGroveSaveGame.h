@@ -32,7 +32,16 @@ public:
 	float FlowerGroveBaseManaProductionRate = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Save")
-	int32 FlowerGroveUpgradeCost = 50;
+	int32 FlowerGroveUpgradeCost = 25;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Save")
+	float FlowerGroveFairyBonusProduction = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Save")
+	int32 FlowerGroveActivePlots = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Save")
+	int32 FlowerGroveMaxPlots = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mystic Grove|Save")
 	int32 SacredPondWaterPurity = 15;
