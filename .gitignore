@@ -259,3 +259,13 @@ docs/superpowers/
 # React Native / Xcode env file (REQUIRED for iOS builds)
 !.xcode.env
 !ios/.xcode.env
+
+# Godot generated files
+.godot/
+builds/
+*.log
+entry_test.log
+entry_test2.log
+flower_builder.log
+flower_resource_check.log
+godot_import.log
