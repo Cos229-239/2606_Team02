@@ -1220,6 +1220,7 @@ func _open_pond_decorate() -> void:
 
 
 func _open_fairy_house() -> void:
+	GameState.record_building_visit("Fairy House")
 	_show_panel(FairyHousePanelScene.instantiate())
 
 
@@ -1228,14 +1229,17 @@ func _open_potion_shop() -> void:
 
 
 func _open_ancient_tree() -> void:
+	GameState.record_building_visit("Ancient Tree")
 	_show_panel(AncientTreePanelScene.instantiate())
 
 
 func _open_arcane_forge() -> void:
+	GameState.record_building_visit("Arcane Forge")
 	_show_panel(ArcaneForgePanelScene.instantiate())
 
 
 func _open_market_stall() -> void:
+	GameState.record_building_visit("Market Stall")
 	_show_panel(MarketStallPanelScene.instantiate())
 
 

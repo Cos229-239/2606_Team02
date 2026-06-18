@@ -63,9 +63,7 @@ func _refresh() -> void:
 	for child in quest_list.get_children():
 		child.queue_free()
 
-	for quest in GameState.quests:
-		if bool(quest.get("IsClaimed", false)):
-			continue
+	for quest in GameState.get_visible_quests():
 		quest_list.add_child(_make_quest_card(quest))
 
 

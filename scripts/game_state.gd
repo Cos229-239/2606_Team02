@@ -22,6 +22,10 @@ const QUEST_GOAL_RESTORE_POND := "restore_pond"
 const QUEST_GOAL_ASSIGN_FLOWER_FAIRY := "assign_flower_fairy"
 const QUEST_GOAL_CRAFT_POTION := "craft_potion"
 const QUEST_GOAL_UPGRADE_FLOWER := "upgrade_flower"
+const QUEST_GOAL_VISIT_FAIRY_HOUSE := "visit_fairy_house"
+const QUEST_GOAL_VISIT_MARKET_STALL := "visit_market_stall"
+const QUEST_GOAL_VISIT_ARCANE_FORGE := "visit_arcane_forge"
+const QUEST_GOAL_VISIT_ANCIENT_TREE := "visit_ancient_tree"
 const QUEST_REWARD_MANA := "Mana"
 const QUEST_REWARD_COINS := "Coins"
 const FLOWER_GRID_COLUMNS := 3
@@ -708,7 +712,13 @@ func _reset_fairies_to_defaults() -> void:
 
 func _reset_quests_to_defaults() -> void:
 	quests.clear()
-	quests.append(_make_quest(
+	for quest in _make_default_quests():
+		quests.append(quest)
+
+
+func _make_default_quests() -> Array:
+	return [
+		_make_quest(
 		"first_harvest",
 		"First Harvest",
 		"Collect mana from the Flower Grove.",
@@ -716,51 +726,97 @@ func _reset_quests_to_defaults() -> void:
 		50,
 		QUEST_REWARD_COINS,
 		25
-	))
-	quests.append(_make_quest(
-		"restore_waters",
-		"Restore the Waters",
-		"Use mana to restore the Sacred Koi Pond.",
-		QUEST_GOAL_RESTORE_POND,
+	),
+		_make_quest(
+		"visit_fairy_house",
+		"Meet the Fairies",
+		"Open the Fairy House to see who can help the grove.",
+		QUEST_GOAL_VISIT_FAIRY_HOUSE,
 		1,
 		QUEST_REWARD_MANA,
-		25
-	))
-	quests.append(_make_quest(
+		20,
+		"first_harvest"
+	),
+		_make_quest(
 		"fairy_work",
 		"A Fairy's Work",
 		"Assign a fairy to the Flower Grove.",
 		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
 		1,
 		QUEST_REWARD_COINS,
-		50
-	))
-	quests.append(_make_quest(
+		50,
+		"visit_fairy_house"
+	),
+		_make_quest(
+		"restore_waters",
+		"Restore the Waters",
+		"Use mana to restore the Sacred Koi Pond.",
+		QUEST_GOAL_RESTORE_POND,
+		1,
+		QUEST_REWARD_MANA,
+		25,
+		"fairy_work"
+	),
+		_make_quest(
 		"beginner_brewer",
 		"Beginner Brewer",
 		"Craft your first Mana Potion.",
 		QUEST_GOAL_CRAFT_POTION,
 		1,
 		QUEST_REWARD_COINS,
-		50
-	))
-	quests.append(_make_quest(
+		50,
+		"restore_waters"
+	),
+		_make_quest(
+		"visit_market_stall",
+		"Open the Market",
+		"Visit the Market Stall to see where village trades will happen.",
+		QUEST_GOAL_VISIT_MARKET_STALL,
+		1,
+		QUEST_REWARD_COINS,
+		25,
+		"beginner_brewer"
+	),
+		_make_quest(
 		"village_growth",
 		"Village Growth",
 		"Upgrade the Flower Grove.",
 		QUEST_GOAL_UPGRADE_FLOWER,
 		1,
 		QUEST_REWARD_COINS,
-		75
-	))
+		75,
+		"visit_market_stall"
+	),
+		_make_quest(
+		"visit_arcane_forge",
+		"Arcane Tools",
+		"Visit the Arcane Forge to inspect permanent upgrade work.",
+		QUEST_GOAL_VISIT_ARCANE_FORGE,
+		1,
+		QUEST_REWARD_MANA,
+		25,
+		"village_growth"
+	),
+		_make_quest(
+		"visit_ancient_tree",
+		"Heart of the Grove",
+		"Visit the Ancient Tree and check the grove restoration goal.",
+		QUEST_GOAL_VISIT_ANCIENT_TREE,
+		1,
+		QUEST_REWARD_COINS,
+		100,
+		"visit_arcane_forge"
+	)
+	]
 
 
-func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int) -> Dictionary:
+func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int, prerequisite_quest_id: String = "") -> Dictionary:
 	return {
 		"QuestID": quest_id,
 		"QuestTitle": title,
 		"QuestDescription": description,
 		"QuestGoalType": goal_type,
+		"PrerequisiteQuestID": prerequisite_quest_id,
 		"CurrentProgress": 0,
 		"RequiredProgress": required_progress,
 		"RewardType": reward_type,
@@ -778,6 +834,8 @@ func add_quest_progress(goal_type: String, amount: int) -> void:
 	for index in range(quests.size()):
 		if String(quests[index].get("QuestGoalType", "")) != goal_type:
 			continue
+		if not is_quest_unlocked(String(quests[index].get("QuestID", ""))):
+			continue
 		if bool(quests[index].get("IsClaimed", false)):
 			continue
 		var required := int(quests[index].get("RequiredProgress", 1))
@@ -794,6 +852,45 @@ func add_quest_progress(goal_type: String, amount: int) -> void:
 		if completed_now:
 			preserve_feedback_once = true
 			save_status_changed.emit("Quest Complete!")
+
+
+func record_building_visit(building_name: String) -> void:
+	match building_name:
+		"Fairy House":
+			add_quest_progress(QUEST_GOAL_VISIT_FAIRY_HOUSE, 1)
+		"Market Stall":
+			add_quest_progress(QUEST_GOAL_VISIT_MARKET_STALL, 1)
+		"Arcane Forge":
+			add_quest_progress(QUEST_GOAL_VISIT_ARCANE_FORGE, 1)
+		"Ancient Tree":
+			add_quest_progress(QUEST_GOAL_VISIT_ANCIENT_TREE, 1)
+
+
+func get_visible_quests() -> Array:
+	var visible: Array = []
+	for quest in quests:
+		var quest_id := String(quest.get("QuestID", ""))
+		if bool(quest.get("IsClaimed", false)):
+			continue
+		if not is_quest_unlocked(quest_id):
+			continue
+		visible.append(quest)
+	return visible
+
+
+func get_next_guided_quest_id() -> String:
+	for quest in get_visible_quests():
+		return String(quest.get("QuestID", ""))
+	return ""
+
+
+func is_quest_unlocked(quest_id: String) -> bool:
+	for quest in quests:
+		if String(quest.get("QuestID", "")) != quest_id:
+			continue
+		var prerequisite := String(quest.get("PrerequisiteQuestID", ""))
+		return prerequisite.is_empty() or is_quest_claimed(prerequisite)
+	return false
 
 
 func claim_quest_reward(quest_id: String) -> bool:
@@ -992,6 +1089,7 @@ func apply_save_data(data: Dictionary) -> void:
 					"QuestTitle": String(saved_quest.get("QuestTitle", "")),
 					"QuestDescription": String(saved_quest.get("QuestDescription", "")),
 					"QuestGoalType": String(saved_quest.get("QuestGoalType", "")),
+					"PrerequisiteQuestID": String(saved_quest.get("PrerequisiteQuestID", "")),
 					"CurrentProgress": int(saved_quest.get("CurrentProgress", 0)),
 					"RequiredProgress": int(saved_quest.get("RequiredProgress", 1)),
 					"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
@@ -999,6 +1097,7 @@ func apply_save_data(data: Dictionary) -> void:
 					"IsCompleted": bool(saved_quest.get("IsCompleted", false)),
 					"IsClaimed": bool(saved_quest.get("IsClaimed", false))
 				})
+		_sync_guided_quest_definitions()
 	else:
 		_reset_quests_to_defaults()
 	has_completed_onboarding = bool(data.get("has_completed_onboarding", true))
@@ -1014,6 +1113,27 @@ func apply_save_data(data: Dictionary) -> void:
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
 	quests_changed.emit()
+
+
+func _sync_guided_quest_definitions() -> void:
+	var defaults := _make_default_quests()
+	for default_quest in defaults:
+		var quest_id := String(default_quest.get("QuestID", ""))
+		var existing_index := -1
+		for index in range(quests.size()):
+			if String(quests[index].get("QuestID", "")) == quest_id:
+				existing_index = index
+				break
+		if existing_index == -1:
+			quests.append(default_quest)
+			continue
+		quests[existing_index]["QuestTitle"] = String(default_quest.get("QuestTitle", ""))
+		quests[existing_index]["QuestDescription"] = String(default_quest.get("QuestDescription", ""))
+		quests[existing_index]["QuestGoalType"] = String(default_quest.get("QuestGoalType", ""))
+		quests[existing_index]["PrerequisiteQuestID"] = String(default_quest.get("PrerequisiteQuestID", ""))
+		quests[existing_index]["RequiredProgress"] = int(default_quest.get("RequiredProgress", 1))
+		quests[existing_index]["RewardType"] = String(default_quest.get("RewardType", QUEST_REWARD_COINS))
+		quests[existing_index]["RewardAmount"] = int(default_quest.get("RewardAmount", 0))
 
 
 func save_game() -> void:
