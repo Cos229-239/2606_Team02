@@ -1,0 +1,16 @@
+# Godot editor/cache data
+.godot/
+.import/
+
+# Exported builds and local scratch output
+builds/
+work/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# OS files
+Thumbs.db
+Desktop.ini
