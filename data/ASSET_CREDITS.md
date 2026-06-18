@@ -93,5 +93,15 @@ This file tracks all third-party assets currently used in the Godot prototype.
   - `res://assets/sprites/arcane_forge/forge_back_card.png`
   - `res://assets/sprites/arcane_forge/forge_fairy_workbench.png`
   - `res://assets/sprites/arcane_forge/forge_anvil_focus.png`
+  - `res://assets/sprites/market_stall/market_stall_background.png`
+  - `res://assets/sprites/market_stall/market_stall_title.png`
+  - `res://assets/sprites/market_stall/market_order_row_panel.png`
+  - `res://assets/sprites/market_stall/market_order_board.png`
+  - `res://assets/sprites/market_stall/market_shopkeeper.png`
+  - `res://assets/sprites/market_stall/market_trade_card.png`
+  - `res://assets/sprites/market_stall/market_orders_card.png`
+  - `res://assets/sprites/market_stall/market_upgrades_card.png`
+  - `res://assets/sprites/market_stall/market_storage_card.png`
+  - `res://assets/sprites/market_stall/market_back_card.png`
 - Used for:
-  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, Arcane Forge screen, pond decoration placeholders, koi/fairy visual flavor, and reference-style cozy fantasy art pass.
+  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, Arcane Forge screen, Market Stall screen, pond decoration placeholders, koi/fairy visual flavor, and reference-style cozy fantasy art pass.

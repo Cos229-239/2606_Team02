@@ -6,6 +6,7 @@ signal sacred_pond_changed
 signal fairy_house_changed
 signal potion_shop_changed
 signal arcane_forge_changed
+signal market_stall_changed
 signal quests_changed
 signal save_status_changed(message: String)
 
@@ -80,6 +81,10 @@ var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
+var market_stall_level: int = 1
+var market_reputation: int = 0
+var market_orders_completed: int = 0
+var market_storage_capacity: int = 3
 var arcane_forge_level: int = 1
 var forge_gear_count: int = 0
 var arcane_crystal_count: int = 0
@@ -540,6 +545,73 @@ func upgrade_potion_shop() -> bool:
 	resources_changed.emit()
 	potion_shop_changed.emit()
 	save_game()
+	return true
+
+
+func get_market_trade_mana_cost() -> int:
+	return max(10, 30 - market_stall_level * 5)
+
+
+func get_market_trade_coin_reward() -> int:
+	return 25 + market_stall_level * 10
+
+
+func get_market_order_target() -> int:
+	return 2 + market_stall_level
+
+
+func get_market_upgrade_cost_coins() -> int:
+	return 100 + (market_stall_level - 1) * 75
+
+
+func get_market_storage_upgrade_cost_coins() -> int:
+	return 50 + market_storage_capacity * 15
+
+
+func fulfill_market_trade() -> bool:
+	var cost := get_market_trade_mana_cost()
+	if total_mana < cost:
+		save_status_changed.emit("Not enough Mana.")
+		return false
+
+	total_mana -= cost
+	total_coins += get_market_trade_coin_reward()
+	market_orders_completed += 1
+	market_reputation += market_stall_level + 1
+	resources_changed.emit()
+	market_stall_changed.emit()
+	save_game()
+	save_status_changed.emit("Market trade fulfilled!")
+	return true
+
+
+func upgrade_market_stall() -> bool:
+	var coin_cost := get_market_upgrade_cost_coins()
+	if total_coins < coin_cost:
+		save_status_changed.emit("Not enough Coins.")
+		return false
+
+	total_coins -= coin_cost
+	market_stall_level += 1
+	resources_changed.emit()
+	market_stall_changed.emit()
+	save_game()
+	save_status_changed.emit("Market Stall upgraded!")
+	return true
+
+
+func upgrade_market_storage() -> bool:
+	var coin_cost := get_market_storage_upgrade_cost_coins()
+	if total_coins < coin_cost:
+		save_status_changed.emit("Not enough Coins.")
+		return false
+
+	total_coins -= coin_cost
+	market_storage_capacity += 2
+	resources_changed.emit()
+	market_stall_changed.emit()
+	save_game()
+	save_status_changed.emit("Market storage expanded!")
 	return true
 
 
@@ -1054,6 +1126,10 @@ func get_save_data() -> Dictionary:
 		"potion_crafting_active": potion_crafting_active,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
+		"market_stall_level": market_stall_level,
+		"market_reputation": market_reputation,
+		"market_orders_completed": market_orders_completed,
+		"market_storage_capacity": market_storage_capacity,
 		"arcane_forge_level": arcane_forge_level,
 		"forge_gear_count": forge_gear_count,
 		"arcane_crystal_count": arcane_crystal_count,
@@ -1162,6 +1238,10 @@ func apply_save_data(data: Dictionary) -> void:
 	potion_crafting_active = bool(data.get("potion_crafting_active", false))
 	potion_sell_value = int(data.get("potion_sell_value", 50))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
+	market_stall_level = int(data.get("market_stall_level", 1))
+	market_reputation = int(data.get("market_reputation", 0))
+	market_orders_completed = int(data.get("market_orders_completed", 0))
+	market_storage_capacity = int(data.get("market_storage_capacity", 3))
 	arcane_forge_level = int(data.get("arcane_forge_level", 1))
 	forge_gear_count = int(data.get("forge_gear_count", 0))
 	arcane_crystal_count = int(data.get("arcane_crystal_count", 0))
@@ -1199,6 +1279,7 @@ func apply_save_data(data: Dictionary) -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	market_stall_changed.emit()
 	arcane_forge_changed.emit()
 	quests_changed.emit()
 
@@ -1308,6 +1389,10 @@ func reset_to_defaults() -> void:
 	potion_crafting_active = false
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
+	market_stall_level = 1
+	market_reputation = 0
+	market_orders_completed = 0
+	market_storage_capacity = 3
 	arcane_forge_level = 1
 	forge_gear_count = 0
 	arcane_crystal_count = 0
@@ -1324,6 +1409,7 @@ func reset_to_defaults() -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	market_stall_changed.emit()
 	arcane_forge_changed.emit()
 	quests_changed.emit()
 

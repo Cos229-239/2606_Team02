@@ -43,7 +43,7 @@ $requiredBuildingsText = @(
     "`"Market Stall`"",
     "`"Arcane Forge`"",
     "Restoration landmark and grove story placeholder.",
-    "Orders and trading placeholder.",
+    "Fulfill trades, complete orders, and expand storage.",
     "Craft gear, enhance it with crystals, and upgrade the forge."
 )
 
