@@ -730,6 +730,14 @@ func _get_click_rect(visual_rect: Rect2) -> Rect2:
 	)
 
 
+func _get_placeholder_click_rect(title: String, visual_rect: Rect2) -> Rect2:
+	if title == "Arcane Forge":
+		var label_rect := _get_area_label_rect(title, visual_rect)
+		if label_rect.size != Vector2.ZERO:
+			return label_rect.grow_individual(40.0, 70.0, 40.0, 160.0)
+	return _get_click_rect(visual_rect)
+
+
 func _add_water_details(rect: Rect2) -> void:
 	var center := rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.56)
 	_add_shadow_ellipse(center + Vector2(0, rect.size.y * 0.27), Vector2(rect.size.x * 0.42, max(18.0, rect.size.y * 0.12)), 0.22)
@@ -863,7 +871,7 @@ func _add_placeholder_area_button(title: String, rect: Rect2, callback: Callable
 	var hit_area := Button.new()
 	hit_area.name = "%sHitButton" % title.replace(" ", "")
 	hit_area.text = ""
-	var click_rect := _get_click_rect(rect)
+	var click_rect := _get_placeholder_click_rect(title, rect)
 	hit_area.position = click_rect.position
 	hit_area.size = click_rect.size
 	hit_area.focus_mode = Control.FOCUS_NONE
