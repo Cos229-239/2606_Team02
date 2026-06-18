@@ -1,0 +1,216 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/fairy_house_panel.gd" id="1_tsv12"]
+[ext_resource type="Texture2D" path="res://assets/sprites/panels/fairy_house_zoom.png" id="2_61wj4"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4yv3g"]
+bg_color = Color(0.012, 0.018, 0.04, 0.74)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blpgr"]
+bg_color = Color(0.015, 0.018, 0.025, 0.68)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43529412, 0.3254902, 0.15294118, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hvdeh"]
+bg_color = Color(0.01, 0.016, 0.035, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nrvcx"]
+bg_color = Color(0.04, 0.06, 0.105, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nquim"]
+bg_color = Color(0.01, 0.016, 0.035, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sycx0"]
+bg_color = Color(0.04, 0.06, 0.105, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="FairyHousePanel" type="PanelContainer" unique_id=11230064]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_tsv12")
+
+[node name="Root" type="Control" parent="." unique_id=956133340]
+layout_mode = 2
+
+[node name="DarkBackground" type="ColorRect" parent="Root" unique_id=1503938421]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0.03529412, 0.019607844, 0.039215688, 1)
+
+[node name="FairyHouseBackground" type="TextureRect" parent="Root" unique_id=1802138861]
+texture_filter = 2
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+texture = ExtResource("2_61wj4")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SoftVignette" type="ColorRect" parent="Root" unique_id=1245871452]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.1)
+
+[node name="StatsPanelBackground" type="PanelContainer" parent="Root" unique_id=1302167478]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 920.0
+offset_right = 1010.0
+offset_bottom = 1036.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_4yv3g")
+
+[node name="StatsLabel" type="Label" parent="Root" unique_id=223316191]
+layout_mode = 0
+offset_left = 94.0
+offset_top = 934.0
+offset_right = 986.0
+offset_bottom = 1022.0
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Level 1
+Residents: 3 / 3
+Workers Active: 2"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="WorkersTitle" type="Label" parent="Root" unique_id=729421493]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 1050.0
+offset_right = 990.0
+offset_bottom = 1094.0
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Fairy Workers"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="FairyCardsScroll" type="ScrollContainer" parent="Root" unique_id=512584408]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 1100.0
+offset_right = 1010.0
+offset_bottom = 1460.0
+
+[node name="FairyCardsContainer" type="VBoxContainer" parent="Root/FairyCardsScroll" unique_id=2117906338]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="FeedbackLabel" type="Label" parent="Root" unique_id=196061208]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 1488.0
+offset_right = 970.0
+offset_bottom = 1544.0
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ActionBarBackground" type="PanelContainer" parent="Root" unique_id=1999551613]
+layout_mode = 0
+offset_left = 126.0
+offset_top = 1608.0
+offset_right = 954.0
+offset_bottom = 1740.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_blpgr")
+
+[node name="ActionRow" type="HBoxContainer" parent="Root" unique_id=1826494884]
+layout_mode = 0
+offset_left = 146.0
+offset_top = 1626.0
+offset_right = 934.0
+offset_bottom = 1722.0
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="UpgradeHouseButton" type="Button" parent="Root/ActionRow" unique_id=798485138]
+custom_minimum_size = Vector2(360, 82)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hvdeh")
+theme_override_styles/hover = SubResource("StyleBoxFlat_nrvcx")
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 28
+text = "Upgrade House"
+
+[node name="BackButton" type="Button" parent="Root/ActionRow" unique_id=718101149]
+custom_minimum_size = Vector2(260, 82)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_nquim")
+theme_override_styles/hover = SubResource("StyleBoxFlat_sycx0")
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 28
+text = "Back"
