@@ -84,5 +84,14 @@ This file tracks all third-party assets currently used in the Godot prototype.
   - `res://assets/sprites/buildings/potion_shop_home.png`
   - `res://assets/sprites/buildings/market_stall_home.png`
   - `res://assets/sprites/buildings/arcane_forge_home.png`
+  - `res://assets/sprites/arcane_forge/arcane_forge_background.png`
+  - `res://assets/sprites/arcane_forge/forge_wide_frame.png`
+  - `res://assets/sprites/arcane_forge/forge_craft_card.png`
+  - `res://assets/sprites/arcane_forge/forge_gear_card.png`
+  - `res://assets/sprites/arcane_forge/forge_upgrades_card.png`
+  - `res://assets/sprites/arcane_forge/forge_enhance_card.png`
+  - `res://assets/sprites/arcane_forge/forge_back_card.png`
+  - `res://assets/sprites/arcane_forge/forge_fairy_workbench.png`
+  - `res://assets/sprites/arcane_forge/forge_anvil_focus.png`
 - Used for:
-  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, pond decoration placeholders, koi/fairy visual flavor, and reference-style cozy fantasy art pass.
+  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, Arcane Forge screen, pond decoration placeholders, koi/fairy visual flavor, and reference-style cozy fantasy art pass.

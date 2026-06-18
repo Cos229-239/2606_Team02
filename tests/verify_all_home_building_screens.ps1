@@ -44,7 +44,7 @@ $requiredBuildingsText = @(
     "`"Arcane Forge`"",
     "Restoration landmark and grove story placeholder.",
     "Orders and trading placeholder.",
-    "Crafting and enhancement placeholder."
+    "Craft gear, enhance it with crystals, and upgrade the forge."
 )
 
 foreach ($text in $requiredBuildingsText) {

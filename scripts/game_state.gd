@@ -5,6 +5,7 @@ signal flower_grove_changed
 signal sacred_pond_changed
 signal fairy_house_changed
 signal potion_shop_changed
+signal arcane_forge_changed
 signal quests_changed
 signal save_status_changed(message: String)
 
@@ -79,6 +80,10 @@ var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
+var arcane_forge_level: int = 1
+var forge_gear_count: int = 0
+var arcane_crystal_count: int = 0
+var forge_enhancement_power: int = 0
 var quests: Array[Dictionary] = []
 var preserve_feedback_once: bool = false
 var has_completed_onboarding: bool = false
@@ -538,6 +543,80 @@ func upgrade_potion_shop() -> bool:
 	return true
 
 
+func get_forge_craft_mana_cost() -> int:
+	return max(15, 45 - arcane_forge_level * 5)
+
+
+func get_forge_upgrade_cost_mana() -> int:
+	return 100 + (arcane_forge_level - 1) * 75
+
+
+func get_forge_upgrade_cost_coins() -> int:
+	return 50 + (arcane_forge_level - 1) * 50
+
+
+func get_forge_enhance_crystal_cost() -> int:
+	return 10 + forge_enhancement_power * 5
+
+
+func get_forge_crystal_yield() -> int:
+	return 5 + arcane_forge_level
+
+
+func craft_forge_gear() -> bool:
+	var cost := get_forge_craft_mana_cost()
+	if total_mana < cost:
+		save_status_changed.emit("Not enough Mana.")
+		return false
+
+	total_mana -= cost
+	forge_gear_count += 1
+	arcane_crystal_count += get_forge_crystal_yield()
+	resources_changed.emit()
+	arcane_forge_changed.emit()
+	save_game()
+	save_status_changed.emit("Gear crafted!")
+	return true
+
+
+func enhance_forge_gear() -> bool:
+	if forge_gear_count <= 0:
+		save_status_changed.emit("Craft gear first.")
+		return false
+	var cost := get_forge_enhance_crystal_cost()
+	if arcane_crystal_count < cost:
+		save_status_changed.emit("Not enough Crystals.")
+		return false
+
+	arcane_crystal_count -= cost
+	forge_enhancement_power += 1
+	resources_changed.emit()
+	arcane_forge_changed.emit()
+	save_game()
+	save_status_changed.emit("Gear enhanced!")
+	return true
+
+
+func upgrade_arcane_forge() -> bool:
+	var mana_cost := get_forge_upgrade_cost_mana()
+	var coin_cost := get_forge_upgrade_cost_coins()
+	if total_mana < mana_cost:
+		save_status_changed.emit("Not enough Mana.")
+		return false
+	if total_coins < coin_cost:
+		save_status_changed.emit("Not enough Coins.")
+		return false
+
+	total_mana -= mana_cost
+	total_coins -= coin_cost
+	arcane_forge_level += 1
+	resources_changed.emit()
+	arcane_forge_changed.emit()
+	save_game()
+	save_status_changed.emit("Forge upgraded!")
+	return true
+
+
 func update_sacred_pond_level_and_rewards() -> void:
 	if sacred_pond_water_purity >= 100:
 		sacred_pond_level = 5
@@ -975,6 +1054,10 @@ func get_save_data() -> Dictionary:
 		"potion_crafting_active": potion_crafting_active,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
+		"arcane_forge_level": arcane_forge_level,
+		"forge_gear_count": forge_gear_count,
+		"arcane_crystal_count": arcane_crystal_count,
+		"forge_enhancement_power": forge_enhancement_power,
 		"quests": quests,
 		"has_completed_onboarding": has_completed_onboarding,
 		"first_merge_complete": first_merge_complete,
@@ -1079,6 +1162,10 @@ func apply_save_data(data: Dictionary) -> void:
 	potion_crafting_active = bool(data.get("potion_crafting_active", false))
 	potion_sell_value = int(data.get("potion_sell_value", 50))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
+	arcane_forge_level = int(data.get("arcane_forge_level", 1))
+	forge_gear_count = int(data.get("forge_gear_count", 0))
+	arcane_crystal_count = int(data.get("arcane_crystal_count", 0))
+	forge_enhancement_power = int(data.get("forge_enhancement_power", 0))
 	var saved_quests = data.get("quests", [])
 	if saved_quests is Array and saved_quests.size() > 0:
 		quests.clear()
@@ -1112,6 +1199,7 @@ func apply_save_data(data: Dictionary) -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	arcane_forge_changed.emit()
 	quests_changed.emit()
 
 
@@ -1220,6 +1308,10 @@ func reset_to_defaults() -> void:
 	potion_crafting_active = false
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
+	arcane_forge_level = 1
+	forge_gear_count = 0
+	arcane_crystal_count = 0
+	forge_enhancement_power = 0
 	_reset_quests_to_defaults()
 	has_completed_onboarding = false
 	first_merge_complete = false
@@ -1232,6 +1324,7 @@ func reset_to_defaults() -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	arcane_forge_changed.emit()
 	quests_changed.emit()
 
 

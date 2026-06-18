@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/simple_building_panel.gd" id="1_panel"]
+[ext_resource type="Script" path="res://scripts/arcane_forge_panel.gd" id="1_forge"]
 
 [node name="ArcaneForgePanel" type="PanelContainer"]
 layout_mode = 3
@@ -9,7 +9,4 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_panel")
-title = "Arcane Forge"
-description = "Crafting and enhancement placeholder. This building is clickable now, but forge gameplay is saved for a later milestone."
-stat_line = "Forge Level 1"
+script = ExtResource("1_forge")

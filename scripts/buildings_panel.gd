@@ -37,7 +37,7 @@ func _build_ui() -> void:
 	_add_building_entry(building_list, "Potion Shop", "Level %d" % GameState.potion_shop_level, "Craft Mana Potions and sell them for Coins.")
 	_add_building_entry(building_list, "Ancient Tree", "Landmark", "Restoration landmark and grove story placeholder.")
 	_add_building_entry(building_list, "Market Stall", "Placeholder", "Orders and trading placeholder.")
-	_add_building_entry(building_list, "Arcane Forge", "Placeholder", "Crafting and enhancement placeholder.")
+	_add_building_entry(building_list, "Arcane Forge", "Level %d" % GameState.arcane_forge_level, "Craft gear, enhance it with crystals, and upgrade the forge.")
 
 	var locked := _make_label("Locked", 30, Color("#fff2a8"))
 	layout.add_child(locked)
