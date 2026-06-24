@@ -11,7 +11,7 @@ function Assert-FileContains {
 }
 
 Assert-FileContains "scenes/AbandonedNook.tscn" "res://scripts/abandoned_nook.gd"
-Assert-FileContains "scripts/abandoned_nook.gd" "Merge to Restore Life"
+Assert-FileContains "scripts/abandoned_nook.gd" "Tap the dead flower to begin"
 Assert-FileContains "scripts/abandoned_nook.gd" "Drag matching life together."
 Assert-FileContains "scripts/abandoned_nook.gd" "Life returns to the grove."
 Assert-FileContains "scripts/abandoned_nook.gd" "+10 Mana"
