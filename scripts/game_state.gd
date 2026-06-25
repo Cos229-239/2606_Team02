@@ -1,10 +1,13 @@
-﻿extends Node
+extends Node
 
 signal resources_changed
 signal flower_grove_changed
 signal sacred_pond_changed
 signal fairy_house_changed
 signal potion_shop_changed
+signal market_stall_changed
+signal ancient_tree_changed
+signal arcane_forge_changed
 signal quests_changed
 signal save_status_changed(message: String)
 
@@ -22,6 +25,9 @@ const QUEST_GOAL_RESTORE_POND := "restore_pond"
 const QUEST_GOAL_ASSIGN_FLOWER_FAIRY := "assign_flower_fairy"
 const QUEST_GOAL_CRAFT_POTION := "craft_potion"
 const QUEST_GOAL_UPGRADE_FLOWER := "upgrade_flower"
+const QUEST_GOAL_MARKET_TRADE := "market_trade"
+const QUEST_GOAL_RESTORE_TREE := "restore_tree"
+const QUEST_GOAL_FORGE_UPGRADE := "forge_upgrade"
 const QUEST_REWARD_MANA := "Mana"
 const QUEST_REWARD_COINS := "Coins"
 const FLOWER_GRID_COLUMNS := 3
@@ -75,6 +81,15 @@ var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
+var market_reputation: int = 1
+var market_orders_completed: int = 0
+var ancient_tree_level: int = 1
+var ancient_tree_restore_cost: int = 75
+var ancient_tree_claimed_rewards: Array[int] = []
+var forge_level: int = 1
+var forge_flower_focus_level: int = 0
+var forge_potion_gilding_level: int = 0
+var forge_pond_resonance_level: int = 0
 var quests: Array[Dictionary] = []
 var preserve_feedback_once: bool = false
 var has_completed_onboarding: bool = false
@@ -85,6 +100,10 @@ var music_volume: float = 0.75
 var sfx_volume: float = 0.75
 
 func _ready() -> void:
+	if _is_test_save_disabled():
+		reset_to_defaults()
+		save_status_changed.emit("Test save disabled.")
+		return
 	load_game()
 
 
@@ -534,6 +553,269 @@ func upgrade_potion_shop() -> bool:
 	return true
 
 
+func get_market_order_data(order_id: String) -> Dictionary:
+	match order_id:
+		"mana_bundle":
+			return {
+				"OrderID": "mana_bundle",
+				"Title": "Mana Bundle",
+				"CostMana": 25,
+				"CostPotions": 0,
+				"CostSpirit": 0,
+				"RewardCoins": 35,
+				"ReputationReward": 1,
+				"Description": "Trade gathered Mana for village Coins."
+			}
+		"potion_crate":
+			return {
+				"OrderID": "potion_crate",
+				"Title": "Potion Crate",
+				"CostMana": 0,
+				"CostPotions": 1,
+				"CostSpirit": 0,
+				"RewardCoins": 75,
+				"ReputationReward": 1,
+				"Description": "Sell a finished Mana Potion to traveling sprites."
+			}
+		"spirit_contract":
+			return {
+				"OrderID": "spirit_contract",
+				"Title": "Spirit Contract",
+				"CostMana": 10,
+				"CostPotions": 0,
+				"CostSpirit": 10,
+				"RewardCoins": 110,
+				"ReputationReward": 2,
+				"Description": "Bind pond Spirit Energy into a high-value contract."
+			}
+	return {}
+
+
+func get_market_orders() -> Array[Dictionary]:
+	return [
+		get_market_order_data("mana_bundle"),
+		get_market_order_data("potion_crate"),
+		get_market_order_data("spirit_contract")
+	]
+
+
+func fulfill_market_order(order_id: String) -> Dictionary:
+	var order := get_market_order_data(order_id)
+	if order.is_empty():
+		save_status_changed.emit("Unknown market order.")
+		return {"Success": false, "Message": "Unknown market order."}
+
+	var cost_mana := int(order.get("CostMana", 0))
+	var cost_potions := int(order.get("CostPotions", 0))
+	var cost_spirit := int(order.get("CostSpirit", 0))
+	if total_mana < cost_mana:
+		save_status_changed.emit("Not enough Mana.")
+		return {"Success": false, "Message": "Not enough Mana."}
+	if mana_potion_count < cost_potions:
+		save_status_changed.emit("Not enough Mana Potions.")
+		return {"Success": false, "Message": "Not enough Mana Potions."}
+	if sacred_pond_spirit_energy < cost_spirit:
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return {"Success": false, "Message": "Not enough Spirit Energy."}
+
+	total_mana -= cost_mana
+	mana_potion_count -= cost_potions
+	sacred_pond_spirit_energy -= cost_spirit
+	total_coins += int(order.get("RewardCoins", 0))
+	market_orders_completed += 1
+	market_reputation += int(order.get("ReputationReward", 1))
+	add_quest_progress(QUEST_GOAL_MARKET_TRADE, 1)
+
+	resources_changed.emit()
+	market_stall_changed.emit()
+	potion_shop_changed.emit()
+	sacred_pond_changed.emit()
+	save_game()
+	var message := "%s fulfilled!" % String(order.get("Title", "Order"))
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func update_ancient_tree_level() -> void:
+	if grove_restoration >= 100:
+		ancient_tree_level = 5
+	elif grove_restoration >= 75:
+		ancient_tree_level = 4
+	elif grove_restoration >= 50:
+		ancient_tree_level = 3
+	elif grove_restoration >= 25:
+		ancient_tree_level = 2
+	else:
+		ancient_tree_level = 1
+
+
+func restore_ancient_tree() -> Dictionary:
+	if grove_restoration >= 100:
+		save_status_changed.emit("The Ancient Tree is fully restored.")
+		return {"Success": false, "Message": "The Ancient Tree is fully restored."}
+	if total_mana < ancient_tree_restore_cost:
+		save_status_changed.emit("Not enough Mana.")
+		return {"Success": false, "Message": "Not enough Mana."}
+
+	total_mana -= ancient_tree_restore_cost
+	grove_restoration = min(100, grove_restoration + 10)
+	ancient_tree_restore_cost = int(ceil(float(ancient_tree_restore_cost) * 1.35))
+	update_ancient_tree_level()
+	add_quest_progress(QUEST_GOAL_RESTORE_TREE, 1)
+
+	resources_changed.emit()
+	ancient_tree_changed.emit()
+	save_game()
+	var message := "Ancient Tree restored to %d%%." % grove_restoration
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func get_ancient_tree_reward_data(level: int) -> Dictionary:
+	match level:
+		2:
+			return {"Level": 2, "Title": "Root Memory", "RewardMana": 25, "RewardCoins": 0}
+		3:
+			return {"Level": 3, "Title": "Branch Blessing", "RewardMana": 50, "RewardCoins": 40}
+		4:
+			return {"Level": 4, "Title": "Canopy Promise", "RewardMana": 75, "RewardCoins": 80}
+		5:
+			return {"Level": 5, "Title": "Heartwood Awakening", "RewardMana": 100, "RewardCoins": 150}
+	return {}
+
+
+func claim_ancient_tree_reward(level: int) -> Dictionary:
+	var reward := get_ancient_tree_reward_data(level)
+	if reward.is_empty():
+		save_status_changed.emit("No reward at that level.")
+		return {"Success": false, "Message": "No reward at that level."}
+	if ancient_tree_level < level:
+		save_status_changed.emit("Restore the Ancient Tree further.")
+		return {"Success": false, "Message": "Restore the Ancient Tree further."}
+	if ancient_tree_claimed_rewards.has(level):
+		save_status_changed.emit("Reward already claimed.")
+		return {"Success": false, "Message": "Reward already claimed."}
+
+	ancient_tree_claimed_rewards.append(level)
+	total_mana += int(reward.get("RewardMana", 0))
+	total_coins += int(reward.get("RewardCoins", 0))
+	resources_changed.emit()
+	ancient_tree_changed.emit()
+	save_game()
+	var message := "%s claimed!" % String(reward.get("Title", "Reward"))
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func get_next_ancient_tree_reward_text() -> String:
+	for level in [2, 3, 4, 5]:
+		if ancient_tree_claimed_rewards.has(level):
+			continue
+		var reward_thresholds: Array[int] = [0, 0, 25, 50, 75, 100]
+		var threshold: int = reward_thresholds[level]
+		if ancient_tree_level >= level:
+			return "Level %d reward ready" % level
+		return "Level %d reward at %d%% restoration" % [level, threshold]
+	return "All Ancient Tree rewards claimed"
+
+
+func get_forge_upgrade_data(upgrade_id: String) -> Dictionary:
+	match upgrade_id:
+		"flower_focus":
+			return {
+				"UpgradeID": "flower_focus",
+				"Title": "Flower Focus",
+				"Level": forge_flower_focus_level,
+				"MaxLevel": 3,
+				"CostMana": 100 + forge_flower_focus_level * 75,
+				"CostCoins": 50 + forge_flower_focus_level * 50,
+				"CostSpirit": 0,
+				"Description": "+2 Flower Grove Mana/sec per level."
+			}
+		"potion_gilding":
+			return {
+				"UpgradeID": "potion_gilding",
+				"Title": "Potion Gilding",
+				"Level": forge_potion_gilding_level,
+				"MaxLevel": 3,
+				"CostMana": 75 + forge_potion_gilding_level * 60,
+				"CostCoins": 100 + forge_potion_gilding_level * 65,
+				"CostSpirit": 0,
+				"Description": "+15 Coins per Mana Potion sale per level."
+			}
+		"pond_resonance":
+			return {
+				"UpgradeID": "pond_resonance",
+				"Title": "Pond Resonance",
+				"Level": forge_pond_resonance_level,
+				"MaxLevel": 3,
+				"CostMana": 50 + forge_pond_resonance_level * 50,
+				"CostCoins": 50 + forge_pond_resonance_level * 50,
+				"CostSpirit": 20 + forge_pond_resonance_level * 10,
+				"Description": "+2 Sacred Pond restore power per level."
+			}
+	return {}
+
+
+func get_forge_upgrades() -> Array[Dictionary]:
+	return [
+		get_forge_upgrade_data("flower_focus"),
+		get_forge_upgrade_data("potion_gilding"),
+		get_forge_upgrade_data("pond_resonance")
+	]
+
+
+func purchase_forge_upgrade(upgrade_id: String) -> Dictionary:
+	var upgrade := get_forge_upgrade_data(upgrade_id)
+	if upgrade.is_empty():
+		save_status_changed.emit("Unknown forge upgrade.")
+		return {"Success": false, "Message": "Unknown forge upgrade."}
+
+	var level := int(upgrade.get("Level", 0))
+	var max_level := int(upgrade.get("MaxLevel", 3))
+	if level >= max_level:
+		save_status_changed.emit("Forge upgrade is maxed.")
+		return {"Success": false, "Message": "Forge upgrade is maxed."}
+
+	var cost_mana := int(upgrade.get("CostMana", 0))
+	var cost_coins := int(upgrade.get("CostCoins", 0))
+	var cost_spirit := int(upgrade.get("CostSpirit", 0))
+	if total_mana < cost_mana:
+		save_status_changed.emit("Not enough Mana.")
+		return {"Success": false, "Message": "Not enough Mana."}
+	if total_coins < cost_coins:
+		save_status_changed.emit("Not enough Coins.")
+		return {"Success": false, "Message": "Not enough Coins."}
+	if sacred_pond_spirit_energy < cost_spirit:
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return {"Success": false, "Message": "Not enough Spirit Energy."}
+
+	total_mana -= cost_mana
+	total_coins -= cost_coins
+	sacred_pond_spirit_energy -= cost_spirit
+	if upgrade_id == "flower_focus":
+		forge_flower_focus_level += 1
+		flower_grove_base_mana_production_rate += 2.0
+	elif upgrade_id == "potion_gilding":
+		forge_potion_gilding_level += 1
+		potion_sell_value += 15
+	elif upgrade_id == "pond_resonance":
+		forge_pond_resonance_level += 1
+		sacred_pond_base_restore_amount += 2
+	forge_level = 1 + forge_flower_focus_level + forge_potion_gilding_level + forge_pond_resonance_level
+	add_quest_progress(QUEST_GOAL_FORGE_UPGRADE, 1)
+
+	resources_changed.emit()
+	flower_grove_changed.emit()
+	potion_shop_changed.emit()
+	sacred_pond_changed.emit()
+	arcane_forge_changed.emit()
+	save_game()
+	var message := "%s forged!" % String(upgrade.get("Title", "Upgrade"))
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
 func update_sacred_pond_level_and_rewards() -> void:
 	if sacred_pond_water_purity >= 100:
 		sacred_pond_level = 5
@@ -753,6 +1035,33 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_REWARD_COINS,
 		75
 	))
+	quests.append(_make_quest(
+		"first_trade",
+		"First Trade",
+		"Fulfill a Market Stall order.",
+		QUEST_GOAL_MARKET_TRADE,
+		1,
+		QUEST_REWARD_COINS,
+		60
+	))
+	quests.append(_make_quest(
+		"awaken_roots",
+		"Awaken the Roots",
+		"Restore the Ancient Tree.",
+		QUEST_GOAL_RESTORE_TREE,
+		1,
+		QUEST_REWARD_MANA,
+		75
+	))
+	quests.append(_make_quest(
+		"first_forging",
+		"First Forging",
+		"Purchase an Arcane Forge upgrade.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		1,
+		QUEST_REWARD_COINS,
+		100
+	))
 
 
 func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int) -> Dictionary:
@@ -878,6 +1187,15 @@ func get_save_data() -> Dictionary:
 		"potion_crafting_active": potion_crafting_active,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
+		"market_reputation": market_reputation,
+		"market_orders_completed": market_orders_completed,
+		"ancient_tree_level": ancient_tree_level,
+		"ancient_tree_restore_cost": ancient_tree_restore_cost,
+		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
+		"forge_level": forge_level,
+		"forge_flower_focus_level": forge_flower_focus_level,
+		"forge_potion_gilding_level": forge_potion_gilding_level,
+		"forge_pond_resonance_level": forge_pond_resonance_level,
 		"quests": quests,
 		"has_completed_onboarding": has_completed_onboarding,
 		"first_merge_complete": first_merge_complete,
@@ -982,6 +1300,19 @@ func apply_save_data(data: Dictionary) -> void:
 	potion_crafting_active = bool(data.get("potion_crafting_active", false))
 	potion_sell_value = int(data.get("potion_sell_value", 50))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
+	market_reputation = int(data.get("market_reputation", 1))
+	market_orders_completed = int(data.get("market_orders_completed", 0))
+	ancient_tree_level = int(data.get("ancient_tree_level", 1))
+	ancient_tree_restore_cost = int(data.get("ancient_tree_restore_cost", 75))
+	ancient_tree_claimed_rewards.clear()
+	var saved_tree_rewards = data.get("ancient_tree_claimed_rewards", [])
+	if saved_tree_rewards is Array:
+		for reward_level in saved_tree_rewards:
+			ancient_tree_claimed_rewards.append(int(reward_level))
+	forge_level = int(data.get("forge_level", 1))
+	forge_flower_focus_level = int(data.get("forge_flower_focus_level", 0))
+	forge_potion_gilding_level = int(data.get("forge_potion_gilding_level", 0))
+	forge_pond_resonance_level = int(data.get("forge_pond_resonance_level", 0))
 	var saved_quests = data.get("quests", [])
 	if saved_quests is Array and saved_quests.size() > 0:
 		quests.clear()
@@ -1013,10 +1344,19 @@ func apply_save_data(data: Dictionary) -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	market_stall_changed.emit()
+	ancient_tree_changed.emit()
+	arcane_forge_changed.emit()
 	quests_changed.emit()
 
 
 func save_game() -> void:
+	if _is_test_save_disabled():
+		if preserve_feedback_once:
+			preserve_feedback_once = false
+			return
+		save_status_changed.emit("Test save skipped.")
+		return
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
 		save_status_changed.emit("Save failed.")
@@ -1052,14 +1392,23 @@ func load_game() -> void:
 		save_status_changed.emit("Load failed.")
 		return
 
-	var parsed = JSON.parse_string(file.get_as_text())
-	if typeof(parsed) != TYPE_DICTIONARY:
+	var save_text := file.get_as_text()
+	if save_text.strip_edges().is_empty():
+		reset_to_defaults()
+		save_status_changed.emit("Save data reset.")
+		return
+	var parser := JSON.new()
+	if parser.parse(save_text) != OK or typeof(parser.data) != TYPE_DICTIONARY:
 		reset_to_defaults()
 		save_status_changed.emit("Save data reset.")
 		return
 
-	apply_save_data(parsed)
+	apply_save_data(parser.data)
 	save_status_changed.emit("Game loaded.")
+
+
+func _is_test_save_disabled() -> bool:
+	return OS.get_cmdline_user_args().has("--no-save")
 
 
 func reset_to_defaults() -> void:
@@ -1100,6 +1449,15 @@ func reset_to_defaults() -> void:
 	potion_crafting_active = false
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
+	market_reputation = 1
+	market_orders_completed = 0
+	ancient_tree_level = 1
+	ancient_tree_restore_cost = 75
+	ancient_tree_claimed_rewards.clear()
+	forge_level = 1
+	forge_flower_focus_level = 0
+	forge_potion_gilding_level = 0
+	forge_pond_resonance_level = 0
 	_reset_quests_to_defaults()
 	has_completed_onboarding = false
 	first_merge_complete = false
@@ -1112,6 +1470,9 @@ func reset_to_defaults() -> void:
 	sacred_pond_changed.emit()
 	fairy_house_changed.emit()
 	potion_shop_changed.emit()
+	market_stall_changed.emit()
+	ancient_tree_changed.emit()
+	arcane_forge_changed.emit()
 	quests_changed.emit()
 
 

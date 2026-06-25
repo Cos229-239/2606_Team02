@@ -21,7 +21,7 @@ func _ready() -> void:
 
 func _build_scene() -> void:
 	var background := _add_sprite(
-		"res://assets/sprites/environment/abandoned_village_bg.png",
+		"res://assets/sprites/backgrounds/abandoned_village_bg.png",
 		Vector2(0, 0),
 		Vector2(1080, 1920),
 		0.0,
@@ -245,16 +245,16 @@ func _add_arrow(from: Vector2, to: Vector2) -> void:
 	add_child(head)
 
 
-func _add_sprite(path: String, top_left: Vector2, size: Vector2, rotation: float = 0.0, tint: Color = Color.WHITE) -> Sprite2D:
+func _add_sprite(path: String, top_left: Vector2, sprite_size: Vector2, sprite_rotation: float = 0.0, tint: Color = Color.WHITE) -> Sprite2D:
 	var texture := load(path)
 	var sprite := Sprite2D.new()
 	sprite.texture = texture
-	sprite.position = top_left + size * 0.5
-	sprite.rotation = rotation
+	sprite.position = top_left + sprite_size * 0.5
+	sprite.rotation = sprite_rotation
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sprite.modulate = tint
 	if texture:
-		sprite.scale = Vector2(size.x / texture.get_width(), size.y / texture.get_height())
+		sprite.scale = Vector2(sprite_size.x / texture.get_width(), sprite_size.y / texture.get_height())
 	add_child(sprite)
 	return sprite
 
