@@ -1,0 +1,818 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/flower_grove_panel.gd" id="1_rlv46"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/flower_grove_background.png" id="2_6d2ic"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/flower_grove_title.png" id="3_5xuj4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/plot_tap_to_plant.png" id="4_0a00q"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/plot_locked.png" id="5_bxtdw"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/button_collect_mana.png" id="6_o04i3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/button_upgrade_grove.png" id="7_t2e5d"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/button_unlock_plot.png" id="8_7beph"]
+[ext_resource type="Texture2D" path="res://assets/sprites/flower_grove/button_back.png" id="9_v3q1q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymctd"]
+bg_color = Color(0.012, 0.016, 0.025, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ful6x"]
+bg_color = Color(0.012, 0.016, 0.025, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5d2fs"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b4ogw"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wqpbr"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_mtxf7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_agtyl"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_a6uio"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_itult"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cn7ln"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_77l1f"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vlw37"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t1w8d"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b41b1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dtqh7"]
+bg_color = Color(0.012, 0.016, 0.025, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nc0ea"]
+bg_color = Color(0.012, 0.016, 0.025, 0.76)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43529412, 0.3254902, 0.15294118, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qrjq3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_uln1x"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t317i"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sdpwx"]
+
+[node name="FlowerGrovePanel" type="PanelContainer" unique_id=1276152683]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_rlv46")
+
+[node name="Root" type="Control" parent="." unique_id=1974891784]
+layout_mode = 2
+
+[node name="DarkBackground" type="ColorRect" parent="Root" unique_id=229615295]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0.007843138, 0.019607844, 0.039215688, 1)
+
+[node name="FlowerGroveBackground" type="TextureRect" parent="Root" unique_id=1972918701]
+texture_filter = 2
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+texture = ExtResource("2_6d2ic")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SoftVignette" type="ColorRect" parent="Root" unique_id=1446920391]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.18)
+
+[node name="GardenPreviewLayer" type="Control" parent="Root" unique_id=1829915276]
+anchors_preset = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+
+[node name="TitlePlaque" type="TextureRect" parent="Root" unique_id=1773835412]
+texture_filter = 2
+layout_mode = 0
+offset_left = 110.0
+offset_top = 38.0
+offset_right = 970.0
+offset_bottom = 226.0
+mouse_filter = 2
+texture = ExtResource("3_5xuj4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StoredManaPanel" type="PanelContainer" parent="Root" unique_id=1929586652]
+layout_mode = 0
+offset_left = 250.0
+offset_top = 228.0
+offset_right = 510.0
+offset_bottom = 334.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ymctd")
+
+[node name="StoredManaPanelTitle" type="Label" parent="Root" unique_id=634947659]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 238.0
+offset_right = 500.0
+offset_bottom = 272.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Stored Mana"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="StoredManaPanelValue" type="Label" parent="Root" unique_id=301116757]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 272.0
+offset_right = 500.0
+offset_bottom = 320.0
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "0 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ProductionPanel" type="PanelContainer" parent="Root" unique_id=1640073426]
+layout_mode = 0
+offset_left = 570.0
+offset_top = 228.0
+offset_right = 830.0
+offset_bottom = 334.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ful6x")
+
+[node name="ProductionPanelTitle" type="Label" parent="Root" unique_id=398765466]
+layout_mode = 0
+offset_left = 580.0
+offset_top = 238.0
+offset_right = 820.0
+offset_bottom = 272.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Production"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ProductionPanelValue" type="Label" parent="Root" unique_id=654652020]
+layout_mode = 0
+offset_left = 580.0
+offset_top = 272.0
+offset_right = 820.0
+offset_bottom = 320.0
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "+5 / sec"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="MergeGridPanel" type="Control" parent="Root" unique_id=1531325816]
+anchors_preset = 0
+offset_left = 54.0
+offset_top = 360.0
+offset_right = 1026.0
+offset_bottom = 1260.0
+mouse_filter = 1
+
+[node name="MergeGrid" type="GridContainer" parent="Root/MergeGridPanel" unique_id=446873507]
+layout_mode = 0
+offset_right = 972.0
+offset_bottom = 900.0
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="GridSlot0" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1759365287]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_5d2fs")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_5d2fs")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_5d2fs")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_5d2fs")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot0" unique_id=1576381079]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot0" unique_id=1330039928]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot1" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=272076133]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_b4ogw")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_b4ogw")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_b4ogw")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_b4ogw")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot1" unique_id=1863652195]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot1" unique_id=1925350277]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot2" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1374419600]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_wqpbr")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_wqpbr")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_wqpbr")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_wqpbr")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot2" unique_id=1227836417]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot2" unique_id=261422397]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot3" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1388705797]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_mtxf7")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_mtxf7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_mtxf7")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_mtxf7")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot3" unique_id=51718085]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot3" unique_id=52226202]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot4" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=350752946]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_agtyl")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_agtyl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_agtyl")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_agtyl")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot4" unique_id=930248691]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot4" unique_id=1157280286]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot5" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=2124915729]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_a6uio")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_a6uio")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_a6uio")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_a6uio")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot5" unique_id=2073169482]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot5" unique_id=1015906295]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot6" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1539846097]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_itult")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_itult")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_itult")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_itult")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot6" unique_id=1474447328]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot6" unique_id=274296975]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot7" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1200822450]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_cn7ln")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_cn7ln")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_cn7ln")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_cn7ln")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot7" unique_id=503059731]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot7" unique_id=680702384]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot8" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1720615541]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_77l1f")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_77l1f")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_77l1f")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_77l1f")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot8" unique_id=1042428679]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_0a00q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot8" unique_id=1629025751]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Tap to Plant"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot9" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1560151239]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_vlw37")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_vlw37")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_vlw37")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_vlw37")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot9" unique_id=1323768425]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("5_bxtdw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot9" unique_id=1195433392]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Locked"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot10" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=2077154197]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_t1w8d")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_t1w8d")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_t1w8d")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_t1w8d")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot10" unique_id=1495588031]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("5_bxtdw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot10" unique_id=1278145069]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Locked"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GridSlot11" type="Button" parent="Root/MergeGridPanel/MergeGrid" unique_id=1620549058]
+custom_minimum_size = Vector2(312, 210)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_b41b1")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_b41b1")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_b41b1")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_b41b1")
+
+[node name="PlotTexture" type="TextureRect" parent="Root/MergeGridPanel/MergeGrid/GridSlot11" unique_id=1988428577]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("5_bxtdw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotText" type="Label" parent="Root/MergeGridPanel/MergeGrid/GridSlot11" unique_id=2083651446]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "Locked"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatsPanelBackground" type="PanelContainer" parent="Root" unique_id=1915595941]
+layout_mode = 0
+offset_left = 58.0
+offset_top = 1310.0
+offset_right = 1022.0
+offset_bottom = 1518.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dtqh7")
+
+[node name="StatsLabel" type="Label" parent="Root" unique_id=83173404]
+layout_mode = 0
+offset_left = 92.0
+offset_top = 1332.0
+offset_right = 510.0
+offset_bottom = 1458.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Level: 1    Active Plots: 3 / 6    Fairy Bonus: +0/sec    Upgrade Cost: 25 Mana"
+horizontal_alignment = 0
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="StatsRightLabel" type="Label" parent="Root"]
+layout_mode = 0
+offset_left = 536.0
+offset_top = 1332.0
+offset_right = 988.0
+offset_bottom = 1458.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Grid Production: +0/sec
+Base Production: +5/sec
+Fairy Bonus: +0/sec
+Total Production: +5/sec
+Unlock Plot Cost: 50 Mana"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="FeedbackLabel" type="Label" parent="Root" unique_id=2125487561]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 1462.0
+offset_right = 980.0
+offset_bottom = 1506.0
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ActionBarBackground" type="PanelContainer" parent="Root" unique_id=1799582064]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 1570.0
+offset_right = 1050.0
+offset_bottom = 1818.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_nc0ea")
+
+[node name="ActionRow" type="Control" parent="Root" unique_id=406188077]
+anchors_preset = 0
+offset_left = 54.0
+offset_top = 1604.0
+offset_right = 1026.0
+offset_bottom = 1768.0
+mouse_filter = 1
+
+[node name="CollectManaButtonArt" type="Control" parent="Root/ActionRow" unique_id=376581366]
+anchors_preset = 0
+offset_right = 228.0
+offset_bottom = 140.0
+mouse_filter = 2
+
+[node name="Texture" type="TextureRect" parent="Root/ActionRow/CollectManaButtonArt" unique_id=1969833054]
+texture_filter = 2
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("6_o04i3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CollectManaButton" type="Button" parent="Root/ActionRow" unique_id=1979384857]
+custom_minimum_size = Vector2(228, 140)
+layout_mode = 0
+offset_right = 228.0
+offset_bottom = 140.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_qrjq3")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_qrjq3")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_qrjq3")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_qrjq3")
+
+[node name="UpgradeFlowerButtonArt" type="Control" parent="Root/ActionRow" unique_id=641758514]
+anchors_preset = 0
+offset_left = 248.0
+offset_right = 476.0
+offset_bottom = 140.0
+mouse_filter = 2
+
+[node name="Texture" type="TextureRect" parent="Root/ActionRow/UpgradeFlowerButtonArt" unique_id=2091245279]
+texture_filter = 2
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("7_t2e5d")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="UpgradeFlowerButton" type="Button" parent="Root/ActionRow" unique_id=331204872]
+custom_minimum_size = Vector2(228, 140)
+layout_mode = 0
+offset_left = 248.0
+offset_right = 476.0
+offset_bottom = 140.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_uln1x")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_uln1x")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_uln1x")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_uln1x")
+
+[node name="UnlockPlotButtonArt" type="Control" parent="Root/ActionRow" unique_id=1411349821]
+anchors_preset = 0
+offset_left = 496.0
+offset_right = 724.0
+offset_bottom = 140.0
+mouse_filter = 2
+
+[node name="Texture" type="TextureRect" parent="Root/ActionRow/UnlockPlotButtonArt" unique_id=46109306]
+texture_filter = 2
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("8_7beph")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="UnlockPlotButton" type="Button" parent="Root/ActionRow" unique_id=1153173504]
+custom_minimum_size = Vector2(228, 140)
+layout_mode = 0
+offset_left = 496.0
+offset_right = 724.0
+offset_bottom = 140.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_t317i")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_t317i")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_t317i")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_t317i")
+
+[node name="BackButtonArt" type="Control" parent="Root/ActionRow" unique_id=552690731]
+anchors_preset = 0
+offset_left = 744.0
+offset_right = 972.0
+offset_bottom = 140.0
+mouse_filter = 2
+
+[node name="Texture" type="TextureRect" parent="Root/ActionRow/BackButtonArt" unique_id=877113371]
+texture_filter = 2
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("9_v3q1q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BackButton" type="Button" parent="Root/ActionRow" unique_id=942044068]
+custom_minimum_size = Vector2(228, 140)
+layout_mode = 0
+offset_left = 744.0
+offset_right = 972.0
+offset_bottom = 140.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_sdpwx")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_sdpwx")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_sdpwx")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_sdpwx")
