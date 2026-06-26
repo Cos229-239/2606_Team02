@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 signal resources_changed
 signal flower_grove_changed

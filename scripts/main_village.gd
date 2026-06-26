@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const FlowerGrovePanelScene := preload("res://ui/FlowerGrovePanel.tscn")
 const SacredPondPanelScene := preload("res://ui/SacredPondPanel.tscn")
@@ -1320,7 +1320,3 @@ func _close_panel() -> void:
 func _set_home_nav_visible(is_visible: bool) -> void:
 	if bottom_nav_layer:
 		bottom_nav_layer.visible = is_visible
-
-
-
-

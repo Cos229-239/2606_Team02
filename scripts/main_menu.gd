@@ -12,17 +12,12 @@ func _ready() -> void:
 
 
 func _build_menu() -> void:
-	var background := ColorRect.new()
-	background.color = Color("#061511")
-	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(background)
-
-	var glow := Polygon2D.new()
-	glow.color = Color("#113f35", 0.72)
-	glow.polygon = PackedVector2Array([
-		Vector2(120, 360), Vector2(960, 280), Vector2(1010, 1520), Vector2(90, 1620)
-	])
-	add_child(glow)
+	var background := _add_sprite(
+		"res://assets/sprites/backgrounds/main_menu_bg.png",
+		Vector2(0, 0),
+		Vector2(1080, 1920)
+	)
+	background.z_index = -10
 
 	var title := Label.new()
 	title.text = "Mystic Grove"
@@ -50,7 +45,7 @@ func _build_menu() -> void:
 	add_child(subtitle)
 
 	var buttons := VBoxContainer.new()
-	buttons.position = Vector2(300, 640)
+	buttons.position = Vector2(300, 770)
 	buttons.add_theme_constant_override("separation", 24)
 	add_child(buttons)
 
@@ -88,8 +83,32 @@ func _make_button(text: String, callback: Callable) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(480, 90)
 	button.add_theme_font_size_override("font_size", 32)
+	button.add_theme_color_override("font_color", Color("#fff2d6"))
+	button.add_theme_color_override("font_hover_color", Color("#fff2d6"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff2d6"))
+	button.add_theme_color_override("font_disabled_color", Color("#fff2d6", 0.45))
+	button.add_theme_color_override("font_shadow_color", Color.BLACK)
+	button.add_theme_constant_override("shadow_offset_x", 3)
+	button.add_theme_constant_override("shadow_offset_y", 3)
+	button.add_theme_stylebox_override("normal", _make_menu_button_style(false))
+	button.add_theme_stylebox_override("hover", _make_menu_button_style(false, true))
+	button.add_theme_stylebox_override("pressed", _make_menu_button_style(false, true))
+	button.add_theme_stylebox_override("disabled", _make_menu_button_style(true))
 	button.pressed.connect(callback)
 	return button
+
+
+func _make_menu_button_style(disabled: bool, hover: bool = false) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	var alpha_mult := 0.5 if disabled else 1.0
+	style.bg_color = Color("#1a1410", (0.78 if hover else 0.72) * alpha_mult)
+	style.border_color = Color("#f3d57a", 0.55 * alpha_mult)
+	style.set_border_width_all(2)
+	style.corner_radius_top_left = 16
+	style.corner_radius_top_right = 16
+	style.corner_radius_bottom_left = 16
+	style.corner_radius_bottom_right = 16
+	return style
 
 
 func _refresh_buttons() -> void:
@@ -126,7 +145,15 @@ func _show_reset_confirmation() -> void:
 	confirm_panel = PanelContainer.new()
 	confirm_panel.position = Vector2(160, 980)
 	confirm_panel.size = Vector2(760, 310)
-	confirm_panel.self_modulate = Color(0.015, 0.02, 0.045, 0.96)
+	var confirm_style := StyleBoxFlat.new()
+	confirm_style.bg_color = Color("#0a0e16", 0.92)
+	confirm_style.border_color = Color("#f3d57a", 0.55)
+	confirm_style.set_border_width_all(2)
+	confirm_style.corner_radius_top_left = 16
+	confirm_style.corner_radius_top_right = 16
+	confirm_style.corner_radius_bottom_left = 16
+	confirm_style.corner_radius_bottom_right = 16
+	confirm_panel.add_theme_stylebox_override("panel", confirm_style)
 	add_child(confirm_panel)
 
 	var margin := MarginContainer.new()
@@ -141,7 +168,7 @@ func _show_reset_confirmation() -> void:
 	margin.add_child(layout)
 
 	var label := Label.new()
-	label.text = "Reset Save?\nThis clears local playtest progress."
+	label.text = "Reset Save?\nThis clears local progress."
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 28)
 	label.add_theme_color_override("font_color", Color.WHITE)
@@ -152,6 +179,9 @@ func _show_reset_confirmation() -> void:
 	layout.add_child(row)
 	row.add_child(_make_button("Confirm Reset", _confirm_reset))
 	row.add_child(_make_button("Cancel", _cancel_reset))
+	for btn in row.get_children():
+		btn.custom_minimum_size = Vector2(330, 80)
+		btn.add_theme_font_size_override("font_size", 26)
 
 
 func _confirm_reset() -> void:
@@ -173,3 +203,17 @@ func _on_quit_pressed() -> void:
 func _show_feedback(message: String) -> void:
 	if feedback_label:
 		feedback_label.text = message
+
+
+func _add_sprite(path: String, top_left: Vector2, sprite_size: Vector2, sprite_rotation: float = 0.0, tint: Color = Color.WHITE) -> Sprite2D:
+	var texture := load(path)
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.position = top_left + sprite_size * 0.5
+	sprite.rotation = sprite_rotation
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.modulate = tint
+	if texture:
+		sprite.scale = Vector2(sprite_size.x / texture.get_width(), sprite_size.y / texture.get_height())
+	add_child(sprite)
+	return sprite
