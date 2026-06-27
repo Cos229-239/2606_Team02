@@ -38,6 +38,7 @@ var feedback_label: Label
 var tutorial_panel: PanelContainer
 var tutorial_text: Label
 var panel_layer: CanvasLayer
+var tutorial_layer: CanvasLayer
 var bottom_nav_layer: CanvasLayer
 var building_hit_layer: CanvasLayer
 var open_panel: Control
@@ -99,6 +100,11 @@ func _build_screen() -> void:
 	panel_layer = CanvasLayer.new()
 	panel_layer.layer = 10
 	add_child(panel_layer)
+
+	tutorial_layer = CanvasLayer.new()
+	tutorial_layer.name = "TutorialLayer"
+	tutorial_layer.layer = 40
+	add_child(tutorial_layer)
 
 
 func _build_building_hit_layer() -> void:
@@ -1168,7 +1174,7 @@ func _show_tutorial() -> void:
 	tutorial_panel.position = Vector2(70, 520)
 	tutorial_panel.size = Vector2(940, 560)
 	tutorial_panel.self_modulate = Color(0.02, 0.025, 0.05, 0.94)
-	add_child(tutorial_panel)
+	tutorial_layer.add_child(tutorial_panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 36)

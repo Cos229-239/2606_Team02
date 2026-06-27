@@ -18,7 +18,7 @@ func _run() -> void:
 	root.add_child(village)
 	await process_frame
 
-	if village.get_node_or_null("Tutorial") == null:
+	if village.get_node_or_null("TutorialLayer/Tutorial") == null:
 		fail("Tutorial should show after resetting save and completing onboarding")
 		return
 

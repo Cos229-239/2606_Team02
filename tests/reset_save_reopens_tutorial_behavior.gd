@@ -20,7 +20,7 @@ func _run() -> void:
 	root.add_child(village)
 	await process_frame
 
-	if village.get_node_or_null("Tutorial") != null:
+	if village.get_node_or_null("TutorialLayer/Tutorial") != null:
 		fail("Tutorial should start hidden for a completed save")
 		return
 
@@ -30,7 +30,7 @@ func _run() -> void:
 	if game_state.has_seen_tutorial:
 		fail("Reset save should mark tutorial unseen")
 		return
-	if village.get_node_or_null("Tutorial") == null:
+	if village.get_node_or_null("TutorialLayer/Tutorial") == null:
 		fail("Reset save should show the tutorial again in the active village")
 		return
 

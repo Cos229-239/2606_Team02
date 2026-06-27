@@ -19,7 +19,7 @@ func _run() -> void:
 	root.add_child(village)
 	await process_frame
 
-	if village.get_node_or_null("Tutorial") != null:
+	if village.get_node_or_null("TutorialLayer/Tutorial") != null:
 		fail("Main Village should not show the old tutorial after onboarding is complete")
 
 	village.queue_free()
