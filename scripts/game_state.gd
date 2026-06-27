@@ -10,6 +10,7 @@ signal ancient_tree_changed
 signal arcane_forge_changed
 signal quests_changed
 signal save_status_changed(message: String)
+signal save_reset
 
 const SAVE_PATH := "user://mystic_grove_save.json"
 const FAIRY_AREA_FLOWER_GROVE := "Flower Grove"
@@ -1377,6 +1378,7 @@ func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(SAVE_PATH)
 	reset_to_defaults()
+	save_reset.emit()
 	save_status_changed.emit("Save reset.")
 
 

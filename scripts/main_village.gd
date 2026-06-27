@@ -63,6 +63,7 @@ func _ready() -> void:
 	GameState.quests_changed.connect(_refresh_quest_button)
 	GameState.quests_changed.connect(_refresh_attention_indicators)
 	GameState.save_status_changed.connect(_show_feedback)
+	GameState.save_reset.connect(_on_save_reset)
 	_refresh_hud()
 	_refresh_quest_button()
 	_refresh_attention_indicators()
@@ -1160,6 +1161,8 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 
 
 func _show_tutorial() -> void:
+	if tutorial_panel:
+		return
 	tutorial_panel = PanelContainer.new()
 	tutorial_panel.name = "Tutorial"
 	tutorial_panel.position = Vector2(70, 520)
@@ -1198,6 +1201,16 @@ func _close_tutorial() -> void:
 		tutorial_panel.queue_free()
 		tutorial_panel = null
 	GameState.mark_tutorial_seen()
+
+
+func _on_save_reset() -> void:
+	close_all_panels()
+	_set_home_nav_visible(true)
+	_refresh_hud()
+	_refresh_quest_button()
+	_refresh_attention_indicators()
+	_refresh_restoration_visuals()
+	_show_tutorial()
 
 
 func _open_flower_grove() -> void:
