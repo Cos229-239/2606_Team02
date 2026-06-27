@@ -95,6 +95,7 @@ var quests: Array[Dictionary] = []
 var preserve_feedback_once: bool = false
 var has_completed_onboarding: bool = false
 var first_merge_complete: bool = false
+var show_tutorial_after_reset: bool = false
 var has_seen_tutorial: bool = false
 var tutorial_step: int = 0
 var music_volume: float = 0.75
@@ -1200,6 +1201,7 @@ func get_save_data() -> Dictionary:
 		"quests": quests,
 		"has_completed_onboarding": has_completed_onboarding,
 		"first_merge_complete": first_merge_complete,
+		"show_tutorial_after_reset": show_tutorial_after_reset,
 		"has_seen_tutorial": has_seen_tutorial,
 		"tutorial_step": tutorial_step,
 		"music_volume": music_volume,
@@ -1335,6 +1337,7 @@ func apply_save_data(data: Dictionary) -> void:
 		_reset_quests_to_defaults()
 	has_completed_onboarding = bool(data.get("has_completed_onboarding", true))
 	first_merge_complete = bool(data.get("first_merge_complete", has_completed_onboarding))
+	show_tutorial_after_reset = bool(data.get("show_tutorial_after_reset", false))
 	has_seen_tutorial = bool(data.get("has_seen_tutorial", has_completed_onboarding))
 	tutorial_step = int(data.get("tutorial_step", 0))
 	music_volume = clamp(float(data.get("music_volume", 0.75)), 0.0, 1.0)
@@ -1378,6 +1381,7 @@ func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(SAVE_PATH)
 	reset_to_defaults()
+	show_tutorial_after_reset = true
 	save_reset.emit()
 	save_status_changed.emit("Save reset.")
 
@@ -1463,6 +1467,7 @@ func reset_to_defaults() -> void:
 	_reset_quests_to_defaults()
 	has_completed_onboarding = false
 	first_merge_complete = false
+	show_tutorial_after_reset = false
 	has_seen_tutorial = false
 	tutorial_step = 0
 	music_volume = 0.75
@@ -1479,6 +1484,7 @@ func reset_to_defaults() -> void:
 
 
 func mark_tutorial_seen(step: int = 4) -> void:
+	show_tutorial_after_reset = false
 	has_seen_tutorial = true
 	tutorial_step = step
 	save_game()
@@ -1489,8 +1495,12 @@ func complete_onboarding_merge() -> void:
 		return
 	first_merge_complete = true
 	has_completed_onboarding = true
-	has_seen_tutorial = true
-	tutorial_step = 4
+	if show_tutorial_after_reset:
+		has_seen_tutorial = false
+		tutorial_step = 0
+	else:
+		has_seen_tutorial = true
+		tutorial_step = 4
 	total_mana += 10
 	grove_restoration = max(grove_restoration, 5)
 	resources_changed.emit()

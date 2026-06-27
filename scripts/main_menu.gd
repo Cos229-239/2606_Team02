@@ -117,7 +117,7 @@ func _refresh_buttons() -> void:
 
 
 func _on_play_pressed() -> void:
-	if not GameState.save_exists():
+	if not GameState.save_exists() and not GameState.show_tutorial_after_reset:
 		GameState.reset_to_defaults()
 	_go_to_start_scene()
 
