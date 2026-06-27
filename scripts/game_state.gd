@@ -1125,7 +1125,6 @@ func complete_onboarding_merge() -> void:
 		return
 	first_merge_complete = true
 	has_completed_onboarding = true
-	has_seen_tutorial = true
 	tutorial_step = 4
 	total_mana += 10
 	grove_restoration = max(grove_restoration, 5)
