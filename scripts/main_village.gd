@@ -68,7 +68,10 @@ func _ready() -> void:
 	_refresh_attention_indicators()
 	_refresh_restoration_visuals()
 	if not GameState.has_seen_tutorial:
-		_show_tutorial()
+		if GameState.has_completed_onboarding:
+			GameState.mark_tutorial_seen()
+		else:
+			_show_tutorial()
 
 
 func _build_screen() -> void:
