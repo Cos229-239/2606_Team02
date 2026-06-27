@@ -1,3 +1,11 @@
+###############################################################################
+#
+# .gitignore
+#
+# This file tells Git what NOT to upload to GitHub.
+#
+###############################################################################
+
 # Godot editor/cache data
 .godot/
 .import/
@@ -6,11 +14,171 @@
 builds/
 work/
 
-# Logs and temporary files
-*.log
-*.tmp
-*.bak
+###############################################################################
+# ENVIRONMENT FILES
+###############################################################################
 
-# OS files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+###############################################################################
+# OS / EDITOR JUNK
+###############################################################################
+
+.DS_Store
 Thumbs.db
 Desktop.ini
+desktop.ini
+
+.vs/
+.vscode/
+.idea/
+*.iml
+
+###############################################################################
+# LOGS / TEMP / BACKUPS
+###############################################################################
+
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+###############################################################################
+# DEPENDENCIES / PACKAGE MANAGERS
+###############################################################################
+
+node_modules/
+ios/Pods/
+
+.bundle/
+vendor/bundle/
+
+###############################################################################
+# BUILD OUTPUT / GENERATED FILES
+###############################################################################
+
+dist/
+build/
+out/
+
+.next/
+coverage/
+.expo/
+.expo-shared/
+.turbo/
+.cache/
+.parcel-cache/
+.sass-cache/
+*.tsbuildinfo
+
+.gradle/
+.externalNativeBuild/
+.cxx/
+DerivedData/
+
+###############################################################################
+# PYTHON GENERATED FILES
+###############################################################################
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+.venv/
+venv/
+ENV/
+env/
+
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+
+###############################################################################
+# ANDROID / JAVA LOCAL FILES
+###############################################################################
+
+local.properties
+
+*.apk
+*.aab
+
+###############################################################################
+# IOS / XCODE LOCAL USER FILES
+###############################################################################
+
+ios/.xcode.env.local
+xcuserdata/
+*.xcuserstate
+*.pbxuser
+*.mode1v3
+*.xcscmblueprint
+*.xcworkspace
+
+###############################################################################
+# FIREBASE CONFIG / SECRETS
+###############################################################################
+
+google-services.json
+serviceAccountKey.json
+firebase-adminsdk*.json
+firebase-debug.log
+firestore-debug.log
+
+###############################################################################
+# OS / COMPILED ARTIFACTS
+###############################################################################
+
+*.dSYM
+*.exe
+*.dll
+
+###############################################################################
+# ARCHIVES / COMPRESSED FILES
+###############################################################################
+
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+###############################################################################
+# GITHUB / CI OUTPUT
+###############################################################################
+
+.github/workflows/*.log
+
+###############################################################################
+# EXCEPTIONS
+###############################################################################
+
+# Gradle wrapper
+!gradlew
+!gradlew.bat
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Project documentation
+!README.md
+!docs/**
+
+# GitHub Actions workflows
+!.github/workflows/*.yml
+
+# React Native / Xcode env file
+!.xcode.env
+!ios/.xcode.env
