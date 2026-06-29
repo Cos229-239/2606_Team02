@@ -28,14 +28,8 @@ func _build_panel() -> void:
 	layout.add_theme_constant_override("separation", 22)
 	margin.add_child(layout)
 
-	var title := Label.new()
-	title.text = "Active quests"
+	var title := _make_label("Active quests", 46, Color("#f5d66f"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 46)
-	title.add_theme_color_override("font_color", Color("#f3d57a"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 3)
-	title.add_theme_constant_override("shadow_offset_y", 3)
 	layout.add_child(title)
 
 	var quest_scroll := ScrollContainer.new()
@@ -49,19 +43,11 @@ func _build_panel() -> void:
 	quest_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	quest_scroll.add_child(quest_list)
 
-	feedback_label = Label.new()
+	feedback_label = _make_label("", 30, Color("#f5d66f"))
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	feedback_label.add_theme_font_size_override("font_size", 30)
-	feedback_label.add_theme_color_override("font_color", Color("#f3d57a"))
-	feedback_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	feedback_label.add_theme_constant_override("shadow_offset_x", 2)
-	feedback_label.add_theme_constant_override("shadow_offset_y", 2)
 	layout.add_child(feedback_label)
 
-	var back_button := Button.new()
-	back_button.text = "Back"
-	back_button.custom_minimum_size = Vector2(320, 76)
-	back_button.add_theme_font_size_override("font_size", 28)
+	var back_button := _make_button("Back")
 	back_button.pressed.connect(_on_back_pressed)
 	layout.add_child(back_button)
 
@@ -78,13 +64,13 @@ func _refresh() -> void:
 
 func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.self_modulate = Color(0.03, 0.035, 0.06, 0.88)
+	card.add_theme_stylebox_override("panel", _make_style(Color(0.03, 0.035, 0.055, 0.9), Color("#b99245"), 2, 10))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
 	card.add_child(margin)
 
 	var layout := VBoxContainer.new()
@@ -94,24 +80,15 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	var current := int(quest.get("CurrentProgress", 0))
 	var required := int(quest.get("RequiredProgress", 1))
 	var reward_text := "%d %s" % [int(quest.get("RewardAmount", 0)), String(quest.get("RewardType", ""))]
-	var description := Label.new()
-	description.text = (
-		"%s\n%s\nProgress: %d / %d\nReward: %s"
-		% [
-			String(quest.get("QuestTitle", "Quest")),
-			String(quest.get("QuestDescription", "")),
-			current,
-			required,
-			reward_text
-		]
-	)
-	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description.add_theme_font_size_override("font_size", 24)
-	description.add_theme_color_override("font_color", Color.WHITE)
-	description.add_theme_color_override("font_shadow_color", Color.BLACK)
-	description.add_theme_constant_override("shadow_offset_x", 2)
-	description.add_theme_constant_override("shadow_offset_y", 2)
-	layout.add_child(description)
+
+	layout.add_child(_make_label(String(quest.get("QuestTitle", "Quest")), 28, Color("#fff2a8")))
+
+	var desc := _make_label(String(quest.get("QuestDescription", "")), 22, Color("#e8dfca"))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(desc)
+
+	layout.add_child(_make_label("Progress: %d / %d" % [current, required], 22, Color("#f5d66f")))
+	layout.add_child(_make_label("Reward: %s" % reward_text, 22, Color("#f5d66f")))
 
 	var progress := ProgressBar.new()
 	progress.custom_minimum_size = Vector2(860, 34)
@@ -119,10 +96,8 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	progress.value = current
 	layout.add_child(progress)
 
-	var claim_button := Button.new()
-	claim_button.text = "Claim Reward"
+	var claim_button := _make_button("Claim Reward")
 	claim_button.custom_minimum_size = Vector2(260, 58)
-	claim_button.add_theme_font_size_override("font_size", 22)
 	claim_button.disabled = not bool(quest.get("IsCompleted", false))
 	var quest_id := String(quest.get("QuestID", ""))
 	claim_button.pressed.connect(func() -> void:
@@ -133,6 +108,45 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	layout.add_child(claim_button)
 
 	return card
+
+
+func _make_label(text: String, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	return label
+
+
+func _make_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(300, 74)
+	button.add_theme_font_size_override("font_size", 24)
+	button.add_theme_stylebox_override("normal", _make_style(Color(0.02, 0.025, 0.04, 0.96), Color("#b99245"), 2, 8))
+	button.add_theme_stylebox_override("hover", _make_style(Color(0.06, 0.07, 0.09, 0.96), Color("#f0cf76"), 3, 8))
+	button.add_theme_stylebox_override("pressed", _make_style(Color(0.12, 0.10, 0.06, 0.98), Color("#ffe08a"), 3, 8))
+	button.add_theme_color_override("font_color", Color("#fff2a8"))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	return button
+
+
+func _make_style(bg: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.border_width_left = border_width
+	style.border_width_right = border_width
+	style.border_width_top = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	return style
 
 
 func _on_back_pressed() -> void:
