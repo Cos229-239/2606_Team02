@@ -1,0 +1,533 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/fairy_house_panel.gd" id="1_lvnyy"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_house_interior.png" id="2_pt6mn"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/title_plaque.png" id="3_t6wvy"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_luna_gatherer.png" id="4_k5fun"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png" id="5_6ncqt"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_nim_sleeping.png" id="6_ttsoe"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_workers.png" id="7_16jc7"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_tasks.png" id="8_yxeod"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_upgrades.png" id="9_f0jg4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_back.png" id="10_i1onl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tirmr"]
+bg_color = Color(0.012, 0.018, 0.04, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yoll2"]
+bg_color = Color(0.015, 0.018, 0.028, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7254902, 0.54901963, 0.2627451, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m6pnc"]
+bg_color = Color(0.015, 0.018, 0.028, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7254902, 0.54901963, 0.2627451, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r8804"]
+bg_color = Color(0.015, 0.018, 0.028, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7254902, 0.54901963, 0.2627451, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ebu57"]
+bg_color = Color(0.015, 0.018, 0.025, 0.68)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43529412, 0.3254902, 0.15294118, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wu2k7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1d0n0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sb70c"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_357t0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8l1sr"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fmy4d"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_elrm7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jxa4e"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wcmxi"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_y1332"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jkfel"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ujv1v"]
+
+[node name="FairyHousePanel" type="PanelContainer" unique_id=1808758873]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_lvnyy")
+
+[node name="Root" type="Control" parent="." unique_id=1915618862]
+layout_mode = 2
+
+[node name="DarkBackground" type="ColorRect" parent="Root" unique_id=1947428265]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0.03529412, 0.019607844, 0.039215688, 1)
+
+[node name="FairyHouseBackground" type="TextureRect" parent="Root" unique_id=1107170335]
+texture_filter = 2
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+texture = ExtResource("2_pt6mn")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SoftVignette" type="ColorRect" parent="Root" unique_id=32586828]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.18)
+
+[node name="TitlePlaque" type="Sprite2D" parent="Root" unique_id=1010379026]
+texture_filter = 2
+position = Vector2(540, 118)
+scale = Vector2(0.40689272, 0.33451957)
+texture = ExtResource("3_t6wvy")
+
+[node name="StatsPanelBackground" type="PanelContainer" parent="Root" unique_id=611882074]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 190.0
+offset_right = 992.0
+offset_bottom = 296.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tirmr")
+
+[node name="StatsLabel" type="Label" parent="Root" unique_id=702277595]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 204.0
+offset_right = 968.0
+offset_bottom = 282.0
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Residents  3 / 3        Workers Active  2        Resting  1        House Level  1"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="LunaSceneSprite" type="Sprite2D" parent="Root" unique_id=228957202]
+texture_filter = 2
+position = Vector2(214, 567)
+scale = Vector2(0.256651, 0.25675675)
+texture = ExtResource("4_k5fun")
+
+[node name="PipSceneSprite" type="Sprite2D" parent="Root" unique_id=2041511629]
+texture_filter = 2
+position = Vector2(561, 589)
+scale = Vector2(0.2964427, 0.29612035)
+texture = ExtResource("5_6ncqt")
+
+[node name="NimSceneSprite" type="Sprite2D" parent="Root" unique_id=1044128217]
+texture_filter = 2
+position = Vector2(220, 896)
+scale = Vector2(0.25646794, 0.25611177)
+texture = ExtResource("6_ttsoe")
+
+[node name="WorkersTitle" type="Label" parent="Root" unique_id=1691224328]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 1098.0
+offset_right = 990.0
+offset_bottom = 1146.0
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Fairy Workers"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="FairyCardsScroll" type="ScrollContainer" parent="Root" unique_id=837443539]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 1152.0
+offset_right = 1008.0
+offset_bottom = 1502.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 0
+
+[node name="FairyCardsContainer" type="HBoxContainer" parent="Root/FairyCardsScroll" unique_id=154346982]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 15
+
+[node name="EditorPreviewLunaCard" type="PanelContainer" parent="Root/FairyCardsScroll/FairyCardsContainer" unique_id=2054504935]
+self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+custom_minimum_size = Vector2(286, 338)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_yoll2")
+
+[node name="Margin" type="MarginContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard" unique_id=1051567773]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Layout" type="VBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin" unique_id=782535969]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ContentRow" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout" unique_id=563640428]
+custom_minimum_size = Vector2(258, 238)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PortraitFrame" type="Control" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/ContentRow" unique_id=592005171]
+clip_contents = true
+custom_minimum_size = Vector2(96, 220)
+layout_mode = 2
+
+[node name="Portrait" type="Sprite2D" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/ContentRow/PortraitFrame" unique_id=1257031213]
+texture_filter = 2
+position = Vector2(48, 112)
+scale = Vector2(0.177277, 0.177277)
+texture = ExtResource("4_k5fun")
+
+[node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/ContentRow" unique_id=605542236]
+custom_minimum_size = Vector2(148, 220)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Luna
+Gatherer
+Level 1
+
+Working:
+Sacred Koi Pond
+
++2 Restore"
+autowrap_mode = 3
+
+[node name="AssignmentPreviewButtons" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout" unique_id=921024905]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="FlowerPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/AssignmentPreviewButtons" unique_id=1359222619]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Flower"
+
+[node name="PondPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/AssignmentPreviewButtons" unique_id=1436194742]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Pond"
+
+[node name="RestPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/AssignmentPreviewButtons" unique_id=590596900]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Rest"
+
+[node name="EditorPreviewPipCard" type="PanelContainer" parent="Root/FairyCardsScroll/FairyCardsContainer" unique_id=1608531813]
+self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+custom_minimum_size = Vector2(286, 338)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_m6pnc")
+
+[node name="Margin" type="MarginContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard" unique_id=1844076015]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Layout" type="VBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin" unique_id=2121403846]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ContentRow" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout" unique_id=665292397]
+custom_minimum_size = Vector2(258, 238)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PortraitFrame" type="Control" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/ContentRow" unique_id=1383989914]
+clip_contents = true
+custom_minimum_size = Vector2(96, 220)
+layout_mode = 2
+
+[node name="Portrait" type="Sprite2D" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/ContentRow/PortraitFrame" unique_id=1799677712]
+texture_filter = 2
+position = Vector2(48, 112)
+scale = Vector2(0.20554236, 0.20554236)
+texture = ExtResource("5_6ncqt")
+
+[node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/ContentRow" unique_id=1957528775]
+custom_minimum_size = Vector2(148, 220)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Pip
+Pond Keeper
+Level 1
+
+Working:
+Sacred Koi Pond
+
++1 Restore"
+autowrap_mode = 3
+
+[node name="AssignmentPreviewButtons" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout" unique_id=436192332]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="FlowerPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/AssignmentPreviewButtons" unique_id=1103255102]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Flower"
+
+[node name="PondPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/AssignmentPreviewButtons" unique_id=2085253814]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Pond"
+
+[node name="RestPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/AssignmentPreviewButtons" unique_id=696689260]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Rest"
+
+[node name="EditorPreviewNimCard" type="PanelContainer" parent="Root/FairyCardsScroll/FairyCardsContainer" unique_id=841477954]
+self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+custom_minimum_size = Vector2(286, 338)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_r8804")
+
+[node name="Margin" type="MarginContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard" unique_id=1153911521]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Layout" type="VBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin" unique_id=898669708]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ContentRow" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout" unique_id=1703477251]
+custom_minimum_size = Vector2(258, 238)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PortraitFrame" type="Control" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/ContentRow" unique_id=526904945]
+clip_contents = true
+custom_minimum_size = Vector2(96, 220)
+layout_mode = 2
+
+[node name="Portrait" type="Sprite2D" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/ContentRow/PortraitFrame" unique_id=435440512]
+texture_filter = 2
+position = Vector2(48, 112)
+scale = Vector2(0.17817773, 0.17817773)
+texture = ExtResource("6_ttsoe")
+
+[node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/ContentRow" unique_id=1546369501]
+custom_minimum_size = Vector2(148, 220)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Nim
+Helper
+Level 1
+
+Working:
+Unassigned
+
+No active bonus"
+autowrap_mode = 3
+
+[node name="AssignmentPreviewButtons" type="HBoxContainer" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout" unique_id=1734609056]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="FlowerPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/AssignmentPreviewButtons" unique_id=1200267637]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Flower"
+
+[node name="PondPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/AssignmentPreviewButtons" unique_id=2064670592]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Pond"
+
+[node name="RestPreviewButton" type="Button" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/AssignmentPreviewButtons" unique_id=1456367624]
+custom_minimum_size = Vector2(72, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Rest"
+
+[node name="FeedbackLabel" type="Label" parent="Root" unique_id=276981165]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 1510.0
+offset_right = 970.0
+offset_bottom = 1558.0
+theme_override_font_sizes/font_size = 25
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ActionBarBackground" type="PanelContainer" parent="Root" unique_id=740983832]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 1632.0
+offset_right = 1048.0
+offset_bottom = 1806.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ebu57")
+
+[node name="ActionRow" type="HBoxContainer" parent="Root" unique_id=1652065903]
+layout_mode = 0
+offset_left = 54.0
+offset_top = 1654.0
+offset_right = 1026.0
+offset_bottom = 1784.0
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="WorkersButton" type="Button" parent="Root/ActionRow" unique_id=1496629858]
+custom_minimum_size = Vector2(238, 112)
+layout_mode = 2
+tooltip_text = "Workers"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_wu2k7")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_1d0n0")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_sb70c")
+flat = true
+
+[node name="Art" type="Sprite2D" parent="Root/ActionRow/WorkersButton" unique_id=1995878475]
+texture_filter = 2
+position = Vector2(119, 56)
+scale = Vector2(0.17487141, 0.17487141)
+texture = ExtResource("7_16jc7")
+
+[node name="TasksButton" type="Button" parent="Root/ActionRow" unique_id=637957436]
+custom_minimum_size = Vector2(218, 112)
+layout_mode = 2
+tooltip_text = "Tasks"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_357t0")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_8l1sr")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_fmy4d")
+flat = true
+
+[node name="Art" type="Sprite2D" parent="Root/ActionRow/TasksButton" unique_id=1354346821]
+texture_filter = 2
+position = Vector2(109, 56)
+scale = Vector2(0.18257956, 0.18257956)
+texture = ExtResource("8_yxeod")
+
+[node name="UpgradeHouseButton" type="Button" parent="Root/ActionRow" unique_id=653036142]
+custom_minimum_size = Vector2(250, 112)
+layout_mode = 2
+tooltip_text = "Upgrade House"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_elrm7")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_jxa4e")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_wcmxi")
+flat = true
+
+[node name="Art" type="Sprite2D" parent="Root/ActionRow/UpgradeHouseButton" unique_id=1509510094]
+texture_filter = 2
+position = Vector2(125, 56)
+scale = Vector2(0.16949153, 0.16949153)
+texture = ExtResource("9_f0jg4")
+
+[node name="BackButton" type="Button" parent="Root/ActionRow" unique_id=1808532055]
+custom_minimum_size = Vector2(218, 112)
+layout_mode = 2
+tooltip_text = "Back"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_y1332")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_jkfel")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ujv1v")
+flat = true
+
+[node name="Art" type="Sprite2D" parent="Root/ActionRow/BackButton" unique_id=1650879777]
+texture_filter = 2
+position = Vector2(109, 56)
+scale = Vector2(0.20354809, 0.20354809)
+texture = ExtResource("10_i1onl")
