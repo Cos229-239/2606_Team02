@@ -69,6 +69,7 @@ func _ready() -> void:
 	_refresh_quest_button()
 	_refresh_attention_indicators()
 	_refresh_restoration_visuals()
+	SoundManager.play_music(SoundManager.TRACK_MAIN_VILLAGE)
 	if not GameState.has_seen_tutorial:
 		if GameState.has_completed_onboarding and not GameState.show_tutorial_after_reset:
 			GameState.mark_tutorial_seen()
@@ -1203,6 +1204,7 @@ func _show_tutorial() -> void:
 
 
 func _close_tutorial() -> void:
+	SoundManager.play_click()
 	if tutorial_panel:
 		tutorial_panel.queue_free()
 		tutorial_panel = null
@@ -1220,40 +1222,49 @@ func _on_save_reset() -> void:
 
 
 func _open_flower_grove() -> void:
+	SoundManager.play_click()
 	GameState.tutorial_step = max(GameState.tutorial_step, 1)
 	_show_panel(FlowerGrovePanelScene.instantiate())
 
 
 func _open_sacred_pond() -> void:
+	SoundManager.play_click()
 	GameState.tutorial_step = max(GameState.tutorial_step, 3)
 	_show_panel(SacredPondPanelScene.instantiate())
 
 
 func _open_pond_decorate() -> void:
+	SoundManager.play_click()
 	_show_panel(PondDecoratePanelScene.instantiate())
 
 
 func _open_fairy_house() -> void:
+	SoundManager.play_click()
 	_show_panel(FairyHousePanelScene.instantiate())
 
 
 func _open_potion_shop() -> void:
+	SoundManager.play_click()
 	_show_panel(PotionShopPanelScene.instantiate())
 
 
 func _open_ancient_tree() -> void:
+	SoundManager.play_click()
 	_show_panel(AncientTreePanelScene.instantiate())
 
 
 func _open_arcane_forge() -> void:
+	SoundManager.play_click()
 	_show_panel(ArcaneForgePanelScene.instantiate())
 
 
 func _open_market_stall() -> void:
+	SoundManager.play_click()
 	_show_panel(MarketStallPanelScene.instantiate())
 
 
 func open_nav_panel(panel_name: String) -> void:
+	SoundManager.play_click()
 	close_all_panels()
 	match panel_name:
 		"Map":
@@ -1283,10 +1294,12 @@ func _open_map() -> void:
 
 
 func _open_explore() -> void:
+	SoundManager.play_click()
 	_show_panel(ExplorePanelScene.instantiate())
 
 
 func _open_buildings() -> void:
+	SoundManager.play_click()
 	var panel := BuildingsPanelScene.instantiate()
 	_show_panel(panel)
 	if panel.has_signal("open_building_requested"):
@@ -1294,10 +1307,12 @@ func _open_buildings() -> void:
 
 
 func _open_quests() -> void:
+	SoundManager.play_click()
 	_show_panel(QuestPanelScene.instantiate())
 
 
 func _open_settings() -> void:
+	SoundManager.play_click()
 	_show_panel(SettingsPanelScene.instantiate())
 
 

@@ -62,15 +62,18 @@ func _build_ui() -> void:
 	layout.add_child(feedback_label)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(1, 330)
+	scroll.custom_minimum_size = Vector2(860, 330)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(scroll)
 
 	credits_label = _make_label("", 20, Color("#e8dfca"))
 	credits_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	credits_label.custom_minimum_size = Vector2(840, 0)
+	credits_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(credits_label)
 
 	var back_button := _make_button("Back")
-	back_button.pressed.connect(func(): closed.emit())
+	back_button.pressed.connect(func(): SoundManager.play_click(); closed.emit())
 	layout.add_child(back_button)
 
 	_build_reset_confirmation()
@@ -122,28 +125,33 @@ func _refresh_controls() -> void:
 
 
 func _on_tutorial_toggled(enabled: bool) -> void:
+	SoundManager.play_switch()
 	GameState.has_seen_tutorial = not enabled
 	GameState.save_game()
 	feedback_label.text = "Tutorial on." if enabled else "Tutorial off."
 
 
 func _on_save_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	feedback_label.text = "Game saved."
 
 
 func _on_load_pressed() -> void:
+	SoundManager.play_click()
 	GameState.load_game()
 	_refresh_controls()
 	feedback_label.text = "Game loaded."
 
 
 func _show_reset_confirmation() -> void:
+	SoundManager.play_click()
 	confirm_panel.visible = true
 	feedback_label.text = "Confirm reset save?"
 
 
 func _confirm_reset_save() -> void:
+	SoundManager.play_click()
 	GameState.reset_save()
 	_refresh_controls()
 	confirm_panel.visible = false
@@ -151,6 +159,7 @@ func _confirm_reset_save() -> void:
 
 
 func _show_credits() -> void:
+	SoundManager.play_click()
 	var credits_path := "res://data/ASSET_CREDITS.md"
 	if not FileAccess.file_exists(credits_path):
 		credits_label.text = "No asset credits file found."
@@ -203,7 +212,7 @@ func _build_reset_confirmation() -> void:
 	row.add_child(confirm)
 
 	var cancel := _make_button("Cancel")
-	cancel.pressed.connect(func(): confirm_panel.visible = false)
+	cancel.pressed.connect(func(): SoundManager.play_click(); confirm_panel.visible = false)
 	row.add_child(cancel)
 
 

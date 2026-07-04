@@ -232,6 +232,7 @@ func _can_fulfill_order(order: Dictionary) -> bool:
 
 
 func _on_order_pressed(order_id: String) -> void:
+	SoundManager.play_click()
 	var result: Dictionary = GameState.fulfill_market_order(order_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
@@ -239,6 +240,7 @@ func _on_order_pressed(order_id: String) -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

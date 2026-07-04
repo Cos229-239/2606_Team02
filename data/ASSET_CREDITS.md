@@ -1,98 +1,76 @@
-# Mystic Grove Asset Credits
+MYSTIC GROVE - ASSET CREDITS
+Student Project | TEAM 02 - ONLINE
 
-This file tracks all third-party assets currently used in the Godot prototype.
+──────────────────────────────
+		TEAM MEMBERS
+──────────────────────────────
 
-## Kenney - Tiny Town
+Jilden Baniqued
+Turbo Whittenburg Beaudry
+Kimberly Swinderman
+Cole Seppala
 
-- Creator: Kenney
-- Source: https://kenney.nl/assets/tiny-town
-- License: Creative Commons CC0
-- Project use:
-  - `res://assets/sprites/environment/grass_tile.png`
-  - `res://assets/sprites/environment/grass_flowers.png`
-  - `res://assets/sprites/environment/path_corner.png`
-  - `res://assets/sprites/environment/path_straight.png`
-  - `res://assets/sprites/environment/tree_gold.png`
-  - `res://assets/sprites/environment/tree_pine.png`
-  - `res://assets/sprites/environment/tree_round.png`
-  - `res://assets/sprites/environment/mushroom_red.png`
-  - `res://assets/sprites/environment/fence_left.png`
-  - `res://assets/sprites/environment/fence_cross.png`
-  - `res://assets/sprites/environment/fence_right.png`
-  - `res://assets/sprites/environment/fence_post.png`
-  - `res://assets/sprites/environment/water_bucket.png`
-  - `res://assets/sprites/buildings/cottage_door.png`
-  - `res://assets/sprites/buildings/cottage_window.png`
-  - `res://assets/sprites/buildings/cottage_roof_warm.png`
-  - `res://assets/sprites/buildings/cottage_roof_cool.png`
-  - `res://assets/sprites/effects/glow_orb.png`
-  - `res://assets/sprites/effects/marker_round.png`
-  - `res://assets/sprites/characters/fairy_placeholder.png`
-- Used for:
-  - Main village trees, cottage details, mushrooms, fence pieces, pond decorations, flower plot details, and placeholder fairy marker.
+──────────────────────────────
+			MUSIC
+──────────────────────────────
 
-## Kenney - Fantasy UI Borders
+A Small Fire Will Do (Main Village Theme)
+  Creator: Cal McEachern (Trex0n)
+  Source: opengameart.org
+  License: CC0 (credit appreciated)
 
-- Creator: Kenney
-- Source: https://kenney.nl/assets/fantasy-ui-borders
-- License: Creative Commons CC0
-- Project use:
-  - `res://assets/sprites/ui/panel_square.png`
-  - `res://assets/sprites/ui/panel_border_ornate.png`
-- Used for:
-  - Decorative fantasy frames in Flower Grove, Sacred Koi Pond, and Fairy House panels.
+Village In Despair (Abandoned Nook Theme)
+  Creator: Tsorthan Grove
+  Source: opengameart.org
+  License: CC-BY 4.0
 
-## License Notes
+Ambience, Wind Chimes, A.wav (First Merge Moment)
+  Creator: InspectorJ (Jonathan Shaw)
+  Source: freesound.org
+  License: CC-BY 4.0
+  Credit: "Ambience, Wind Chimes, A.wav" by InspectorJ (www.jshaw.co.uk) of Freesound.org
 
-- Kenney lists these packs as Creative Commons CC0 on their asset pages.
-- Kenney's support page states assets on the asset pages are public domain licensed and may be used in commercial projects.
-- Attribution is not required for CC0, but credit is included here for class/project tracking.
+──────────────────────────────
+		SOUND EFFECTS
+──────────────────────────────
 
-## User-provided Mystic Grove reference sprite sheets
+Kenney UI Audio Pack (Button clicks, switch sounds)
+  Creator: Kenney
+  Source: kenney.nl
+  License: CC0
 
-- Creator: User-provided class prototype reference sheets
-- Source: Local clipboard images supplied in Codex on June 12, 2026
-- License: User-provided for this student prototype; confirm license before public/commercial release
-- Project use:
-  - `res://assets/sprites/environment/ancient_tree_large.png`
-  - `res://assets/sprites/buildings/flower_grove_scene.png`
-  - `res://assets/sprites/buildings/sacred_pond_scene.png`
-  - `res://assets/sprites/buildings/fairy_house_scene.png`
-  - `res://assets/sprites/buildings/potion_shop_scene.png`
-  - `res://assets/sprites/characters/fairy_luna.png`
-  - `res://assets/sprites/characters/fairy_pond_keeper.png`
-  - `res://assets/sprites/characters/fairy_potion_maker.png`
-  - `res://assets/sprites/characters/koi_gold.png`
-  - `res://assets/sprites/characters/koi_blue.png`
-  - `res://assets/sprites/characters/koi_pink.png`
-  - `res://assets/sprites/environment/moon_lantern.png`
-  - `res://assets/sprites/environment/spirit_stone.png`
-  - `res://assets/sprites/environment/bloom_lilypad.png`
-  - `res://assets/sprites/environment/sacred_bridge.png`
-  - `res://assets/sprites/environment/blue_bloom.png`
-  - `res://assets/sprites/environment/purple_bloom.png`
-  - `res://assets/sprites/environment/golden_bloom.png`
-  - `res://assets/sprites/panels/flower_grove_zoom.png`
-  - `res://assets/sprites/panels/sacred_pond_zoom.png`
-  - `res://assets/sprites/panels/fairy_house_zoom.png`
-  - `res://assets/sprites/panels/potion_shop_zoom.png`
-  - `res://assets/sprites/backgrounds/restored_village_background.png`
-  - `res://assets/sprites/buildings/ancient_tree_landmark.png`
-  - `res://assets/sprites/buildings/sacred_pond_home.png`
-  - `res://assets/sprites/buildings/flower_grove_home.png`
-  - `res://assets/sprites/buildings/fairy_house_home.png`
-  - `res://assets/sprites/buildings/potion_shop_home.png`
-  - `res://assets/sprites/buildings/market_stall_home.png`
-  - `res://assets/sprites/buildings/arcane_forge_home.png`
-  - `res://assets/sprites/fairy_house/fairy_house_interior.png`
-  - `res://assets/sprites/fairy_house/fairy_house_reference.png`
-  - `res://assets/sprites/fairy_house/title_plaque.png`
-  - `res://assets/sprites/fairy_house/button_workers.png`
-  - `res://assets/sprites/fairy_house/button_tasks.png`
-  - `res://assets/sprites/fairy_house/button_upgrades.png`
-  - `res://assets/sprites/fairy_house/button_back.png`
-  - `res://assets/sprites/fairy_house/fairy_luna_gatherer.png`
-  - `res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png`
-  - `res://assets/sprites/fairy_house/fairy_nim_sleeping.png`
-- Used for:
-  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, pond decoration placeholders, koi/fairy visual flavor, fairy-house UI sprites, and reference-style cozy fantasy art pass.
+plant.mp3 (Merge SFX)
+  Creator: Axlinico
+  Source: freesound.org
+  License: CC BY-NC 4.0 (non-commercial use only)
+
+invalid1.wav (Error / Invalid Action SFX)
+  Creator: mmaal
+  Source: freesound.org
+  License: CC0
+
+collecting_ammo.wav (Resource Collect SFX)
+  Creator: rdaly95
+  Source: freesound.org
+  License: CC-BY 3.0
+
+──────────────────────────────
+		VISUAL ASSETS
+──────────────────────────────
+
+User-provided Mystic Grove Reference Sprites (Generated by AI)
+  Source: Local reference sheets supplied June 12, 2026
+  License: User-provided for student prototype.
+  Confirm license before public or commercial release.
+  Used for: Main village background, building landmarks,
+  full-screen panel zoom art, fairy and koi characters,
+  pond decorations, and fairy house UI sprites.
+
+──────────────────────────────
+			NOTES
+──────────────────────────────
+This project is a student prototype (non-commercial).
+All CC0 assets require no attribution.
+All CC-BY assets are credited above.
+The CC BY-NC asset (plant.mp3) must be replaced
+before any commercial release.

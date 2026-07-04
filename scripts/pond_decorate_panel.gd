@@ -292,6 +292,7 @@ func _select_decoration(index: int) -> void:
 
 
 func _on_slot_pressed(slot_index: int) -> void:
+	SoundManager.play_click()
 	selected_slot_index = slot_index
 	if GameState.is_pond_slot_occupied(slot_index):
 		var placed_name := _decoration_name_at_slot(slot_index)
@@ -301,6 +302,7 @@ func _on_slot_pressed(slot_index: int) -> void:
 
 
 func _on_place_pressed() -> void:
+	SoundManager.play_click()
 	var slot_index := selected_slot_index
 	if slot_index < 0 or GameState.is_pond_slot_occupied(slot_index):
 		slot_index = GameState.get_first_empty_pond_decoration_slot()
@@ -320,6 +322,7 @@ func _place_selected_decoration(slot_index: int) -> void:
 
 
 func _on_remove_pressed() -> void:
+	SoundManager.play_click()
 	var decoration_name := ""
 	if selected_slot_index >= 0:
 		decoration_name = _decoration_name_at_slot(selected_slot_index)
@@ -334,6 +337,7 @@ func _on_remove_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	back_to_sacred_pond_requested.emit()
 
 
