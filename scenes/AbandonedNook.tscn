@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://q2gjdcrgaiwm"]
+
+[ext_resource type="Script" uid="uid://c6jq6lctx761a" path="res://scripts/abandoned_nook.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://w7dqday7o5h2" path="res://assets/sprites/backgrounds/abandoned_village_bg.png" id="2_by7x8"]
+
+[node name="AbandonedNook" type="Control" unique_id=720965966]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Abandone_village_bg" type="TextureRect" parent="." unique_id=1795594392]
+layout_mode = 0
+offset_top = -27.0
+offset_right = 1078.0
+offset_bottom = 1918.0
+texture = ExtResource("2_by7x8")

@@ -1,0 +1,524 @@
+[gd_scene format=3 uid="uid://cvky6l7mbakcp"]
+
+[ext_resource type="Script" uid="uid://dm0xrag1sdvfb" path="res://scripts/pond_decorate_panel.gd" id="1_e5tsi"]
+[ext_resource type="Texture2D" uid="uid://muq3rkgxtj2j" path="res://assets/sprites/panels/sacred_pond_zoom.png" id="2_6m1hi"]
+[ext_resource type="Texture2D" uid="uid://de4olf4ovd0dt" path="res://assets/sprites/ui/decorate_title_plaque.png" id="3_8oauj"]
+[ext_resource type="Texture2D" uid="uid://cjg6e0edb6blq" path="res://assets/sprites/ui/decorate_slot_marker.png" id="4_4rvxr"]
+[ext_resource type="Texture2D" uid="uid://copomdclusddj" path="res://assets/sprites/environment/moon_lantern.png" id="5_2th2k"]
+[ext_resource type="Texture2D" uid="uid://bsdgrvd7tk0mk" path="res://assets/sprites/environment/spirit_stone.png" id="6_cndmw"]
+[ext_resource type="Texture2D" uid="uid://n81087k1rd7k" path="res://assets/sprites/environment/bloom_lilypad.png" id="7_opg3r"]
+[ext_resource type="Texture2D" uid="uid://bwwv1mn3pt8kl" path="res://assets/sprites/environment/sacred_bridge.png" id="8_1hl46"]
+[ext_resource type="Texture2D" uid="uid://b42x1u2lyq5h8" path="res://assets/sprites/ui/decorate_place_button.png" id="9_pt7ot"]
+[ext_resource type="Texture2D" uid="uid://c5r1ttnsdlbpu" path="res://assets/sprites/ui/decorate_remove_button.png" id="10_65naf"]
+[ext_resource type="Texture2D" uid="uid://f8rcrw165p4c" path="res://assets/sprites/ui/decorate_back_button.png" id="11_k5qc5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tj4hk"]
+bg_color = Color(0.012, 0.018, 0.04, 0.86)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ci802"]
+bg_color = Color(0.012, 0.018, 0.04, 0.86)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_df1pt"]
+bg_color = Color(0.012, 0.018, 0.04, 0.86)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72156864, 0.54509807, 0.21176471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rfg4q"]
+bg_color = Color(0.01, 0.016, 0.035, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2q7xk"]
+bg_color = Color(0.04, 0.06, 0.105, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yuays"]
+bg_color = Color(0.01, 0.016, 0.035, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4kudc"]
+bg_color = Color(0.04, 0.06, 0.105, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i83we"]
+bg_color = Color(0.01, 0.016, 0.035, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secq1"]
+bg_color = Color(0.04, 0.06, 0.105, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ieefk"]
+bg_color = Color(0.01, 0.016, 0.035, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d6m4j"]
+bg_color = Color(0.04, 0.06, 0.105, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PondDecoratePanel" type="PanelContainer" unique_id=1717693329]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_e5tsi")
+
+[node name="Root" type="Control" parent="." unique_id=358046863]
+layout_mode = 2
+
+[node name="DarkBackground" type="ColorRect" parent="Root" unique_id=946363125]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0.011764706, 0.03137255, 0.07450981, 1)
+
+[node name="PondBackground" type="Sprite2D" parent="Root" unique_id=1770851983]
+modulate = Color(0.78, 0.82, 0.9, 1)
+texture_filter = 2
+position = Vector2(540, 960)
+scale = Vector2(1.1477152, 1.1477152)
+texture = ExtResource("2_6m1hi")
+
+[node name="Vignette" type="ColorRect" parent="Root" unique_id=1860441642]
+layout_mode = 0
+offset_left = -6.0
+offset_top = 9.0
+offset_right = 1074.0
+offset_bottom = 1929.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.22)
+
+[node name="TitlePlaque" type="Sprite2D" parent="Root" unique_id=1024617982]
+texture_filter = 2
+position = Vector2(530.00006, 192)
+scale = Vector2(0.37865376, 0.3146853)
+texture = ExtResource("3_8oauj")
+
+[node name="TitleLabel" type="Label" parent="Root" unique_id=946891385]
+layout_mode = 0
+offset_left = 217.0
+offset_top = 160.0
+offset_right = 837.0
+offset_bottom = 237.0
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 56
+text = "Sacred Koi Pond"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Stats" type="Control" parent="Root" unique_id=1505584192]
+anchors_preset = 0
+offset_left = 26.0
+offset_top = 255.0
+offset_right = 1024.0
+offset_bottom = 418.0
+
+[node name="PondBeautyCard" type="PanelContainer" parent="Root/Stats" unique_id=973491152]
+layout_mode = 0
+offset_left = 43.0
+offset_top = 39.0
+offset_right = 323.0
+offset_bottom = 143.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tj4hk")
+
+[node name="Title" type="Label" parent="Root/Stats/PondBeautyCard" unique_id=203684401]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "Pond Beauty"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Value" type="Label" parent="Root/Stats/PondBeautyCard" unique_id=654082370]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ManaCard" type="PanelContainer" parent="Root/Stats" unique_id=635912612]
+layout_mode = 0
+offset_left = 371.0
+offset_top = 39.0
+offset_right = 651.0
+offset_bottom = 143.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ci802")
+
+[node name="Title" type="Label" parent="Root/Stats/ManaCard" unique_id=1239046766]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "Mana"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Value" type="Label" parent="Root/Stats/ManaCard" unique_id=412866943]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DecorationBonusCard" type="PanelContainer" parent="Root/Stats" unique_id=1459914039]
+layout_mode = 0
+offset_left = 699.0
+offset_top = 39.0
+offset_right = 979.0
+offset_bottom = 143.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_df1pt")
+
+[node name="Title" type="Label" parent="Root/Stats/DecorationBonusCard" unique_id=544079788]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "Decoration Bonus"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Value" type="Label" parent="Root/Stats/DecorationBonusCard" unique_id=811035954]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PondLayer" type="Control" parent="Root" unique_id=1984005773]
+anchors_preset = 0
+offset_left = -3.0
+offset_top = 466.0
+offset_right = 1078.0
+offset_bottom = 1429.0
+
+[node name="Slot0" type="TextureButton" parent="Root/PondLayer" unique_id=261019951]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 214.0
+offset_right = 200.0
+offset_bottom = 290.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Slot1" type="TextureButton" parent="Root/PondLayer" unique_id=1895944585]
+layout_mode = 0
+offset_left = 708.0
+offset_top = 132.0
+offset_right = 824.0
+offset_bottom = 208.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Slot2" type="TextureButton" parent="Root/PondLayer" unique_id=1033373613]
+layout_mode = 0
+offset_left = 106.0
+offset_top = 628.0
+offset_right = 222.0
+offset_bottom = 704.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Slot3" type="TextureButton" parent="Root/PondLayer" unique_id=561736854]
+layout_mode = 0
+offset_left = 939.0
+offset_top = 281.0
+offset_right = 1055.0
+offset_bottom = 357.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Slot4" type="TextureButton" parent="Root/PondLayer" unique_id=615189202]
+layout_mode = 0
+offset_left = 580.0
+offset_top = 26.0
+offset_right = 696.0
+offset_bottom = 102.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Slot5" type="TextureButton" parent="Root/PondLayer" unique_id=1347694198]
+layout_mode = 0
+offset_left = 874.0
+offset_top = 778.0
+offset_right = 990.0
+offset_bottom = 854.0
+texture_normal = ExtResource("4_4rvxr")
+texture_pressed = ExtResource("4_4rvxr")
+texture_hover = ExtResource("4_4rvxr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="FeedbackLabel" type="Label" parent="Root" unique_id=1288412110]
+layout_mode = 0
+offset_left = 126.0
+offset_top = 1236.0
+offset_right = 966.0
+offset_bottom = 1272.0
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DecorationTray" type="Control" parent="Root" unique_id=255915665]
+anchors_preset = 0
+offset_left = 47.0
+offset_top = 1216.0
+offset_right = 1158.0
+offset_bottom = 1696.0
+scale = Vector2(0.9782769, 0.7829058)
+
+[node name="TrayBackground" type="ColorRect" parent="Root/DecorationTray" unique_id=1118473493]
+layout_mode = 0
+offset_left = 15.33308
+offset_top = 209.47614
+offset_right = 1012.333
+offset_bottom = 616.4499
+mouse_filter = 2
+color = Color(0.015, 0.022, 0.05, 0.84)
+
+[node name="TrayTitle" type="Label" parent="Root/DecorationTray" unique_id=330065732]
+layout_mode = 0
+offset_left = 13.288696
+offset_top = 219.69434
+offset_right = 1021.2887
+offset_bottom = 271.69434
+theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 32
+text = "Select a Decoration"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DecorationRow" type="HBoxContainer" parent="Root/DecorationTray" unique_id=369058997]
+layout_mode = 0
+offset_left = 35.33308
+offset_top = 278.4499
+offset_right = 995.33307
+offset_bottom = 578.4499
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="DecorationCard0" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=1215274383]
+custom_minimum_size = Vector2(228, 294)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_rfg4q")
+theme_override_styles/hover = SubResource("StyleBoxFlat_2q7xk")
+text = "Moon Lantern
+25 Mana
++5 Beauty"
+icon = ExtResource("5_2th2k")
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="DecorationCard1" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=35977224]
+custom_minimum_size = Vector2(228, 294)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_yuays")
+theme_override_styles/hover = SubResource("StyleBoxFlat_4kudc")
+text = "Spirit Stone
+40 Mana
++8 Beauty"
+icon = ExtResource("6_cndmw")
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="DecorationCard2" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=1016074505]
+custom_minimum_size = Vector2(228, 294)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_i83we")
+theme_override_styles/hover = SubResource("StyleBoxFlat_secq1")
+text = "Bloom Lilypad
+30 Mana
++6 Beauty"
+icon = ExtResource("7_opg3r")
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="DecorationCard3" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=109169495]
+custom_minimum_size = Vector2(228, 294)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_ieefk")
+theme_override_styles/hover = SubResource("StyleBoxFlat_d6m4j")
+text = "Sacred Bridge
+75 Mana
++12 Beauty"
+icon = ExtResource("8_1hl46")
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="ActionRow" type="HBoxContainer" parent="Root" unique_id=1219199145]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 1698.0
+offset_right = 1048.0
+offset_bottom = 1848.0
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="PlaceButton" type="TextureButton" parent="Root/ActionRow" unique_id=1992481519]
+custom_minimum_size = Vector2(300, 118)
+layout_mode = 2
+texture_normal = ExtResource("9_pt7ot")
+texture_pressed = ExtResource("9_pt7ot")
+texture_hover = ExtResource("9_pt7ot")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="RemoveButton" type="TextureButton" parent="Root/ActionRow" unique_id=1276492902]
+custom_minimum_size = Vector2(300, 118)
+layout_mode = 2
+texture_normal = ExtResource("10_65naf")
+texture_pressed = ExtResource("10_65naf")
+texture_hover = ExtResource("10_65naf")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="BackButton" type="TextureButton" parent="Root/ActionRow" unique_id=1930724114]
+custom_minimum_size = Vector2(300, 118)
+layout_mode = 2
+texture_normal = ExtResource("11_k5qc5")
+texture_pressed = ExtResource("11_k5qc5")
+texture_hover = ExtResource("11_k5qc5")
+ignore_texture_size = true
+stretch_mode = 0

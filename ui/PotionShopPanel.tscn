@@ -1,0 +1,483 @@
+[gd_scene format=3 uid="uid://cb4mohwwboevl"]
+
+[ext_resource type="Script" uid="uid://cmurtns1j3jmu" path="res://scripts/potion_shop_panel.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://deokgt0k1i02l" path="res://assets/sprites/panels/potion_shop_zoom.png" id="2_legacy_zoom"]
+[ext_resource type="Texture2D" uid="uid://2co7at0yx8i4" path="res://assets/sprites/potion_shop/potion_shop_interior.png" id="3_interior"]
+[ext_resource type="Texture2D" uid="uid://bt42y5pwuodqx" path="res://assets/sprites/potion_shop/shopkeeper_fairy.png" id="4_fairy"]
+[ext_resource type="Texture2D" uid="uid://biceob2086wjb" path="res://assets/sprites/potion_shop/magic_cauldron.png" id="5_cauldron"]
+[ext_resource type="Texture2D" uid="uid://d2vex2wslpqg2" path="res://assets/sprites/potion_shop/mana_potion_bottle.png" id="6_potion"]
+[ext_resource type="Texture2D" uid="uid://bgrhh4a8tex0y" path="res://assets/sprites/potion_shop/potion_ingredients_strip.png" id="7_ingredients"]
+[ext_resource type="Texture2D" uid="uid://dgi03h3cf5vbo" path="res://assets/sprites/ui/potion_buy_card.png" id="8_buy"]
+[ext_resource type="Texture2D" uid="uid://6gteildrfwh4" path="res://assets/sprites/ui/potion_craft_card.png" id="9_craft"]
+[ext_resource type="Texture2D" uid="uid://ccs3ebcqkskq" path="res://assets/sprites/ui/potion_sell_card.png" id="10_sell"]
+[ext_resource type="Texture2D" uid="uid://cxynfa75xpoko" path="res://assets/sprites/ui/potion_upgrades_card.png" id="11_upgrade"]
+[ext_resource type="Texture2D" uid="uid://dcmtal6tsrvtq" path="res://assets/sprites/ui/potion_back_card.png" id="12_back"]
+[ext_resource type="Texture2D" uid="uid://coivju4rocqlf" path="res://assets/sprites/potion_shop/mana_crystal.png" id="13_crystal"]
+[ext_resource type="Texture2D" uid="uid://debxk5bo5o0x6" path="res://assets/sprites/potion_shop/dreambloom.png" id="14_dreambloom"]
+[ext_resource type="Texture2D" uid="uid://dd02c00rm0l0q" path="res://assets/sprites/potion_shop/empty_vial.png" id="15_vial"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_root"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title"]
+bg_color = Color(0.018, 0.012, 0.026, 0.88)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9, 0.67, 0.28, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stat"]
+bg_color = Color(0.018, 0.014, 0.024, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78, 0.56, 0.21, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_recipe"]
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+bg_color = Color(0.018, 0.014, 0.024, 0.9)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.8, 0.57, 0.24, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.04, 0.025, 0.05, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.36, 0.16, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.55, 0.18, 0.92, 0.96)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
+bg_color = Color(0.01, 0.009, 0.014, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.48, 0.34, 0.14, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_transparent"]
+bg_color = Color(0, 0, 0, 0)
+border_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(1, 0.84, 0.35, 0.08)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.82, 0.32, 0.65)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="PotionShopPanel" type="PanelContainer" unique_id=289665558]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxEmpty_root")
+script = ExtResource("1_script")
+
+[node name="Root" type="Control" parent="." unique_id=275428992]
+layout_mode = 2
+mouse_filter = 1
+
+[node name="DarkBackground" type="ColorRect" parent="Root" unique_id=631324219]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0.005, 0.004, 0.009, 1)
+
+[node name="PotionShopBackground" type="TextureRect" parent="Root" unique_id=1444755299]
+texture_filter = 2
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+texture = ExtResource("3_interior")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="LegacyZoomReference" type="TextureRect" parent="Root" unique_id=1168088980]
+visible = false
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_filter = 2
+texture = ExtResource("2_legacy_zoom")
+
+[node name="SoftVignette" type="ColorRect" parent="Root" unique_id=1120852440]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.16)
+
+[node name="TitlePanel" type="PanelContainer" parent="Root" unique_id=646776025]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 54.0
+offset_right = 992.0
+offset_bottom = 164.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_title")
+
+[node name="TitleLabel" type="Label" parent="Root/TitlePanel" unique_id=461834645]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.5, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 56
+text = "Potion Shop"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatsPanelBackground" type="PanelContainer" parent="Root" unique_id=724335814]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 184.0
+offset_right = 1008.0
+offset_bottom = 270.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_stat")
+
+[node name="StatsLabel" type="Label" parent="Root" unique_id=2012252772]
+layout_mode = 0
+offset_left = 95.0
+offset_top = 201.0
+offset_right = 985.0
+offset_bottom = 257.0
+theme_override_colors/font_color = Color(1, 0.93, 0.72, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 28
+text = "Level 1        Potions Owned: 0 / 20        Craft Speed: 5s"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ShopkeeperFairy" type="TextureRect" parent="Root" unique_id=631387983]
+texture_filter = 2
+layout_mode = 0
+offset_left = 125.0
+offset_top = 546.0
+offset_right = 694.0
+offset_bottom = 1023.0
+mouse_filter = 2
+texture = ExtResource("4_fairy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Cauldron" type="TextureRect" parent="Root" unique_id=1268367280]
+texture_filter = 2
+layout_mode = 0
+offset_left = 475.0
+offset_top = 500.0
+offset_right = 941.0
+offset_bottom = 1102.0
+mouse_filter = 2
+texture = ExtResource("5_cauldron")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RecipePanel" type="Panel" parent="Root" unique_id=811031012]
+layout_mode = 0
+offset_left = 54.0
+offset_top = 1054.0
+offset_right = 1014.0
+offset_bottom = 1614.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_recipe")
+
+[node name="PotionBottle" type="TextureRect" parent="Root/RecipePanel" unique_id=546582786]
+layout_mode = 0
+offset_left = 58.0
+offset_top = 82.0
+offset_right = 332.0
+offset_bottom = 502.0
+mouse_filter = 2
+texture = ExtResource("6_potion")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RecipeTitle" type="Label" parent="Root/RecipePanel" unique_id=1644816026]
+layout_mode = 0
+offset_left = 374.0
+offset_top = 44.0
+offset_right = 904.0
+offset_bottom = 104.0
+theme_override_colors/font_color = Color(1, 0.91, 0.69, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 48
+text = "Mana Potion"
+vertical_alignment = 1
+
+[node name="RecipeDescription" type="Label" parent="Root/RecipePanel" unique_id=196379968]
+layout_mode = 0
+offset_left = 378.0
+offset_top = 112.0
+offset_right = 908.0
+offset_bottom = 158.0
+theme_override_colors/font_color = Color(0.95, 0.84, 0.66, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 26
+text = "Restores 50 Mana."
+
+[node name="IngredientsPreview" type="TextureRect" parent="Root/RecipePanel" unique_id=192215588]
+visible = false
+layout_mode = 0
+offset_left = 374.0
+offset_top = 196.0
+offset_right = 874.0
+offset_bottom = 326.0
+mouse_filter = 2
+texture = ExtResource("7_ingredients")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ManaCrystalIcon" type="TextureRect" parent="Root/RecipePanel" unique_id=1551361267]
+texture_filter = 2
+layout_mode = 0
+offset_left = 374.0
+offset_top = 194.0
+offset_right = 454.0
+offset_bottom = 274.0
+mouse_filter = 2
+texture = ExtResource("13_crystal")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DreambloomIcon" type="TextureRect" parent="Root/RecipePanel" unique_id=426918937]
+texture_filter = 2
+layout_mode = 0
+offset_left = 374.0
+offset_top = 298.0
+offset_right = 454.0
+offset_bottom = 378.0
+mouse_filter = 2
+texture = ExtResource("14_dreambloom")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EmptyVialIcon" type="TextureRect" parent="Root/RecipePanel" unique_id=991444012]
+texture_filter = 2
+layout_mode = 0
+offset_left = 374.0
+offset_top = 402.0
+offset_right = 454.0
+offset_bottom = 482.0
+mouse_filter = 2
+texture = ExtResource("15_vial")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RequirementsLabel" type="Label" parent="Root/RecipePanel" unique_id=1557221855]
+layout_mode = 0
+offset_left = 470.0
+offset_top = 184.0
+offset_right = 676.0
+offset_bottom = 498.0
+theme_override_colors/font_color = Color(1, 0.88, 0.58, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+text = "Requirements
+
+Mana Crystal 0 / 3
+
+Dreambloom 0 / 2
+
+Empty Vial 0 / 1"
+
+[node name="PotionDetailsLabel" type="Label" parent="Root/RecipePanel" unique_id=932669313]
+layout_mode = 0
+offset_left = 700.0
+offset_top = 184.0
+offset_right = 910.0
+offset_bottom = 498.0
+theme_override_colors/font_color = Color(1, 0.88, 0.58, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+text = "Craft Time
+5s
+
+Sell Value
+50"
+horizontal_alignment = 1
+
+[node name="CraftProgressBar" type="ProgressBar" parent="Root" unique_id=2061607659]
+visible = false
+layout_mode = 0
+offset_left = 240.0
+offset_top = 1524.0
+offset_right = 840.0
+offset_bottom = 1562.0
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
+
+[node name="FeedbackLabel" type="Label" parent="Root" unique_id=1545857457]
+layout_mode = 0
+offset_left = 74.0
+offset_top = 1570.0
+offset_right = 1006.0
+offset_bottom = 1628.0
+theme_override_colors/font_color = Color(1, 0.86, 0.42, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ActionBarBackground" type="PanelContainer" parent="Root" unique_id=834257489]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 1644.0
+offset_right = 1054.0
+offset_bottom = 1892.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bar")
+
+[node name="ActionRow" type="Control" parent="Root" unique_id=157703504]
+anchors_preset = 0
+offset_left = 46.0
+offset_top = 1660.0
+offset_right = 1034.0
+offset_bottom = 1876.0
+
+[node name="BuyCard" type="TextureRect" parent="Root/ActionRow" unique_id=966593899]
+layout_mode = 0
+offset_right = 172.0
+offset_bottom = 216.0
+mouse_filter = 2
+texture = ExtResource("8_buy")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BuyButton" type="Button" parent="Root/ActionRow" unique_id=1867785315]
+layout_mode = 0
+offset_right = 172.0
+offset_bottom = 216.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_transparent")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+
+[node name="CraftCard" type="TextureRect" parent="Root/ActionRow" unique_id=95622030]
+layout_mode = 0
+offset_left = 204.0
+offset_right = 376.0
+offset_bottom = 216.0
+mouse_filter = 2
+texture = ExtResource("9_craft")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CraftPotionButton" type="Button" parent="Root/ActionRow" unique_id=608028025]
+layout_mode = 0
+offset_left = 204.0
+offset_right = 376.0
+offset_bottom = 216.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_transparent")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+
+[node name="SellCard" type="TextureRect" parent="Root/ActionRow" unique_id=699212677]
+layout_mode = 0
+offset_left = 408.0
+offset_right = 580.0
+offset_bottom = 216.0
+mouse_filter = 2
+texture = ExtResource("10_sell")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SellPotionButton" type="Button" parent="Root/ActionRow" unique_id=113017627]
+layout_mode = 0
+offset_left = 408.0
+offset_right = 580.0
+offset_bottom = 216.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_transparent")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+
+[node name="UpgradeCard" type="TextureRect" parent="Root/ActionRow" unique_id=113677226]
+layout_mode = 0
+offset_left = 612.0
+offset_right = 784.0
+offset_bottom = 216.0
+mouse_filter = 2
+texture = ExtResource("11_upgrade")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="UpgradeShopButton" type="Button" parent="Root/ActionRow" unique_id=73636369]
+layout_mode = 0
+offset_left = 612.0
+offset_right = 784.0
+offset_bottom = 216.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_transparent")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+
+[node name="BackCard" type="TextureRect" parent="Root/ActionRow" unique_id=133310169]
+layout_mode = 0
+offset_left = 816.0
+offset_right = 988.0
+offset_bottom = 216.0
+mouse_filter = 2
+texture = ExtResource("12_back")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BackButton" type="Button" parent="Root/ActionRow" unique_id=181594832]
+layout_mode = 0
+offset_left = 816.0
+offset_right = 988.0
+offset_bottom = 216.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_transparent")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
