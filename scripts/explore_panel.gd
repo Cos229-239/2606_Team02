@@ -67,11 +67,12 @@ func _build_ui() -> void:
 	button_row.add_child(begin_button)
 
 	var back_button := _make_button("Back")
-	back_button.pressed.connect(func(): closed.emit())
+	back_button.pressed.connect(func(): SoundManager.play_click(); closed.emit())
 	button_row.add_child(back_button)
 
 
 func _on_begin_pressed() -> void:
+	SoundManager.play_click()
 	feedback_label.text = "Exploration coming soon."
 	_flash_button(begin_button)
 

@@ -330,9 +330,11 @@ func _get_fairy_portrait(fairy_name: String) -> String:
 
 
 func _on_upgrade_pressed() -> void:
+	SoundManager.play_click()
 	feedback_label.text = "House upgrades will be added later."
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()

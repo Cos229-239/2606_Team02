@@ -101,6 +101,7 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	claim_button.disabled = not bool(quest.get("IsCompleted", false))
 	var quest_id := String(quest.get("QuestID", ""))
 	claim_button.pressed.connect(func() -> void:
+		SoundManager.play_collect()
 		if GameState.claim_quest_reward(quest_id):
 			feedback_label.text = "Quest Complete! Reward claimed."
 			_refresh()
@@ -150,5 +151,6 @@ func _make_style(bg: Color, border: Color, border_width: int, radius: int) -> St
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()

@@ -1551,9 +1551,22 @@ func _make_pond_decoration(decoration_name: String, cost_mana: int, beauty_value
 
 func set_music_volume(value: float) -> void:
 	music_volume = clamp(value, 0.0, 1.0)
+	var sound_manager := _get_sound_manager()
+	if sound_manager:
+		sound_manager.set_music_volume(music_volume)
 	save_game()
 
 
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = clamp(value, 0.0, 1.0)
+	var sound_manager := _get_sound_manager()
+	if sound_manager:
+		sound_manager.set_sfx_volume(sfx_volume)
 	save_game()
+
+
+func _get_sound_manager() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("SoundManager")

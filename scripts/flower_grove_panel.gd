@@ -1,4 +1,4 @@
-﻿extends PanelContainer
+extends PanelContainer
 
 signal closed
 
@@ -372,6 +372,7 @@ func _update_visual_grid_slot(button: Button, tier: int, locked: bool, tier_data
 
 
 func _on_grid_slot_pressed(slot_index: int) -> void:
+	SoundManager.play_click()
 	var result := GameState.plant_seed_in_flower_slot(slot_index)
 	if result == 1:
 		feedback_label.text = "Seed planted."
@@ -406,6 +407,7 @@ func _finish_grid_drag() -> void:
 	if target_slot >= 0:
 		var merge_result := GameState.merge_flower_grid_slots(dragged_slot_index, target_slot)
 		if bool(merge_result.get("Success", false)):
+			SoundManager.play_merge()
 			var reward := int(merge_result.get("Reward", 0))
 			feedback_label.text = "%s +%d Mana" % [String(merge_result.get("Message", "Merged!")), reward]
 			_show_floating_text("+%d Mana" % reward, Vector2(420, 920), Color("#f3d57a"))
@@ -426,6 +428,7 @@ func _get_grid_slot_at_position(global_position: Vector2) -> int:
 
 
 func _on_collect_pressed() -> void:
+	SoundManager.play_collect()
 	var collected := GameState.collect_flower_mana()
 	if collected > 0:
 		feedback_label.text = "+%d Mana" % collected
@@ -436,6 +439,7 @@ func _on_collect_pressed() -> void:
 
 
 func _on_upgrade_pressed() -> void:
+	SoundManager.play_click()
 	if GameState.upgrade_flower_grove():
 		feedback_label.text = "Flower Grove upgraded!"
 		_show_floating_text("Flower Grove upgraded!", Vector2(300, 840), Color("#a8ff9b"))
@@ -445,6 +449,7 @@ func _on_upgrade_pressed() -> void:
 
 
 func _on_unlock_pressed() -> void:
+	SoundManager.play_click()
 	var result := GameState.unlock_flower_plot()
 	if result == 1:
 		feedback_label.text = "New flower plot unlocked!"
@@ -460,6 +465,7 @@ func _on_unlock_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

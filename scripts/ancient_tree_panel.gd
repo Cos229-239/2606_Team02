@@ -143,6 +143,7 @@ func _make_reward_sigil(level: int) -> Control:
 
 
 func _on_restore_pressed() -> void:
+	SoundManager.play_click()
 	var result: Dictionary = GameState.restore_ancient_tree()
 	feedback_label.text = String(result.get("Message", ""))
 	if bool(result.get("Success", false)):
@@ -151,6 +152,7 @@ func _on_restore_pressed() -> void:
 
 
 func _on_claim_pressed(level: int) -> void:
+	SoundManager.play_collect()
 	var result: Dictionary = GameState.claim_ancient_tree_reward(level)
 	feedback_label.text = String(result.get("Message", ""))
 	if bool(result.get("Success", false)):
@@ -159,6 +161,7 @@ func _on_claim_pressed(level: int) -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

@@ -280,6 +280,7 @@ func _refresh() -> void:
 
 
 func _on_restore_pressed() -> void:
+	SoundManager.play_click()
 	var restore_amount := GameState.get_sacred_pond_total_restore_amount()
 	if GameState.restore_sacred_pond():
 		feedback_label.text = "Water Purity +%d%%" % restore_amount
@@ -291,20 +292,24 @@ func _on_restore_pressed() -> void:
 
 
 func _on_decorate_pressed() -> void:
+	SoundManager.play_click()
 	decorate_requested.emit()
 
 
 func _on_upgrades_pressed() -> void:
+	SoundManager.play_click()
 	feedback_label.text = "Pond upgrades coming soon."
 	_show_floating_text("Pond upgrades coming soon", Vector2(250, 1450), Color("#f3d57a"))
 
 
 func _on_remove_pressed() -> void:
+	SoundManager.play_click()
 	feedback_label.text = "Open Decorate to remove pond decorations."
 	decorate_requested.emit()
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

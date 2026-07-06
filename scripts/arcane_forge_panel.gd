@@ -243,6 +243,7 @@ func _can_purchase_upgrade(upgrade: Dictionary) -> bool:
 
 
 func _on_upgrade_pressed(upgrade_id: String) -> void:
+	SoundManager.play_click()
 	var result: Dictionary = GameState.purchase_forge_upgrade(upgrade_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
@@ -250,6 +251,7 @@ func _on_upgrade_pressed(upgrade_id: String) -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

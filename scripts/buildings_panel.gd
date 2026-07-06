@@ -49,7 +49,7 @@ func _build_ui() -> void:
 	layout.add_child(spacer)
 
 	var back_button := _make_button("Back")
-	back_button.pressed.connect(func(): closed.emit())
+	back_button.pressed.connect(func(): SoundManager.play_click(); closed.emit())
 	layout.add_child(back_button)
 
 
@@ -82,7 +82,7 @@ func _add_building_entry(parent: VBoxContainer, building_name: String, level_tex
 
 	var open_button := _make_button("Open")
 	open_button.custom_minimum_size = Vector2(160, 70)
-	open_button.pressed.connect(func(): open_building_requested.emit(building_name))
+	open_button.pressed.connect(func(): SoundManager.play_click(); open_building_requested.emit(building_name))
 	row.add_child(open_button)
 
 

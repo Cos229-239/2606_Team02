@@ -117,12 +117,14 @@ func _refresh_buttons() -> void:
 
 
 func _on_play_pressed() -> void:
+	SoundManager.play_click()
 	if not GameState.save_exists() and not GameState.show_tutorial_after_reset:
 		GameState.reset_to_defaults()
 	_go_to_start_scene()
 
 
 func _on_continue_pressed() -> void:
+	SoundManager.play_click()
 	GameState.load_game()
 	_go_to_start_scene()
 
@@ -135,6 +137,7 @@ func _go_to_start_scene() -> void:
 
 
 func _on_reset_pressed() -> void:
+	SoundManager.play_click()
 	_show_reset_confirmation()
 
 
@@ -197,6 +200,7 @@ func _cancel_reset() -> void:
 
 
 func _on_quit_pressed() -> void:
+	SoundManager.play_click()
 	get_tree().quit()
 
 

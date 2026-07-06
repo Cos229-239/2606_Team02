@@ -48,6 +48,84 @@ This file tracks all third-party assets currently used in the Godot prototype.
 - Kenney's support page states assets on the asset pages are public domain licensed and may be used in commercial projects.
 - Attribution is not required for CC0, but credit is included here for class/project tracking.
 
+## Audio Assets
+
+### A Small Fire Will Do
+
+- Creator: Cal McEachern (Trex0n)
+- Source: OpenGameArt
+- License: Creative Commons CC0
+- Project use:
+  - `res://assets/audio/music/main_village_music.mp3`
+- Used for:
+  - Main village background music.
+
+### Village In Despair
+
+- Creator: Tsorthan Grove
+- Source: OpenGameArt
+- License: Creative Commons Attribution 4.0 (CC BY 4.0)
+- Project use:
+  - `res://assets/audio/music/abandoned_nook_music.mp3`
+- Used for:
+  - Abandoned Nook background music.
+
+### Ambience, Wind Chimes, A.wav
+
+- Creator: InspectorJ (Jonathan Shaw)
+- Source: Freesound
+- License: Creative Commons Attribution 4.0 (CC BY 4.0)
+- Credit text: "Ambience, Wind Chimes, A.wav" by InspectorJ (www.jshaw.co.uk) of Freesound.org
+- Project use:
+  - `res://assets/audio/sfx/first_merge_sfx.mp3`
+- Used for:
+  - First merge moment audio.
+
+### Kenney UI Audio Pack
+
+- Creator: Kenney
+- Source: https://kenney.nl
+- License: Creative Commons CC0
+- Project use:
+  - `res://assets/audio/sfx/click*.wav`
+  - `res://assets/audio/sfx/mouseclick1.wav`
+  - `res://assets/audio/sfx/mouserelease1.wav`
+  - `res://assets/audio/sfx/switch*.wav`
+- Used for:
+  - Button clicks, toggles, and menu interaction sounds.
+
+### plant.mp3
+
+- Creator: Axlinico
+- Source: Freesound
+- License: Creative Commons Attribution NonCommercial 4.0 (CC BY-NC 4.0)
+- Project use:
+  - `res://assets/audio/sfx/planting_sfx.mp3`
+- Used for:
+  - Flower merge sound effect.
+- Note:
+  - This asset is for the non-commercial student prototype and should be replaced before any public commercial release.
+
+### invalid1.wav
+
+- Creator: mmaal
+- Source: Freesound
+- License: Creative Commons CC0
+- Project use:
+  - `res://assets/audio/sfx/invalid_sfx.wav`
+- Used for:
+  - Invalid action feedback.
+
+### collecting_ammo.wav
+
+- Creator: rdaly95
+- Source: Freesound
+- License: Creative Commons Attribution 3.0 (CC BY 3.0)
+- Project use:
+  - `res://assets/audio/sfx/collecting_ammo.wav`
+- Used for:
+  - Resource collection sound effect.
+
 ## User-provided Mystic Grove reference sprite sheets
 
 - Creator: User-provided class prototype reference sheets

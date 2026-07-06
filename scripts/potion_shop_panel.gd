@@ -272,6 +272,7 @@ func _refresh() -> void:
 
 
 func _on_craft_pressed() -> void:
+	SoundManager.play_click()
 	if GameState.start_mana_potion_craft():
 		feedback_label.text = "Crafting Mana Potion..."
 	else:
@@ -279,10 +280,12 @@ func _on_craft_pressed() -> void:
 
 
 func _on_buy_pressed() -> void:
+	SoundManager.play_click()
 	feedback_label.text = "Ingredients shop coming soon."
 
 
 func _on_sell_pressed() -> void:
+	SoundManager.play_click()
 	if GameState.sell_mana_potion():
 		feedback_label.text = "Potion sold for 50 Coins!"
 		_show_floating_text("Potion sold for 50 Coins!", Vector2(260, 840), Color("#f3d57a"))
@@ -291,6 +294,7 @@ func _on_sell_pressed() -> void:
 
 
 func _on_upgrade_pressed() -> void:
+	SoundManager.play_click()
 	if GameState.upgrade_potion_shop():
 		feedback_label.text = "Potion Shop upgraded!"
 		_pulse_shop_preview()
@@ -299,6 +303,7 @@ func _on_upgrade_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
+	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
 

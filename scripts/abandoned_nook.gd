@@ -17,6 +17,7 @@ var seed_drag_offset := Vector2.ZERO
 
 func _ready() -> void:
 	_build_scene()
+	SoundManager.play_music(SoundManager.TRACK_ABANDONED_NOOK)
 
 
 func _build_scene() -> void:
@@ -101,6 +102,7 @@ func _spawn_seed() -> void:
 
 
 func _on_sprout_pressed() -> void:
+	SoundManager.play_click()
 	_spawn_seed()
 
 
@@ -163,11 +165,14 @@ func _complete_first_merge() -> void:
 	_show_floating_text("+10 Mana", Vector2(448, 782), Color("#f3d57a"))
 	message_label.text = "Life returns to the grove."
 	GameState.complete_onboarding_merge()
+	SoundManager.play_merge()
+	SoundManager.play_first_merge_moment()
 
 	var tween := create_tween()
 	tween.tween_property(color_wash, "color", Color("#4bbf78", 0.18), 0.7)
 	tween.tween_interval(1.2)
 	tween.tween_callback(func() -> void:
+		SoundManager.stop_moment()
 		get_tree().change_scene_to_file(MAIN_VILLAGE_PATH)
 	)
 
