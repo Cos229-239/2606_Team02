@@ -1611,6 +1611,12 @@ func _reset_pond_decorations_to_defaults() -> void:
 	pond_decorations.append(_make_pond_decoration("Sacred Bridge", 75, 12))
 	pond_decorations.append(_make_pond_decoration("Crystal Lotus", 90, 16))
 	pond_decorations.append(_make_pond_decoration("Stone Koi Statue", 60, 10))
+	pond_decorations.append(_make_pond_decoration("Crystal Pillar", 80, 14))
+	pond_decorations.append(_make_pond_decoration("Moonstone Steps", 45, 7))
+	pond_decorations.append(_make_pond_decoration("Fern Spring", 55, 9))
+	pond_decorations.append(_make_pond_decoration("Flame Basin", 70, 11))
+	pond_decorations.append(_make_pond_decoration("Reed Cluster", 35, 6))
+	pond_decorations.append(_make_pond_decoration("Willow Arch", 100, 18))
 	recalculate_pond_beauty()
 
 

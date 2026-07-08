@@ -480,6 +480,18 @@ func _pond_decoration_sprite_path(decoration_name: String) -> String:
 		return "res://assets/sprites/environment/crystal_lotus.png"
 	if decoration_name == "Stone Koi Statue":
 		return "res://assets/sprites/environment/stone_koi_statue.png"
+	if decoration_name == "Crystal Pillar":
+		return "res://assets/sprites/environment/crystal_pillar.png"
+	if decoration_name == "Moonstone Steps":
+		return "res://assets/sprites/environment/moonstone_steps.png"
+	if decoration_name == "Fern Spring":
+		return "res://assets/sprites/environment/fern_spring.png"
+	if decoration_name == "Flame Basin":
+		return "res://assets/sprites/environment/flame_basin.png"
+	if decoration_name == "Reed Cluster":
+		return "res://assets/sprites/environment/reed_cluster.png"
+	if decoration_name == "Willow Arch":
+		return "res://assets/sprites/environment/willow_arch.png"
 	return "res://assets/sprites/environment/bloom_lilypad.png"
 
 
@@ -496,6 +508,18 @@ func _pond_decoration_world_size(decoration_name: String) -> Vector2:
 		return Vector2(62, 76)
 	if decoration_name == "Stone Koi Statue":
 		return Vector2(60, 78)
+	if decoration_name == "Crystal Pillar":
+		return Vector2(54, 76)
+	if decoration_name == "Moonstone Steps":
+		return Vector2(68, 52)
+	if decoration_name == "Fern Spring":
+		return Vector2(66, 62)
+	if decoration_name == "Flame Basin":
+		return Vector2(66, 58)
+	if decoration_name == "Reed Cluster":
+		return Vector2(54, 78)
+	if decoration_name == "Willow Arch":
+		return Vector2(68, 80)
 	return Vector2(46, 46)
 
 

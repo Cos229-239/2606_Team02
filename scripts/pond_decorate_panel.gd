@@ -483,6 +483,18 @@ func _decoration_size(decoration_name: String) -> Vector2:
 		return Vector2(140, 170)
 	if decoration_name == "Stone Koi Statue":
 		return Vector2(138, 172)
+	if decoration_name == "Crystal Pillar":
+		return Vector2(126, 178)
+	if decoration_name == "Moonstone Steps":
+		return Vector2(160, 124)
+	if decoration_name == "Fern Spring":
+		return Vector2(154, 142)
+	if decoration_name == "Flame Basin":
+		return Vector2(156, 134)
+	if decoration_name == "Reed Cluster":
+		return Vector2(126, 180)
+	if decoration_name == "Willow Arch":
+		return Vector2(160, 188)
 	return Vector2(120, 120)
 
 
@@ -499,6 +511,18 @@ func _decoration_sprite_path(decoration_name: String) -> String:
 		return "res://assets/sprites/environment/crystal_lotus.png"
 	if decoration_name == "Stone Koi Statue":
 		return "res://assets/sprites/environment/stone_koi_statue.png"
+	if decoration_name == "Crystal Pillar":
+		return "res://assets/sprites/environment/crystal_pillar.png"
+	if decoration_name == "Moonstone Steps":
+		return "res://assets/sprites/environment/moonstone_steps.png"
+	if decoration_name == "Fern Spring":
+		return "res://assets/sprites/environment/fern_spring.png"
+	if decoration_name == "Flame Basin":
+		return "res://assets/sprites/environment/flame_basin.png"
+	if decoration_name == "Reed Cluster":
+		return "res://assets/sprites/environment/reed_cluster.png"
+	if decoration_name == "Willow Arch":
+		return "res://assets/sprites/environment/willow_arch.png"
 	return "res://assets/sprites/effects/glow_orb.png"
 
 
@@ -507,6 +531,8 @@ func _decoration_display_name(decoration_name: String) -> String:
 		return "Stone Koi"
 	if decoration_name == "Bloom Lilypad":
 		return "Bloom Pads"
+	if decoration_name == "Moonstone Steps":
+		return "Moon Steps"
 	return decoration_name
 
 

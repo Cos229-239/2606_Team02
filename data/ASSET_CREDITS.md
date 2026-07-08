@@ -181,3 +181,9 @@ This file tracks all third-party assets currently used in the Godot prototype.
   - `res://assets/sprites/environment/sacred_bridge.png`
   - `res://assets/sprites/environment/crystal_lotus.png`
   - `res://assets/sprites/environment/stone_koi_statue.png`
+  - `res://assets/sprites/environment/crystal_pillar.png`
+  - `res://assets/sprites/environment/moonstone_steps.png`
+  - `res://assets/sprites/environment/fern_spring.png`
+  - `res://assets/sprites/environment/flame_basin.png`
+  - `res://assets/sprites/environment/reed_cluster.png`
+  - `res://assets/sprites/environment/willow_arch.png`
