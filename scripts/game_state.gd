@@ -444,9 +444,9 @@ func place_pond_decoration_at(decoration_name: String, pond_position: Vector2, r
 		total_mana -= cost
 		pond_decorations[index]["IsPlaced"] = true
 		pond_decorations[index]["SlotIndex"] = requested_slot_index
-		var clamped_position := clamp_pond_decoration_position(pond_position)
-		pond_decorations[index]["PositionX"] = clamped_position.x
-		pond_decorations[index]["PositionY"] = clamped_position.y
+		var normalized_position := get_pond_decoration_normalized_from_editor_position(pond_position)
+		pond_decorations[index]["PositionX"] = normalized_position.x
+		pond_decorations[index]["PositionY"] = normalized_position.y
 		recalculate_pond_beauty()
 		last_pond_decoration_message = "Decoration placed!"
 		resources_changed.emit()
@@ -489,9 +489,9 @@ func move_pond_decoration(decoration_name: String, pond_position: Vector2, save_
 			last_pond_decoration_message = "Decoration is not placed."
 			save_status_changed.emit(last_pond_decoration_message)
 			return false
-		var clamped_position := clamp_pond_decoration_position(pond_position)
-		pond_decorations[index]["PositionX"] = clamped_position.x
-		pond_decorations[index]["PositionY"] = clamped_position.y
+		var normalized_position := get_pond_decoration_normalized_from_editor_position(pond_position)
+		pond_decorations[index]["PositionX"] = normalized_position.x
+		pond_decorations[index]["PositionY"] = normalized_position.y
 		pond_decorations[index]["SlotIndex"] = -1
 		last_pond_decoration_message = "Decoration moved."
 		sacred_pond_changed.emit()
@@ -504,14 +504,25 @@ func move_pond_decoration(decoration_name: String, pond_position: Vector2, save_
 
 
 func get_pond_decoration_position(decoration: Dictionary) -> Vector2:
+	return get_pond_decoration_screen_position(decoration, POND_DECORATION_EDITOR_RECT)
+
+
+func get_pond_decoration_screen_position(decoration: Dictionary, target_rect: Rect2) -> Vector2:
+	var normalized := get_pond_decoration_normalized_position(decoration)
+	return target_rect.position + target_rect.size * normalized
+
+
+func get_pond_decoration_normalized_position(decoration: Dictionary) -> Vector2:
 	var x := float(decoration.get("PositionX", -1.0))
 	var y := float(decoration.get("PositionY", -1.0))
 	if x >= 0.0 and y >= 0.0:
-		return Vector2(x, y)
+		if x <= 1.0 and y <= 1.0:
+			return Vector2(clamp(x, 0.0, 1.0), clamp(y, 0.0, 1.0))
+		return get_pond_decoration_normalized_from_editor_position(Vector2(x, y))
 	var slot_index := int(decoration.get("SlotIndex", -1))
 	if slot_index >= 0:
-		return get_default_pond_decoration_position(slot_index)
-	return POND_DECORATION_EDITOR_RECT.get_center()
+		return get_pond_decoration_normalized_from_editor_position(get_default_pond_decoration_position(slot_index))
+	return Vector2(0.5, 0.5)
 
 
 func get_default_pond_decoration_position(slot_index: int) -> Vector2:
@@ -530,6 +541,14 @@ func clamp_pond_decoration_position(pond_position: Vector2) -> Vector2:
 	return Vector2(
 		clamp(pond_position.x, POND_DECORATION_EDITOR_RECT.position.x, POND_DECORATION_EDITOR_RECT.end.x),
 		clamp(pond_position.y, POND_DECORATION_EDITOR_RECT.position.y, POND_DECORATION_EDITOR_RECT.end.y)
+	)
+
+
+func get_pond_decoration_normalized_from_editor_position(pond_position: Vector2) -> Vector2:
+	var clamped_position := clamp_pond_decoration_position(pond_position)
+	return Vector2(
+		inverse_lerp(POND_DECORATION_EDITOR_RECT.position.x, POND_DECORATION_EDITOR_RECT.end.x, clamped_position.x),
+		inverse_lerp(POND_DECORATION_EDITOR_RECT.position.y, POND_DECORATION_EDITOR_RECT.end.y, clamped_position.y)
 	)
 
 
@@ -1333,7 +1352,7 @@ func apply_save_data(data: Dictionary) -> void:
 				})
 				var imported_index := pond_decorations.size() - 1
 				if bool(pond_decorations[imported_index].get("IsPlaced", false)):
-					var imported_position := get_pond_decoration_position(pond_decorations[imported_index])
+					var imported_position := get_pond_decoration_normalized_position(pond_decorations[imported_index])
 					pond_decorations[imported_index]["PositionX"] = imported_position.x
 					pond_decorations[imported_index]["PositionY"] = imported_position.y
 	var saved_slots = data.get("pond_decoration_slots", [])

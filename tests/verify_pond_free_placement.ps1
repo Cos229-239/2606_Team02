@@ -14,6 +14,8 @@ function Assert-FileContains {
 Assert-FileContains "scripts/game_state.gd" "POND_DECORATION_EDITOR_RECT"
 Assert-FileContains "scripts/game_state.gd" "func place_pond_decoration_at"
 Assert-FileContains "scripts/game_state.gd" "func move_pond_decoration"
+Assert-FileContains "scripts/game_state.gd" "func get_pond_decoration_screen_position"
+Assert-FileContains "scripts/game_state.gd" "func get_pond_decoration_normalized_position"
 Assert-FileContains "scripts/game_state.gd" '"PositionX"'
 Assert-FileContains "scripts/game_state.gd" '"PositionY"'
 
@@ -27,6 +29,6 @@ Assert-FileContains "scripts/sacred_pond_panel.gd" "_refresh_decoration_preview"
 Assert-FileContains "scripts/sacred_pond_panel.gd" "GameState.get_pond_decoration_position"
 
 Assert-FileContains "scripts/main_village.gd" "_pond_decoration_world_position"
-Assert-FileContains "scripts/main_village.gd" "GameState.get_pond_decoration_position"
+Assert-FileContains "scripts/main_village.gd" "GameState.get_pond_decoration_screen_position"
 
 Write-Output "MysticGrove_Godot pond free placement verification passed"

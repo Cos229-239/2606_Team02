@@ -434,10 +434,11 @@ func _refresh_pond_decoration_visuals() -> void:
 			continue
 		var decoration_name := String(decoration.get("DecorationName", ""))
 		var marker_size := _pond_decoration_world_size(decoration_name)
+		var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
 		var marker := _add_layer_sprite(
 			pond_decoration_visual_layer,
 			_pond_decoration_sprite_path(decoration_name),
-			_pond_decoration_world_position(GameState.get_pond_decoration_position(decoration)) - marker_size * 0.5,
+			GameState.get_pond_decoration_screen_position(decoration, pond_rect) - marker_size * 0.5,
 			marker_size
 		)
 		marker.z_index = 18
@@ -446,13 +447,11 @@ func _refresh_pond_decoration_visuals() -> void:
 
 func _pond_decoration_world_position(editor_position: Vector2) -> Vector2:
 	var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
-	var normalized := Vector2(
-		inverse_lerp(GameState.POND_DECORATION_EDITOR_RECT.position.x, GameState.POND_DECORATION_EDITOR_RECT.end.x, editor_position.x),
-		inverse_lerp(GameState.POND_DECORATION_EDITOR_RECT.position.y, GameState.POND_DECORATION_EDITOR_RECT.end.y, editor_position.y)
-	)
-	normalized.x = clamp(normalized.x, 0.0, 1.0)
-	normalized.y = clamp(normalized.y, 0.0, 1.0)
-	return pond_rect.position + pond_rect.size * normalized
+	var decoration := {
+		"PositionX": editor_position.x,
+		"PositionY": editor_position.y
+	}
+	return GameState.get_pond_decoration_screen_position(decoration, pond_rect)
 
 
 func _pond_decoration_world_slot(slot_index: int) -> Vector2:
