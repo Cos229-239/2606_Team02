@@ -6,6 +6,7 @@ signal decorate_requested
 var stats_label: Label
 var feedback_label: Label
 var pond_preview: CanvasItem
+var decoration_preview_layer: Control
 
 const PANEL_BUTTONS := {
 	"Back": "res://assets/sprites/ui/panel_back.png",
@@ -19,6 +20,7 @@ func _ready() -> void:
 		_bind_scene_ui()
 	else:
 		_build_panel()
+	_build_decoration_preview_layer()
 	GameState.sacred_pond_changed.connect(_refresh)
 	GameState.resources_changed.connect(_refresh)
 	_refresh()
@@ -277,6 +279,62 @@ func _refresh() -> void:
 			GameState.get_next_pond_reward_text()
 		]
 	)
+	_refresh_decoration_preview()
+
+
+func _build_decoration_preview_layer() -> void:
+	decoration_preview_layer = Control.new()
+	decoration_preview_layer.name = "Pond Decoration Preview"
+	decoration_preview_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	decoration_preview_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if has_node("Root"):
+		get_node("Root").add_child(decoration_preview_layer)
+	else:
+		add_child(decoration_preview_layer)
+
+
+func _refresh_decoration_preview() -> void:
+	if decoration_preview_layer == null:
+		return
+	for child in decoration_preview_layer.get_children():
+		child.queue_free()
+	for decoration in GameState.pond_decorations:
+		if not bool(decoration.get("IsPlaced", false)):
+			continue
+		var decoration_name := String(decoration.get("DecorationName", ""))
+		var marker_size := _pond_decoration_preview_size(decoration_name)
+		var marker := _add_sprite(
+			decoration_preview_layer,
+			_pond_decoration_sprite_path(decoration_name),
+			GameState.get_pond_decoration_position(decoration) - marker_size * 0.5,
+			marker_size
+		)
+		marker.z_index = 4
+		marker.modulate.a = 0.94
+
+
+func _pond_decoration_sprite_path(decoration_name: String) -> String:
+	if decoration_name == "Moon Lantern":
+		return "res://assets/sprites/environment/moon_lantern.png"
+	if decoration_name == "Spirit Stone":
+		return "res://assets/sprites/environment/spirit_stone.png"
+	if decoration_name == "Bloom Lilypad":
+		return "res://assets/sprites/environment/bloom_lilypad.png"
+	if decoration_name == "Sacred Bridge":
+		return "res://assets/sprites/environment/sacred_bridge.png"
+	return "res://assets/sprites/effects/glow_orb.png"
+
+
+func _pond_decoration_preview_size(decoration_name: String) -> Vector2:
+	if decoration_name == "Moon Lantern":
+		return Vector2(110, 136)
+	if decoration_name == "Spirit Stone":
+		return Vector2(120, 120)
+	if decoration_name == "Bloom Lilypad":
+		return Vector2(128, 94)
+	if decoration_name == "Sacred Bridge":
+		return Vector2(154, 100)
+	return Vector2(108, 108)
 
 
 func _on_restore_pressed() -> void:

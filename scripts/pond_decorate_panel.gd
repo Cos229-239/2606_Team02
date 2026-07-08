@@ -27,6 +27,8 @@ var pond_layer: Control
 var feedback_label: Label
 var selected_decoration_index: int = 0
 var selected_slot_index: int = -1
+var selected_placed_decoration_name: String = ""
+var dragged_decoration_name: String = ""
 
 
 func _ready() -> void:
@@ -48,6 +50,7 @@ func _bind_scene_ui() -> void:
 	slot_buttons.clear()
 
 	pond_layer = get_node("Root/PondLayer") as Control
+	pond_layer.gui_input.connect(_on_pond_layer_gui_input)
 	feedback_label = get_node("Root/FeedbackLabel") as Label
 	stats_values["pond_beauty"] = get_node("Root/Stats/PondBeautyCard/Value") as Label
 	stats_values["mana"] = get_node("Root/Stats/ManaCard/Value") as Label
@@ -56,6 +59,8 @@ func _bind_scene_ui() -> void:
 	for slot_index in range(GameState.pond_decoration_slots.size()):
 		var slot_button := get_node("Root/PondLayer/Slot%d" % slot_index) as TextureButton
 		slot_button.pressed.connect(_on_slot_pressed.bind(slot_index))
+		slot_button.visible = false
+		slot_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot_buttons.append(slot_button)
 
 	for index in range(GameState.pond_decorations.size()):
@@ -103,7 +108,8 @@ func _build_ui() -> void:
 	pond_layer = Control.new()
 	pond_layer.position = Vector2.ZERO
 	pond_layer.size = DESIGN_SIZE
-	pond_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	pond_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	pond_layer.gui_input.connect(_on_pond_layer_gui_input)
 	root.add_child(pond_layer)
 
 	_build_slots()
@@ -159,7 +165,8 @@ func _build_slots() -> void:
 		button.stretch_mode = TextureButton.STRETCH_SCALE
 		button.position = _slot_position(slot_index) - Vector2(58, 38)
 		button.size = Vector2(116, 76)
-		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		button.visible = false
+		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.pressed.connect(_on_slot_pressed.bind(slot_index))
 		pond_layer.add_child(button)
 		slot_buttons.append(button)
@@ -254,6 +261,8 @@ func _refresh_decoration_buttons() -> void:
 func _refresh_slots() -> void:
 	for index in range(slot_buttons.size()):
 		var button := slot_buttons[index]
+		button.visible = false
+		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var occupied := GameState.is_pond_slot_occupied(index)
 		if occupied:
 			button.modulate = Color(1.0, 0.8, 0.5, 0.55)
@@ -271,24 +280,36 @@ func _refresh_placed_decorations() -> void:
 	for decoration in GameState.pond_decorations:
 		if not bool(decoration.get("IsPlaced", false)):
 			continue
-		var slot_index := int(decoration.get("SlotIndex", -1))
-		if slot_index < 0:
-			continue
-		var sprite := _add_texture(
-			pond_layer,
-			_decoration_sprite_path(String(decoration.get("DecorationName", ""))),
-			_slot_position(slot_index) - Vector2(59, 82),
-			Vector2(118, 118)
-		)
-		sprite.add_to_group("placed_pond_decoration")
+		var decoration_name := String(decoration.get("DecorationName", ""))
+		var marker_size := _decoration_size(decoration_name)
+		var marker := TextureButton.new()
+		var texture: Texture2D = load(_decoration_sprite_path(decoration_name))
+		marker.name = "%sPlacedDecoration" % decoration_name.replace(" ", "")
+		marker.texture_normal = texture
+		marker.texture_hover = texture
+		marker.texture_pressed = texture
+		marker.ignore_texture_size = true
+		marker.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		marker.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		marker.size = marker_size
+		marker.position = GameState.get_pond_decoration_position(decoration) - marker_size * 0.5
+		marker.mouse_filter = Control.MOUSE_FILTER_STOP
+		marker.mouse_default_cursor_shape = Control.CURSOR_DRAG
+		marker.modulate = Color(1.18, 1.08, 0.82, 1.0) if decoration_name == selected_placed_decoration_name else Color.WHITE
+		marker.pressed.connect(_select_placed_decoration.bind(decoration_name))
+		marker.gui_input.connect(_on_placed_decoration_gui_input.bind(decoration_name, marker))
+		marker.add_to_group("placed_pond_decoration")
+		pond_layer.add_child(marker)
 
 
 func _select_decoration(index: int) -> void:
 	selected_decoration_index = index
 	selected_slot_index = -1
-	feedback_label.text = "Select a glowing slot."
+	selected_placed_decoration_name = ""
+	feedback_label.text = "Tap the pond to place this decoration."
 	_refresh_decoration_buttons()
 	_refresh_slots()
+	_refresh_placed_decorations()
 
 
 func _on_slot_pressed(slot_index: int) -> void:
@@ -303,10 +324,7 @@ func _on_slot_pressed(slot_index: int) -> void:
 
 func _on_place_pressed() -> void:
 	SoundManager.play_click()
-	var slot_index := selected_slot_index
-	if slot_index < 0 or GameState.is_pond_slot_occupied(slot_index):
-		slot_index = GameState.get_first_empty_pond_decoration_slot()
-	_place_selected_decoration(slot_index)
+	_place_selected_decoration_at(GameState.POND_DECORATION_EDITOR_RECT.get_center())
 
 
 func _place_selected_decoration(slot_index: int) -> void:
@@ -321,9 +339,24 @@ func _place_selected_decoration(slot_index: int) -> void:
 	_refresh()
 
 
+func _place_selected_decoration_at(pond_position: Vector2) -> void:
+	var decoration_name := _selected_decoration_name()
+	if decoration_name.is_empty():
+		feedback_label.text = "Select a decoration first."
+		return
+	if GameState.place_pond_decoration_at(decoration_name, pond_position):
+		selected_placed_decoration_name = decoration_name
+		feedback_label.text = "Decoration placed. Drag it anywhere on the pond."
+	else:
+		feedback_label.text = GameState.last_pond_decoration_message
+	_refresh()
+
+
 func _on_remove_pressed() -> void:
 	SoundManager.play_click()
 	var decoration_name := ""
+	if not selected_placed_decoration_name.is_empty():
+		decoration_name = selected_placed_decoration_name
 	if selected_slot_index >= 0:
 		decoration_name = _decoration_name_at_slot(selected_slot_index)
 	if decoration_name.is_empty():
@@ -331,6 +364,7 @@ func _on_remove_pressed() -> void:
 	if GameState.remove_pond_decoration(decoration_name):
 		feedback_label.text = "Decoration removed."
 		selected_slot_index = -1
+		selected_placed_decoration_name = ""
 	else:
 		feedback_label.text = GameState.last_pond_decoration_message
 	_refresh()
@@ -355,15 +389,58 @@ func _decoration_name_at_slot(slot_index: int) -> String:
 
 
 func _slot_position(slot_index: int) -> Vector2:
-	var positions := [
-		Vector2(300, 438),
-		Vector2(810, 535),
-		Vector2(218, 900),
-		Vector2(742, 1005),
-		Vector2(548, 394),
-		Vector2(540, 1038)
-	]
-	return positions[clamp(slot_index, 0, positions.size() - 1)]
+	return GameState.get_default_pond_decoration_position(slot_index)
+
+
+func _on_pond_layer_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		SoundManager.play_click()
+		_place_selected_decoration_at(event.position)
+
+
+func _select_placed_decoration(decoration_name: String, refresh_visuals: bool = true) -> void:
+	SoundManager.play_click()
+	selected_placed_decoration_name = decoration_name
+	selected_decoration_index = _decoration_index_by_name(decoration_name)
+	feedback_label.text = "%s selected. Drag to move or remove it." % decoration_name
+	_refresh_decoration_buttons()
+	if refresh_visuals:
+		_refresh_placed_decorations()
+
+
+func _on_placed_decoration_gui_input(event: InputEvent, decoration_name: String, marker: TextureButton) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			dragged_decoration_name = decoration_name
+			_select_placed_decoration(decoration_name, false)
+			marker.modulate = Color(1.18, 1.08, 0.82, 1.0)
+		elif dragged_decoration_name == decoration_name:
+			dragged_decoration_name = ""
+			GameState.save_game()
+	if event is InputEventMouseMotion and dragged_decoration_name == decoration_name and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		var marker_center := GameState.clamp_pond_decoration_position(marker.position + marker.size * 0.5 + event.relative)
+		marker.position = marker_center - marker.size * 0.5
+		GameState.move_pond_decoration(decoration_name, marker_center, false)
+		feedback_label.text = "Moved %s." % decoration_name
+
+
+func _decoration_index_by_name(decoration_name: String) -> int:
+	for index in range(GameState.pond_decorations.size()):
+		if String(GameState.pond_decorations[index].get("DecorationName", "")) == decoration_name:
+			return index
+	return -1
+
+
+func _decoration_size(decoration_name: String) -> Vector2:
+	if decoration_name == "Moon Lantern":
+		return Vector2(126, 150)
+	if decoration_name == "Spirit Stone":
+		return Vector2(134, 134)
+	if decoration_name == "Bloom Lilypad":
+		return Vector2(142, 104)
+	if decoration_name == "Sacred Bridge":
+		return Vector2(170, 110)
+	return Vector2(120, 120)
 
 
 func _decoration_sprite_path(decoration_name: String) -> String:

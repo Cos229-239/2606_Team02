@@ -39,6 +39,7 @@ const FLOWER_TIER_SEED := 1
 const FLOWER_TIER_FLOWER := 2
 const FLOWER_TIER_BLOOM := 3
 const FLOWER_TIER_RARE_BLOSSOM := 4
+const POND_DECORATION_EDITOR_RECT := Rect2(140, 320, 800, 830)
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -406,6 +407,17 @@ func get_first_empty_pond_decoration_slot() -> int:
 
 
 func place_pond_decoration(decoration_name: String, requested_slot_index: int = -1) -> bool:
+	var slot_index := requested_slot_index
+	if slot_index < 0:
+		slot_index = get_first_empty_pond_decoration_slot()
+	if slot_index < 0:
+		last_pond_decoration_message = "No empty decoration slots."
+		save_status_changed.emit(last_pond_decoration_message)
+		return false
+	return place_pond_decoration_at(decoration_name, get_default_pond_decoration_position(slot_index), slot_index)
+
+
+func place_pond_decoration_at(decoration_name: String, pond_position: Vector2, requested_slot_index: int = -1) -> bool:
 	for index in range(pond_decorations.size()):
 		if String(pond_decorations[index].get("DecorationName", "")) != decoration_name:
 			continue
@@ -418,14 +430,7 @@ func place_pond_decoration(decoration_name: String, requested_slot_index: int = 
 			save_status_changed.emit(last_pond_decoration_message)
 			return false
 
-		var slot_index := requested_slot_index
-		if slot_index < 0:
-			slot_index = get_first_empty_pond_decoration_slot()
-		if slot_index < 0:
-			last_pond_decoration_message = "No empty decoration slots."
-			save_status_changed.emit(last_pond_decoration_message)
-			return false
-		if is_pond_slot_occupied(slot_index):
+		if requested_slot_index >= 0 and is_pond_slot_occupied(requested_slot_index):
 			last_pond_decoration_message = "No empty decoration slots."
 			save_status_changed.emit(last_pond_decoration_message)
 			return false
@@ -438,7 +443,10 @@ func place_pond_decoration(decoration_name: String, requested_slot_index: int = 
 
 		total_mana -= cost
 		pond_decorations[index]["IsPlaced"] = true
-		pond_decorations[index]["SlotIndex"] = slot_index
+		pond_decorations[index]["SlotIndex"] = requested_slot_index
+		var clamped_position := clamp_pond_decoration_position(pond_position)
+		pond_decorations[index]["PositionX"] = clamped_position.x
+		pond_decorations[index]["PositionY"] = clamped_position.y
 		recalculate_pond_beauty()
 		last_pond_decoration_message = "Decoration placed!"
 		resources_changed.emit()
@@ -462,6 +470,8 @@ func remove_pond_decoration(decoration_name: String) -> bool:
 			return false
 		pond_decorations[index]["IsPlaced"] = false
 		pond_decorations[index]["SlotIndex"] = -1
+		pond_decorations[index]["PositionX"] = -1.0
+		pond_decorations[index]["PositionY"] = -1.0
 		recalculate_pond_beauty()
 		last_pond_decoration_message = "Decoration removed."
 		sacred_pond_changed.emit()
@@ -469,6 +479,58 @@ func remove_pond_decoration(decoration_name: String) -> bool:
 		save_status_changed.emit(last_pond_decoration_message)
 		return true
 	return false
+
+
+func move_pond_decoration(decoration_name: String, pond_position: Vector2, save_immediately: bool = true) -> bool:
+	for index in range(pond_decorations.size()):
+		if String(pond_decorations[index].get("DecorationName", "")) != decoration_name:
+			continue
+		if not bool(pond_decorations[index].get("IsPlaced", false)):
+			last_pond_decoration_message = "Decoration is not placed."
+			save_status_changed.emit(last_pond_decoration_message)
+			return false
+		var clamped_position := clamp_pond_decoration_position(pond_position)
+		pond_decorations[index]["PositionX"] = clamped_position.x
+		pond_decorations[index]["PositionY"] = clamped_position.y
+		pond_decorations[index]["SlotIndex"] = -1
+		last_pond_decoration_message = "Decoration moved."
+		sacred_pond_changed.emit()
+		if save_immediately:
+			save_game()
+		return true
+	last_pond_decoration_message = "Decoration not found."
+	save_status_changed.emit(last_pond_decoration_message)
+	return false
+
+
+func get_pond_decoration_position(decoration: Dictionary) -> Vector2:
+	var x := float(decoration.get("PositionX", -1.0))
+	var y := float(decoration.get("PositionY", -1.0))
+	if x >= 0.0 and y >= 0.0:
+		return Vector2(x, y)
+	var slot_index := int(decoration.get("SlotIndex", -1))
+	if slot_index >= 0:
+		return get_default_pond_decoration_position(slot_index)
+	return POND_DECORATION_EDITOR_RECT.get_center()
+
+
+func get_default_pond_decoration_position(slot_index: int) -> Vector2:
+	var positions := [
+		Vector2(300, 438),
+		Vector2(810, 535),
+		Vector2(218, 900),
+		Vector2(742, 1005),
+		Vector2(548, 394),
+		Vector2(540, 1038)
+	]
+	return positions[clamp(slot_index, 0, positions.size() - 1)]
+
+
+func clamp_pond_decoration_position(pond_position: Vector2) -> Vector2:
+	return Vector2(
+		clamp(pond_position.x, POND_DECORATION_EDITOR_RECT.position.x, POND_DECORATION_EDITOR_RECT.end.x),
+		clamp(pond_position.y, POND_DECORATION_EDITOR_RECT.position.y, POND_DECORATION_EDITOR_RECT.end.y)
+	)
 
 
 func recalculate_pond_beauty() -> void:
@@ -1265,8 +1327,15 @@ func apply_save_data(data: Dictionary) -> void:
 					"BeautyValue": int(saved_decoration.get("BeautyValue", 0)),
 					"IsUnlocked": bool(saved_decoration.get("IsUnlocked", true)),
 					"IsPlaced": bool(saved_decoration.get("IsPlaced", false)),
-					"SlotIndex": int(saved_decoration.get("SlotIndex", -1))
+					"SlotIndex": int(saved_decoration.get("SlotIndex", -1)),
+					"PositionX": float(saved_decoration.get("PositionX", -1.0)),
+					"PositionY": float(saved_decoration.get("PositionY", -1.0))
 				})
+				var imported_index := pond_decorations.size() - 1
+				if bool(pond_decorations[imported_index].get("IsPlaced", false)):
+					var imported_position := get_pond_decoration_position(pond_decorations[imported_index])
+					pond_decorations[imported_index]["PositionX"] = imported_position.x
+					pond_decorations[imported_index]["PositionY"] = imported_position.y
 	var saved_slots = data.get("pond_decoration_slots", [])
 	if saved_slots is Array and saved_slots.size() > 0:
 		pond_decoration_slots.clear()
@@ -1545,7 +1614,9 @@ func _make_pond_decoration(decoration_name: String, cost_mana: int, beauty_value
 		"BeautyValue": beauty_value,
 		"IsUnlocked": true,
 		"IsPlaced": false,
-		"SlotIndex": -1
+		"SlotIndex": -1,
+		"PositionX": -1.0,
+		"PositionY": -1.0
 	}
 
 
