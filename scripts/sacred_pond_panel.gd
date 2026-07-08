@@ -322,6 +322,10 @@ func _pond_decoration_sprite_path(decoration_name: String) -> String:
 		return "res://assets/sprites/environment/bloom_lilypad.png"
 	if decoration_name == "Sacred Bridge":
 		return "res://assets/sprites/environment/sacred_bridge.png"
+	if decoration_name == "Crystal Lotus":
+		return "res://assets/sprites/environment/crystal_lotus.png"
+	if decoration_name == "Stone Koi Statue":
+		return "res://assets/sprites/environment/stone_koi_statue.png"
 	return "res://assets/sprites/effects/glow_orb.png"
 
 
@@ -334,6 +338,10 @@ func _pond_decoration_preview_size(decoration_name: String) -> Vector2:
 		return Vector2(128, 94)
 	if decoration_name == "Sacred Bridge":
 		return Vector2(154, 100)
+	if decoration_name == "Crystal Lotus":
+		return Vector2(132, 164)
+	if decoration_name == "Stone Koi Statue":
+		return Vector2(132, 166)
 	return Vector2(108, 108)
 
 

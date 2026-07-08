@@ -21,6 +21,7 @@ Assert-FileContains "scripts/game_state.gd" '"PositionY"'
 
 Assert-FileContains "scripts/pond_decorate_panel.gd" "_on_pond_layer_gui_input"
 Assert-FileContains "scripts/pond_decorate_panel.gd" "_on_placed_decoration_gui_input"
+Assert-FileContains "scripts/pond_decorate_panel.gd" "DecorationScroller"
 Assert-FileContains "scripts/pond_decorate_panel.gd" "Tap the pond to place this decoration."
 Assert-FileContains "scripts/pond_decorate_panel.gd" "GameState.move_pond_decoration"
 

@@ -63,10 +63,8 @@ func _bind_scene_ui() -> void:
 		slot_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot_buttons.append(slot_button)
 
-	for index in range(GameState.pond_decorations.size()):
-		var button := get_node("Root/DecorationTray/DecorationRow/DecorationCard%d" % index) as Button
-		button.pressed.connect(_select_decoration.bind(index))
-		decoration_buttons.append(button)
+	var row := _get_or_create_decoration_scroll_row()
+	_populate_decoration_buttons(row)
 
 	(get_node("Root/ActionRow/PlaceButton") as TextureButton).pressed.connect(_on_place_pressed)
 	(get_node("Root/ActionRow/RemoveButton") as TextureButton).pressed.connect(_on_remove_pressed)
@@ -195,18 +193,34 @@ func _build_decoration_tray(parent: Control) -> void:
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layout.add_child(header)
 
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	layout.add_child(row)
+	var scroller := ScrollContainer.new()
+	scroller.name = "DecorationScroller"
+	scroller.custom_minimum_size = Vector2(956, 304)
+	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	layout.add_child(scroller)
 
+	var row := HBoxContainer.new()
+	row.name = "DecorationRow"
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", 14)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroller.add_child(row)
+
+	_populate_decoration_buttons(row)
+
+
+func _populate_decoration_buttons(row: HBoxContainer) -> void:
 	decoration_buttons.clear()
+	for child in row.get_children():
+		row.remove_child(child)
+		child.queue_free()
 	for index in range(GameState.pond_decorations.size()):
 		var decoration := GameState.pond_decorations[index]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(228, 294)
+		button.custom_minimum_size = Vector2(206, 278)
 		button.text = "%s\n%d Mana\n+%d Beauty" % [
-			String(decoration.get("DecorationName", "")),
+			_decoration_display_name(String(decoration.get("DecorationName", ""))),
 			int(decoration.get("CostMana", 0)),
 			int(decoration.get("BeautyValue", 0))
 		]
@@ -224,6 +238,31 @@ func _build_decoration_tray(parent: Control) -> void:
 		button.pressed.connect(_select_decoration.bind(index))
 		row.add_child(button)
 		decoration_buttons.append(button)
+
+
+func _get_or_create_decoration_scroll_row() -> HBoxContainer:
+	var tray := get_node("Root/DecorationTray") as Control
+	var scroller := tray.get_node_or_null("DecorationScroller") as ScrollContainer
+	var row := tray.get_node_or_null("DecorationRow") as HBoxContainer
+	if scroller == null:
+		scroller = ScrollContainer.new()
+		scroller.name = "DecorationScroller"
+		scroller.position = row.position if row else Vector2(35, 278)
+		scroller.size = row.size if row else Vector2(960, 300)
+		scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		tray.add_child(scroller)
+	if row == null:
+		row = HBoxContainer.new()
+		row.name = "DecorationRow"
+	else:
+		row.get_parent().remove_child(row)
+	row.position = Vector2.ZERO
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", 14)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroller.add_child(row)
+	return row
 
 
 func _build_bottom_buttons(parent: Control) -> void:
@@ -440,6 +479,10 @@ func _decoration_size(decoration_name: String) -> Vector2:
 		return Vector2(142, 104)
 	if decoration_name == "Sacred Bridge":
 		return Vector2(170, 110)
+	if decoration_name == "Crystal Lotus":
+		return Vector2(140, 170)
+	if decoration_name == "Stone Koi Statue":
+		return Vector2(138, 172)
 	return Vector2(120, 120)
 
 
@@ -452,7 +495,19 @@ func _decoration_sprite_path(decoration_name: String) -> String:
 		return "res://assets/sprites/environment/bloom_lilypad.png"
 	if decoration_name == "Sacred Bridge":
 		return "res://assets/sprites/environment/sacred_bridge.png"
+	if decoration_name == "Crystal Lotus":
+		return "res://assets/sprites/environment/crystal_lotus.png"
+	if decoration_name == "Stone Koi Statue":
+		return "res://assets/sprites/environment/stone_koi_statue.png"
 	return "res://assets/sprites/effects/glow_orb.png"
+
+
+func _decoration_display_name(decoration_name: String) -> String:
+	if decoration_name == "Stone Koi Statue":
+		return "Stone Koi"
+	if decoration_name == "Bloom Lilypad":
+		return "Bloom Pads"
+	return decoration_name
 
 
 func _add_texture(parent: Node, path: String, top_left: Vector2, texture_size: Vector2) -> Sprite2D:

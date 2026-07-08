@@ -173,4 +173,11 @@ This file tracks all third-party assets currently used in the Godot prototype.
   - `res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png`
   - `res://assets/sprites/fairy_house/fairy_nim_sleeping.png`
 - Used for:
-  - Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, pond decoration placeholders, koi/fairy visual flavor, fairy-house UI sprites, and reference-style cozy fantasy art pass.
+- Main village visual upgrade, home screen composition background and landmarks, full-screen building zoom panels, pond decoration placeholders, koi/fairy visual flavor, fairy-house UI sprites, and reference-style cozy fantasy art pass.
+- User-provided pond decoration replacement sprites:
+  - `res://assets/sprites/environment/moon_lantern.png`
+  - `res://assets/sprites/environment/spirit_stone.png`
+  - `res://assets/sprites/environment/bloom_lilypad.png`
+  - `res://assets/sprites/environment/sacred_bridge.png`
+  - `res://assets/sprites/environment/crystal_lotus.png`
+  - `res://assets/sprites/environment/stone_koi_statue.png`

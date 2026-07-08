@@ -1609,6 +1609,8 @@ func _reset_pond_decorations_to_defaults() -> void:
 	pond_decorations.append(_make_pond_decoration("Spirit Stone", 40, 8))
 	pond_decorations.append(_make_pond_decoration("Bloom Lilypad", 30, 6))
 	pond_decorations.append(_make_pond_decoration("Sacred Bridge", 75, 12))
+	pond_decorations.append(_make_pond_decoration("Crystal Lotus", 90, 16))
+	pond_decorations.append(_make_pond_decoration("Stone Koi Statue", 60, 10))
 	recalculate_pond_beauty()
 
 
