@@ -1064,6 +1064,120 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_REWARD_COINS,
 		100
 	))
+	# --- Tier 2 quests (added) ---
+	quests.append(_make_quest(
+		"mana_gatherer",
+		"Mana Gatherer",
+		"Collect 250 mana from the Flower Grove.",
+		QUEST_GOAL_COLLECT_MANA,
+		250,
+		QUEST_REWARD_COINS,
+		60
+	))
+	quests.append(_make_quest(
+		"grove_keeper",
+		"Grove Keeper",
+		"Upgrade the Flower Grove 3 times.",
+		QUEST_GOAL_UPGRADE_FLOWER,
+		3,
+		QUEST_REWARD_COINS,
+		100
+	))
+	quests.append(_make_quest(
+		"master_brewer",
+		"Master Brewer",
+		"Craft 5 Mana Potions.",
+		QUEST_GOAL_CRAFT_POTION,
+		5,
+		QUEST_REWARD_COINS,
+		120
+	))
+	
+	quests.append(_make_quest(
+		"seasoned_trader",
+		"Seasoned Trader",
+		"Fulfill 5 Market Stall orders.",
+		QUEST_GOAL_MARKET_TRADE,
+		5,
+		QUEST_REWARD_COINS,
+		150
+	))
+	quests.append(_make_quest(
+		"fairy_circle",
+		"Fairy Circle",
+		"Assign a fairy to the Flower Grove 3 times.",
+		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
+		3,
+		QUEST_REWARD_MANA,
+		80
+	))
+	
+	quests.append(_make_quest(
+		"master_forger",
+		"Master Forger",
+		"Purchase 3 Arcane Forge upgrades.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		3,
+		QUEST_REWARD_COINS,
+		200
+	))
+	# --- Tier 3 quests (added) ---
+	quests.append(_make_quest(
+		"mana_hoarder",
+		"Mana Hoarder",
+		"Collect 750 mana from the Flower Grove.",
+		QUEST_GOAL_COLLECT_MANA,
+		750,
+		QUEST_REWARD_COINS,
+		200
+	))
+	quests.append(_make_quest(
+		"grove_master",
+		"Grove Master",
+		"Upgrade the Flower Grove 9 times.",
+		QUEST_GOAL_UPGRADE_FLOWER,
+		9,
+		QUEST_REWARD_COINS,
+		300
+	))
+	quests.append(_make_quest(
+		"legendary_brewer",
+		"Legendary Brewer",
+		"Craft 15 Mana Potions.",
+		QUEST_GOAL_CRAFT_POTION,
+		15,
+		QUEST_REWARD_COINS,
+		350
+	))
+
+	quests.append(_make_quest(
+		"master_merchant",
+		"Master Merchant",
+		"Fulfill 15 Market Stall orders.",
+		QUEST_GOAL_MARKET_TRADE,
+		15,
+		QUEST_REWARD_COINS,
+		450
+	))
+	quests.append(_make_quest(
+		"fairy_monarch",
+		"Fairy Monarch",
+		"Assign a fairy to the Flower Grove 9 times.",
+		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
+		9,
+		QUEST_REWARD_MANA,
+		240
+	))
+
+	quests.append(_make_quest(
+		"grand_forger",
+		"Grand Forger",
+		"Purchase 9 Arcane Forge upgrades.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		9,
+		QUEST_REWARD_COINS,
+		600
+	))
 
 
 func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int) -> Dictionary:
