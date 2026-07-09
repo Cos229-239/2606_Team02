@@ -50,6 +50,7 @@ const POND_DECORATION_EDITOR_RECT := Rect2(140, 320, 800, 830)
 const FAIRY_TASK_FLOWER_GROVE := "flower_grove"
 const FAIRY_TASK_FORAGE_INGREDIENTS := "forage_ingredients"
 const FAIRY_TASK_SACRED_POND := "sacred_pond"
+const FAIRY_TASK_IDS := [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]
 const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
 const FAIRY_MAX_LEVEL := 5
 const FAIRY_WORK_BONUS_PER_LEVEL := 0.5
@@ -1361,6 +1362,26 @@ func get_fairy_task_ready_count(task_id: String) -> int:
 	return int(fairy_task_ready_counts.get(task_id, 0))
 
 
+func get_total_fairy_task_ready_count() -> int:
+	var total := 0
+	for task_id in FAIRY_TASK_IDS:
+		total += get_fairy_task_ready_count(task_id)
+	return total
+
+
+func get_fairy_task_inbox_text() -> String:
+	var ready_count := get_total_fairy_task_ready_count()
+	if ready_count > 0:
+		return "%d fairy reward%s ready to collect." % [ready_count, "" if ready_count == 1 else "s"]
+	var active_count := 0
+	for task_id in FAIRY_TASK_IDS:
+		if _get_fairy_task_speed(task_id) > 0.0:
+			active_count += 1
+	if active_count > 0:
+		return "%d fairy task%s in progress." % [active_count, "" if active_count == 1 else "s"]
+	return "Assign fairies to begin gathering rewards."
+
+
 func get_fairy_task_status_text(task_id: String) -> String:
 	var ready_count := get_fairy_task_ready_count(task_id)
 	if ready_count > 0:
@@ -1517,6 +1538,52 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		save_status_changed.emit(ingredient_message)
 		return {"Success": true, "Message": ingredient_message, "LevelUpNames": level_up_names, "FloatingText": "+Ingredients"}
 	return {"Success": false, "Message": "Unknown fairy task."}
+
+
+func collect_all_fairy_task_rewards() -> Dictionary:
+	var starting_ready_count := get_total_fairy_task_ready_count()
+	if starting_ready_count <= 0:
+		return {"Success": false, "Message": "No fairy task rewards ready.", "ClaimedCount": 0, "LevelUpNames": []}
+
+	var claimed_count := 0
+	var mana_gained := 0
+	var spirit_gained := 0
+	var ingredient_rewards := 0
+	var level_up_names: Array[String] = []
+	for task_id in FAIRY_TASK_IDS:
+		while get_fairy_task_ready_count(task_id) > 0:
+			var before_mana := total_mana
+			var before_spirit := sacred_pond_spirit_energy
+			var result: Dictionary = collect_fairy_task_reward(task_id)
+			if not bool(result.get("Success", false)):
+				break
+			claimed_count += 1
+			mana_gained += max(0, total_mana - before_mana)
+			spirit_gained += max(0, sacred_pond_spirit_energy - before_spirit)
+			if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+				ingredient_rewards += 1
+			for fairy_name in result.get("LevelUpNames", []):
+				var clean_name := String(fairy_name)
+				if not level_up_names.has(clean_name):
+					level_up_names.append(clean_name)
+
+	var parts: Array[String] = []
+	if mana_gained > 0:
+		parts.append("%d Mana" % mana_gained)
+	if spirit_gained > 0:
+		parts.append("%d Spirit" % spirit_gained)
+	if ingredient_rewards > 0:
+		parts.append("%d ingredient bundle%s" % [ingredient_rewards, "" if ingredient_rewards == 1 else "s"])
+	var reward_text := ", ".join(parts) if not parts.is_empty() else "fairy rewards"
+	var message := _append_fairy_level_message("Collected %d fairy reward%s: %s." % [claimed_count, "" if claimed_count == 1 else "s", reward_text], level_up_names)
+	save_status_changed.emit(message)
+	return {
+		"Success": claimed_count > 0,
+		"Message": message,
+		"ClaimedCount": claimed_count,
+		"LevelUpNames": level_up_names,
+		"FloatingText": "+%d Rewards" % claimed_count
+	}
 
 
 func _grant_fairy_task_xp(task_id: String) -> Array[String]:

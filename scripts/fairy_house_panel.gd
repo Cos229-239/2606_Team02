@@ -278,6 +278,7 @@ func _rebuild_fairy_cards() -> void:
 func _rebuild_task_cards() -> void:
 	_set_section_title("Fairy Tasks")
 	_clear_cards()
+	fairy_cards_container.add_child(_make_task_inbox_card())
 	for task in GameState.get_fairy_task_cards():
 		fairy_cards_container.add_child(_make_task_card(task))
 	fairy_cards_container.add_child(_make_info_card(
@@ -399,6 +400,79 @@ func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
 	body.add_theme_constant_override("shadow_offset_y", 2)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(body)
+	return card
+
+
+func _make_task_inbox_card() -> PanelContainer:
+	var ready_count := GameState.get_total_fairy_task_ready_count()
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	var border_color := Color("#f3d57a") if ready_count > 0 else Color("#80d6ff")
+	var bg_color := Color(0.050, 0.038, 0.018, 0.94) if ready_count > 0 else Color(0.018, 0.030, 0.046, 0.92)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(border_color, bg_color))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+
+	var status := Label.new()
+	status.text = "REWARD INBOX"
+	status.add_theme_font_size_override("font_size", 15)
+	status.add_theme_color_override("font_color", Color("#f3d57a"))
+	status.add_theme_color_override("font_shadow_color", Color.BLACK)
+	status.add_theme_constant_override("shadow_offset_x", 2)
+	status.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(status)
+
+	var title := Label.new()
+	title.text = "%d Ready" % ready_count
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color("#fff0c2"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = "%s\n\nClaim all gathers every ready mana, ingredient, and pond reward while still granting fairy XP." % GameState.get_fairy_task_inbox_text()
+	body.custom_minimum_size = Vector2(1, 178)
+	body.add_theme_font_size_override("font_size", 17)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var collect_all := Button.new()
+	collect_all.name = "ClaimAllFairyTasksButton"
+	collect_all.text = "Claim All" if ready_count <= 1 else "Claim All x%d" % ready_count
+	collect_all.custom_minimum_size = Vector2(1, 52)
+	collect_all.add_theme_font_size_override("font_size", 20)
+	collect_all.disabled = ready_count <= 0
+	collect_all.pressed.connect(func() -> void:
+		SoundManager.play_collect()
+		var result: Dictionary = GameState.collect_all_fairy_task_rewards()
+		var message := String(result.get("Message", ""))
+		feedback_label.text = message
+		var float_text := String(result.get("FloatingText", message))
+		var level_up_names: Array = result.get("LevelUpNames", [])
+		_show_floating_text(float_text, Vector2(340, 790), Color("#f3d57a"))
+		if not level_up_names.is_empty():
+			_show_floating_text("%s leveled up!" % ", ".join(level_up_names), Vector2(280, 720), Color("#a8ff9b"))
+		active_view = "tasks"
+		_refresh()
+	)
+	layout.add_child(collect_all)
 	return card
 
 

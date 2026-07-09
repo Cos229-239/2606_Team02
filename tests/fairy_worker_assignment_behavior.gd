@@ -45,6 +45,10 @@ func _init() -> void:
 		fail("Fairy House level 1 should not alter task speed")
 	if state.get_fairy_house_reward_multiplier() != 1.0:
 		fail("Fairy House level 1 should not alter task rewards")
+	if state.get_total_fairy_task_ready_count() != 0:
+		fail("No fairy rewards should be ready at the start")
+	if not state.get_fairy_task_inbox_text().contains("in progress"):
+		fail("Fairy task inbox should summarize active work")
 
 	state.update_fairy_tasks(30.0)
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 1:
@@ -56,6 +60,10 @@ func _init() -> void:
 		fail("Completed mana task should advertise that a reward is ready")
 	if not bool(ready_task.get("IsReady", false)):
 		fail("Completed mana task should expose ready flag")
+	if state.get_total_fairy_task_ready_count() != 1:
+		fail("Fairy task inbox should count ready rewards")
+	if not state.get_fairy_task_inbox_text().contains("ready to collect"):
+		fail("Fairy task inbox should summarize ready rewards")
 
 	var mana_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FLOWER_GROVE)
 	if not bool(mana_reward.get("Success", false)):
@@ -70,17 +78,24 @@ func _init() -> void:
 		fail("Pip should complete one Sacred Pond fairy task after 60 total seconds")
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FORAGE_INGREDIENTS) != 1:
 		fail("Luna should complete one ingredient forage after 60 seconds")
-	var pond_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_SACRED_POND)
-	if not bool(pond_reward.get("Success", false)):
-		fail("Sacred Pond fairy task reward should be collectable")
+	var claim_all_reward: Dictionary = state.collect_all_fairy_task_rewards()
+	if not bool(claim_all_reward.get("Success", false)):
+		fail("Claim all should collect ready fairy task rewards")
+	if int(claim_all_reward.get("ClaimedCount", 0)) != 3:
+		fail("Claim all should collect mana, pond, and ingredient rewards")
+	if not String(claim_all_reward.get("Message", "")).contains("Mana"):
+		fail("Claim all should summarize collected Mana")
 	if state.sacred_pond_spirit_energy != 1:
-		fail("Sacred Pond fairy task should award Spirit Energy")
-	var ingredient_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FORAGE_INGREDIENTS)
-	if not bool(ingredient_reward.get("Success", false)):
-		fail("Ingredient fairy task reward should be collectable")
+		fail("Claim all should award Spirit Energy")
+	if state.get_total_fairy_task_ready_count() != 0:
+		fail("Claim all should clear ready fairy rewards")
+	if bool(state.collect_all_fairy_task_rewards().get("Success", false)):
+		fail("Claim all should fail cleanly when no rewards are ready")
 	var luna_after_tasks: Dictionary = state.get_fairy_data("Luna")
-	if int(luna_after_tasks.get("FairyXP", 0)) != 2:
-		fail("Luna should gain XP from completed mana and ingredient tasks")
+	if int(luna_after_tasks.get("FairyLevel", 1)) != 2:
+		fail("Luna should level up from individual and claim-all task rewards")
+	if int(luna_after_tasks.get("FairyXP", 0)) != 0:
+		fail("Luna XP should reset after leveling from claim-all rewards")
 	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_MANA_CRYSTAL) != 1:
 		fail("Ingredient forage should add Mana Crystal")
 	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_DREAMBLOOM) != 2:
@@ -103,16 +118,16 @@ func _init() -> void:
 		fail("Expected Luna pond assignment feedback")
 	if int(state.get_flower_fairy_bonus_production()) != 1:
 		fail("Expected only Nim to boost Flower Grove")
-	if state.get_sacred_pond_fairy_restore_bonus() != 3:
+	if state.get_sacred_pond_fairy_restore_bonus() != 4:
 		fail("Expected Pip and Luna to boost Sacred Pond restore")
-	if state.get_sacred_pond_total_restore_amount() != 8:
-		fail("Expected total restore amount to update to 8")
+	if state.get_sacred_pond_total_restore_amount() != 9:
+		fail("Expected total restore amount to update to 9")
 
 	state.total_mana = 25
 	var old_purity: int = state.sacred_pond_water_purity
 	if not state.restore_sacred_pond():
 		fail("Restore should succeed with enough mana")
-	if state.sacred_pond_water_purity != old_purity + 8:
+	if state.sacred_pond_water_purity != old_purity + 9:
 		fail("Restore should include fairy pond bonus")
 
 	var rest_message: String = state.assign_fairy_to_area("Nim", "Unassigned")
@@ -132,7 +147,7 @@ func _init() -> void:
 		fail("Luna assignment should survive load")
 	if int(loaded_state.get_flower_fairy_bonus_production()) != 0:
 		fail("Loaded Flower Grove bonus should be recalculated")
-	if loaded_state.get_sacred_pond_fairy_restore_bonus() != 3:
+	if loaded_state.get_sacred_pond_fairy_restore_bonus() != 4:
 		fail("Loaded Sacred Pond bonus should be recalculated")
 
 	loaded_state.total_mana = 1000
