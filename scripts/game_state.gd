@@ -35,6 +35,9 @@ const QUEST_REWARD_COINS := "Coins"
 const SUN_KOI_GUARDIAN_SPIRIT_BONUS := 1
 const POTION_RECIPE_MANA := "mana_potion"
 const POTION_RECIPE_SPIRIT_TONIC := "spirit_tonic"
+const POTION_INGREDIENT_MANA_CRYSTAL := "mana_crystal"
+const POTION_INGREDIENT_DREAMBLOOM := "dreambloom"
+const POTION_INGREDIENT_EMPTY_VIAL := "empty_vial"
 const FLOWER_GRID_COLUMNS := 3
 const FLOWER_GRID_ROWS := 4
 const FLOWER_GRID_SLOT_COUNT := 12
@@ -45,6 +48,7 @@ const FLOWER_TIER_BLOOM := 3
 const FLOWER_TIER_RARE_BLOSSOM := 4
 const POND_DECORATION_EDITOR_RECT := Rect2(140, 320, 800, 830)
 const FAIRY_TASK_FLOWER_GROVE := "flower_grove"
+const FAIRY_TASK_FORAGE_INGREDIENTS := "forage_ingredients"
 const FAIRY_TASK_SACRED_POND := "sacred_pond"
 const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
 
@@ -92,6 +96,7 @@ var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
 var potion_crafting_recipe_id: String = POTION_RECIPE_MANA
 var potion_inventory: Dictionary = {}
+var potion_ingredients: Dictionary = {}
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
 var market_reputation: int = 1
@@ -615,6 +620,10 @@ func get_potion_recipe_data(recipe_id: String) -> Dictionary:
 				"Name": "Mana Potion",
 				"CostMana": potion_mana_cost,
 				"CostSpirit": 0,
+				"Ingredients": {
+					POTION_INGREDIENT_MANA_CRYSTAL: 1,
+					POTION_INGREDIENT_EMPTY_VIAL: 1
+				},
 				"BaseCraftTime": potion_base_craft_time,
 				"SellValue": potion_sell_value,
 				"Description": "A reliable village staple brewed from gathered Mana."
@@ -625,6 +634,11 @@ func get_potion_recipe_data(recipe_id: String) -> Dictionary:
 				"Name": "Spirit Tonic",
 				"CostMana": 20,
 				"CostSpirit": 5,
+				"Ingredients": {
+					POTION_INGREDIENT_MANA_CRYSTAL: 1,
+					POTION_INGREDIENT_DREAMBLOOM: 2,
+					POTION_INGREDIENT_EMPTY_VIAL: 1
+				},
 				"BaseCraftTime": potion_base_craft_time + 2,
 				"SellValue": potion_sell_value + 45,
 				"Description": "A bright pond-infused tonic that sells for a premium."
@@ -637,6 +651,84 @@ func get_potion_recipes() -> Array[Dictionary]:
 		get_potion_recipe_data(POTION_RECIPE_MANA),
 		get_potion_recipe_data(POTION_RECIPE_SPIRIT_TONIC)
 	]
+
+
+func get_potion_ingredient_name(ingredient_id: String) -> String:
+	match ingredient_id:
+		POTION_INGREDIENT_MANA_CRYSTAL:
+			return "Mana Crystal"
+		POTION_INGREDIENT_DREAMBLOOM:
+			return "Dreambloom"
+		POTION_INGREDIENT_EMPTY_VIAL:
+			return "Empty Vial"
+	return "Ingredient"
+
+
+func get_potion_ingredient_count(ingredient_id: String) -> int:
+	_sync_potion_ingredients()
+	return int(potion_ingredients.get(ingredient_id, 0))
+
+
+func get_potion_ingredient_requirements(recipe_id: String) -> Dictionary:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		return {}
+	var ingredients = recipe.get("Ingredients", {})
+	return ingredients if ingredients is Dictionary else {}
+
+
+func has_potion_ingredients(recipe_id: String) -> bool:
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	for ingredient_id in requirements.keys():
+		if get_potion_ingredient_count(String(ingredient_id)) < int(requirements.get(ingredient_id, 0)):
+			return false
+	return true
+
+
+func get_potion_ingredient_requirement_text(recipe_id: String) -> String:
+	var lines: Array[String] = []
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	for ingredient_id in requirements.keys():
+		var clean_id := String(ingredient_id)
+		lines.append("%s %d / %d" % [
+			get_potion_ingredient_name(clean_id),
+			get_potion_ingredient_count(clean_id),
+			int(requirements.get(ingredient_id, 0))
+		])
+	return "\n".join(lines)
+
+
+func add_potion_ingredient(ingredient_id: String, amount: int) -> void:
+	if amount <= 0:
+		return
+	_sync_potion_ingredients()
+	potion_ingredients[ingredient_id] = get_potion_ingredient_count(ingredient_id) + amount
+	inventory_changed.emit()
+	potion_shop_changed.emit()
+
+
+func _spend_potion_ingredients(recipe_id: String) -> void:
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	_sync_potion_ingredients()
+	for ingredient_id in requirements.keys():
+		var clean_id := String(ingredient_id)
+		potion_ingredients[clean_id] = max(0, get_potion_ingredient_count(clean_id) - int(requirements.get(ingredient_id, 0)))
+
+
+func buy_potion_ingredient_bundle() -> Dictionary:
+	var cost := 30
+	if total_coins < cost:
+		save_status_changed.emit("Not enough Coins.")
+		return {"Success": false, "Message": "Not enough Coins."}
+	total_coins -= cost
+	add_potion_ingredient(POTION_INGREDIENT_MANA_CRYSTAL, 2)
+	add_potion_ingredient(POTION_INGREDIENT_DREAMBLOOM, 2)
+	add_potion_ingredient(POTION_INGREDIENT_EMPTY_VIAL, 2)
+	resources_changed.emit()
+	save_game()
+	var message := "Bought potion ingredients."
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
 
 
 func get_potion_count(recipe_id: String) -> int:
@@ -656,7 +748,7 @@ func can_craft_potion(recipe_id: String) -> bool:
 	var recipe := get_potion_recipe_data(recipe_id)
 	if recipe.is_empty() or potion_crafting_active:
 		return false
-	return total_mana >= int(recipe.get("CostMana", 0)) and sacred_pond_spirit_energy >= int(recipe.get("CostSpirit", 0))
+	return total_mana >= int(recipe.get("CostMana", 0)) and sacred_pond_spirit_energy >= int(recipe.get("CostSpirit", 0)) and has_potion_ingredients(recipe_id)
 
 
 func start_potion_craft(recipe_id: String) -> bool:
@@ -675,9 +767,13 @@ func start_potion_craft(recipe_id: String) -> bool:
 	if sacred_pond_spirit_energy < cost_spirit:
 		save_status_changed.emit("Not enough Spirit Energy.")
 		return false
+	if not has_potion_ingredients(recipe_id):
+		save_status_changed.emit("Missing potion ingredients.")
+		return false
 
 	total_mana -= cost_mana
 	sacred_pond_spirit_energy -= cost_spirit
+	_spend_potion_ingredients(recipe_id)
 	potion_current_craft_time = float(get_potion_craft_time(recipe_id))
 	potion_crafting_recipe_id = recipe_id
 	potion_crafting_active = true
@@ -761,6 +857,23 @@ func _set_potion_inventory_from_save(saved_inventory) -> void:
 			potion_inventory[clean_recipe_id] = max(0, int(saved_inventory.get(recipe_id, 0)))
 	_sync_potion_inventory_from_legacy()
 	_sync_legacy_mana_potion_count()
+
+
+func _sync_potion_ingredients() -> void:
+	for ingredient_id in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		if not potion_ingredients.has(ingredient_id):
+			potion_ingredients[ingredient_id] = 0
+
+
+func _set_potion_ingredients_from_save(saved_ingredients) -> void:
+	potion_ingredients.clear()
+	if saved_ingredients is Dictionary:
+		for ingredient_id in saved_ingredients.keys():
+			var clean_id := String(ingredient_id)
+			if clean_id not in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+				continue
+			potion_ingredients[clean_id] = max(0, int(saved_ingredients.get(ingredient_id, 0)))
+	_sync_potion_ingredients()
 
 
 func upgrade_potion_shop() -> bool:
@@ -1149,6 +1262,7 @@ func update_fairy_tasks(delta: float) -> void:
 	var flower_speed := _get_fairy_task_speed(FAIRY_AREA_FLOWER_GROVE)
 	if flower_speed > 0.0:
 		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * delta) or changed
+		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, flower_speed * delta * 0.75) or changed
 	var pond_speed := _get_fairy_task_speed(FAIRY_AREA_SACRED_POND)
 	if pond_speed > 0.0:
 		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * delta) or changed
@@ -1198,6 +1312,15 @@ func get_fairy_task_cards() -> Array[Dictionary]:
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FLOWER_GROVE),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE),
 			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE)
+		},
+		{
+			"TaskID": FAIRY_TASK_FORAGE_INGREDIENTS,
+			"Title": "Forage Ingredients",
+			"Area": FAIRY_AREA_FLOWER_GROVE,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"RewardText": "Crystals, blooms, and vials"
 		},
 		{
 			"TaskID": FAIRY_TASK_SACRED_POND,
@@ -1254,6 +1377,15 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		var pond_message := "Fairies gathered %d Spirit Energy." % reward_amount
 		save_status_changed.emit(pond_message)
 		return {"Success": true, "Message": pond_message}
+	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+		add_potion_ingredient(POTION_INGREDIENT_MANA_CRYSTAL, 1)
+		add_potion_ingredient(POTION_INGREDIENT_DREAMBLOOM, 2)
+		add_potion_ingredient(POTION_INGREDIENT_EMPTY_VIAL, 1)
+		fairy_house_changed.emit()
+		save_game()
+		var ingredient_message := "Fairies delivered potion ingredients."
+		save_status_changed.emit(ingredient_message)
+		return {"Success": true, "Message": ingredient_message}
 	return {"Success": false, "Message": "Unknown fairy task."}
 
 
@@ -1331,19 +1463,21 @@ func _reset_fairies_to_defaults() -> void:
 func _reset_fairy_tasks_to_defaults() -> void:
 	fairy_task_progress.clear()
 	fairy_task_progress[FAIRY_TASK_FLOWER_GROVE] = 0.0
+	fairy_task_progress[FAIRY_TASK_FORAGE_INGREDIENTS] = 0.0
 	fairy_task_progress[FAIRY_TASK_SACRED_POND] = 0.0
 	fairy_task_ready_counts.clear()
 	fairy_task_ready_counts[FAIRY_TASK_FLOWER_GROVE] = 0
+	fairy_task_ready_counts[FAIRY_TASK_FORAGE_INGREDIENTS] = 0
 	fairy_task_ready_counts[FAIRY_TASK_SACRED_POND] = 0
 
 
 func _apply_saved_fairy_tasks(saved_progress, saved_ready_counts) -> void:
 	_reset_fairy_tasks_to_defaults()
 	if saved_progress is Dictionary:
-		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_SACRED_POND]:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]:
 			fairy_task_progress[task_id] = clampf(float(saved_progress.get(task_id, 0.0)), 0.0, FAIRY_TASK_REQUIRED_PROGRESS - 0.01)
 	if saved_ready_counts is Dictionary:
-		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_SACRED_POND]:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]:
 			fairy_task_ready_counts[task_id] = max(0, int(saved_ready_counts.get(task_id, 0)))
 
 
@@ -1573,6 +1707,13 @@ func get_inventory_items() -> Array[Dictionary]:
 			"Category": "Crafted Goods",
 			"Description": String(recipe.get("Description", "Crafted in the Potion Shop."))
 		})
+	for ingredient_id in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		items.append({
+			"Name": get_potion_ingredient_name(ingredient_id),
+			"Quantity": get_potion_ingredient_count(ingredient_id),
+			"Category": "Potion Ingredients",
+			"Description": "Gathered by fairies and consumed by Potion Shop recipes."
+		})
 	var active_fairies := 0
 	for fairy in fairies:
 		if bool(fairy.get("IsUnlocked", false)):
@@ -1674,6 +1815,7 @@ func get_save_data() -> Dictionary:
 		"potion_crafting_active": potion_crafting_active,
 		"potion_crafting_recipe_id": potion_crafting_recipe_id,
 		"potion_inventory": potion_inventory,
+		"potion_ingredients": potion_ingredients,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
 		"market_reputation": market_reputation,
@@ -1804,6 +1946,7 @@ func apply_save_data(data: Dictionary) -> void:
 		potion_current_craft_time = 0.0
 	potion_sell_value = int(data.get("potion_sell_value", 50))
 	_set_potion_inventory_from_save(data.get("potion_inventory", {}))
+	_set_potion_ingredients_from_save(data.get("potion_ingredients", {}))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
 	market_reputation = int(data.get("market_reputation", 1))
 	market_orders_completed = int(data.get("market_orders_completed", 0))
@@ -1948,6 +2091,10 @@ func reset_to_defaults() -> void:
 	potion_inventory.clear()
 	potion_inventory[POTION_RECIPE_MANA] = 0
 	potion_inventory[POTION_RECIPE_SPIRIT_TONIC] = 0
+	potion_ingredients.clear()
+	potion_ingredients[POTION_INGREDIENT_MANA_CRYSTAL] = 0
+	potion_ingredients[POTION_INGREDIENT_DREAMBLOOM] = 0
+	potion_ingredients[POTION_INGREDIENT_EMPTY_VIAL] = 0
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
 	market_reputation = 1

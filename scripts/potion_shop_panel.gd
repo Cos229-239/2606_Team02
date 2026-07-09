@@ -308,11 +308,15 @@ func _refresh() -> void:
 	if recipe_description_label:
 		recipe_description_label.text = String(recipe.get("Description", ""))
 	if requirements_label:
-		requirements_label.text = "Requirements\n\nMana %d / %d\n\nSpirit Energy %d / %d" % [
+		var ingredient_text := GameState.get_potion_ingredient_requirement_text(selected_recipe_id)
+		if ingredient_text == "":
+			ingredient_text = "None"
+		requirements_label.text = "Requirements\n\nMana %d / %d\n\nSpirit Energy %d / %d\n\n%s" % [
 			GameState.total_mana,
 			cost_mana,
 			GameState.sacred_pond_spirit_energy,
-			cost_spirit
+			cost_spirit,
+			ingredient_text
 		]
 	if potion_details_label:
 		potion_details_label.text = "Craft Time\n%ds\n\nSell Value\n%d\n\nOwned\n%d" % [
@@ -321,7 +325,7 @@ func _refresh() -> void:
 			owned
 		]
 	if craft_button:
-		craft_button.disabled = GameState.potion_crafting_active
+		craft_button.disabled = GameState.potion_crafting_active or not GameState.can_craft_potion(selected_recipe_id)
 	for recipe_id in recipe_buttons.keys():
 		var button := recipe_buttons[recipe_id] as Button
 		button.disabled = GameState.potion_crafting_active
@@ -347,7 +351,9 @@ func _on_craft_pressed() -> void:
 func _on_buy_pressed() -> void:
 	SoundManager.play_click()
 	upgrade_confirmation_pending = false
-	feedback_label.text = "Select a recipe, then craft or sell."
+	var result: Dictionary = GameState.buy_potion_ingredient_bundle()
+	feedback_label.text = String(result.get("Message", ""))
+	_refresh()
 
 
 func _on_sell_pressed() -> void:

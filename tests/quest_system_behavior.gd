@@ -34,6 +34,8 @@ func _init() -> void:
 		fail("A Fairy's Work should complete after assigning a fairy to Flower Grove")
 
 	state.total_mana = 25
+	state.add_potion_ingredient(state.POTION_INGREDIENT_MANA_CRYSTAL, 1)
+	state.add_potion_ingredient(state.POTION_INGREDIENT_EMPTY_VIAL, 1)
 	if not state.start_mana_potion_craft():
 		fail("Potion craft should start")
 	state.update_potion_crafting(5.1)

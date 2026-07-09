@@ -22,10 +22,18 @@ func _init() -> void:
 	if state.start_mana_potion_craft():
 		fail("Craft should fail without enough mana")
 	state.total_mana = 25
+	if state.start_mana_potion_craft():
+		fail("Craft should fail without potion ingredients")
+	state.add_potion_ingredient(state.POTION_INGREDIENT_MANA_CRYSTAL, 1)
+	state.add_potion_ingredient(state.POTION_INGREDIENT_EMPTY_VIAL, 1)
 	if not state.start_mana_potion_craft():
-		fail("Craft should start with enough mana")
+		fail("Craft should start with enough mana and ingredients")
 	if state.total_mana != 0:
 		fail("Craft should spend 25 mana")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_MANA_CRYSTAL) != 0:
+		fail("Craft should spend Mana Crystal")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_EMPTY_VIAL) != 0:
+		fail("Craft should spend Empty Vial")
 	if not state.potion_crafting_active:
 		fail("Crafting should be active")
 	if state.start_mana_potion_craft():
@@ -54,8 +62,11 @@ func _init() -> void:
 	if state.start_potion_craft("spirit_tonic"):
 		fail("Spirit Tonic should require enough Spirit Energy")
 	state.sacred_pond_spirit_energy = 5
+	state.add_potion_ingredient(state.POTION_INGREDIENT_MANA_CRYSTAL, 1)
+	state.add_potion_ingredient(state.POTION_INGREDIENT_DREAMBLOOM, 2)
+	state.add_potion_ingredient(state.POTION_INGREDIENT_EMPTY_VIAL, 1)
 	if not state.start_potion_craft("spirit_tonic"):
-		fail("Spirit Tonic craft should start with Mana and Spirit Energy")
+		fail("Spirit Tonic craft should start with Mana, Spirit Energy, and ingredients")
 	if state.total_mana != 0:
 		fail("Spirit Tonic should spend 20 mana")
 	if state.sacred_pond_spirit_energy != 0:
@@ -85,6 +96,8 @@ func _init() -> void:
 		fail("Save data should include mana potion count")
 	if not data.has("potion_inventory"):
 		fail("Save data should include recipe potion inventory")
+	if not data.has("potion_ingredients"):
+		fail("Save data should include potion ingredients")
 	if not data.has("potion_crafting_active"):
 		fail("Save data should include crafting active state")
 
@@ -104,6 +117,15 @@ func _init() -> void:
 	})
 	if legacy_state.get_potion_count("mana_potion") != 3:
 		fail("Old saves should migrate mana_potion_count into recipe inventory")
+
+	state.total_coins = 30
+	var bought: Dictionary = state.buy_potion_ingredient_bundle()
+	if not bool(bought.get("Success", false)):
+		fail("Buying ingredients should succeed with enough coins")
+	if state.total_coins != 0:
+		fail("Buying ingredients should spend coins")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_DREAMBLOOM) < 2:
+		fail("Buying ingredients should add Dreambloom")
 
 	print("Potion Shop behavior check passed")
 	quit(0)

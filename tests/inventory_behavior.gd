@@ -16,6 +16,7 @@ func _run() -> void:
 	game_state.total_coins = 80
 	game_state.mana_potion_count = 2
 	game_state.sacred_pond_spirit_energy = 12
+	game_state.add_potion_ingredient(game_state.POTION_INGREDIENT_MANA_CRYSTAL, 3)
 	game_state.inventory_notes.clear()
 	game_state.inventory_notes.append("Found market ledger")
 
@@ -31,6 +32,9 @@ func _run() -> void:
 		return
 	if not _has_item(items, "Mana Potion", 2):
 		fail("Inventory should include crafted Mana Potions")
+		return
+	if not _has_item(items, "Mana Crystal", 3):
+		fail("Inventory should include potion ingredients")
 		return
 	game_state.potion_inventory["spirit_tonic"] = 1
 	if not _has_item(game_state.get_inventory_items(), "Spirit Tonic", 1):

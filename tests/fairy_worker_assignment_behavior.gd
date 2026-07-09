@@ -16,8 +16,8 @@ func _init() -> void:
 		fail("Expected total restore amount to start at 6")
 	if state.fairy_workers_active != 2:
 		fail("Expected Luna and Pip to count as active workers")
-	if state.get_fairy_task_cards().size() != 2:
-		fail("Expected Fairy House to expose two active task cards")
+	if state.get_fairy_task_cards().size() != 3:
+		fail("Expected Fairy House to expose mana, ingredient, and pond task cards")
 
 	state.update_fairy_tasks(30.0)
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 1:
@@ -36,11 +36,22 @@ func _init() -> void:
 	state.update_fairy_tasks(30.0)
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_SACRED_POND) != 1:
 		fail("Pip should complete one Sacred Pond fairy task after 60 total seconds")
+	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FORAGE_INGREDIENTS) != 1:
+		fail("Luna should complete one ingredient forage after 60 seconds")
 	var pond_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_SACRED_POND)
 	if not bool(pond_reward.get("Success", false)):
 		fail("Sacred Pond fairy task reward should be collectable")
 	if state.sacred_pond_spirit_energy != 1:
 		fail("Sacred Pond fairy task should award Spirit Energy")
+	var ingredient_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FORAGE_INGREDIENTS)
+	if not bool(ingredient_reward.get("Success", false)):
+		fail("Ingredient fairy task reward should be collectable")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_MANA_CRYSTAL) != 1:
+		fail("Ingredient forage should add Mana Crystal")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_DREAMBLOOM) != 2:
+		fail("Ingredient forage should add Dreambloom")
+	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_EMPTY_VIAL) != 1:
+		fail("Ingredient forage should add Empty Vial")
 
 	var nim_message: String = state.assign_fairy_to_area("Nim", "Flower Grove")
 	if nim_message != "Nim assigned to Flower Grove":
