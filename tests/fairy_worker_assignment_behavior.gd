@@ -4,8 +4,12 @@ func _init() -> void:
 	var state = load("res://scripts/game_state.gd").new()
 	state.reset_to_defaults()
 
-	if state.fairies.size() != 3:
-		fail("Expected Luna, Pip, and Nim to exist")
+	if state.fairies.size() != 5:
+		fail("Expected Luna, Pip, Nim, and recruitable fairies to exist")
+	if state.get_unlocked_fairy_count() != 3:
+		fail("Expected three fairies to be unlocked by default")
+	if state.get_recruitable_fairy_cards().size() != 2:
+		fail("Expected two recruitable fairy cards by default")
 	if int(state.get_flower_fairy_bonus_production()) != 2:
 		fail("Expected Luna to add +2 mana/sec by default")
 	if int(state.get_flower_production_rate()) != 7:
@@ -136,6 +140,32 @@ func _init() -> void:
 		fail("Fairy House should upgrade to max level")
 	if loaded_state.get_fairy_house_xp_gain() != 2:
 		fail("Max Fairy House should grant extra task XP")
+	if loaded_state.fairy_max_residents < 5:
+		fail("Max Fairy House should have room for recruitable fairies")
+
+	loaded_state.total_mana = 1000
+	loaded_state.total_coins = 1000
+	loaded_state.sacred_pond_spirit_energy = 100
+	loaded_state.add_potion_ingredient(loaded_state.POTION_INGREDIENT_MANA_CRYSTAL, 4)
+	loaded_state.add_potion_ingredient(loaded_state.POTION_INGREDIENT_DREAMBLOOM, 4)
+	loaded_state.add_potion_ingredient(loaded_state.POTION_INGREDIENT_EMPTY_VIAL, 2)
+	var sol_recruit: Dictionary = loaded_state.recruit_fairy("Sol")
+	if not bool(sol_recruit.get("Success", false)):
+		fail("Sol should be recruitable with capacity and resources")
+	if loaded_state.get_unlocked_fairy_count() != 4:
+		fail("Recruiting Sol should increase unlocked fairy count")
+	var sol_assign: String = loaded_state.assign_fairy_to_area("Sol", "Flower Grove")
+	if sol_assign != "Sol assigned to Flower Grove":
+		fail("Recruited Sol should be assignable")
+	if int(loaded_state.get_flower_fairy_bonus_production()) < 1:
+		fail("Recruited Sol should add Flower Grove production")
+	var mira_recruit: Dictionary = loaded_state.recruit_fairy("Mira")
+	if not bool(mira_recruit.get("Success", false)):
+		fail("Mira should be recruitable with max house capacity")
+	if loaded_state.get_unlocked_fairy_count() != 5:
+		fail("Recruiting Mira should fill max fairy capacity")
+	if bool(loaded_state.recruit_fairy("Mira").get("Success", false)):
+		fail("Mira should not be recruitable twice")
 
 	var level_message: String = loaded_state.assign_fairy_to_area("Nim", "Flower Grove")
 	if level_message != "Nim assigned to Flower Grove":
@@ -164,6 +194,10 @@ func _init() -> void:
 		fail("Fairy work bonus should survive save/load")
 	if reloaded_state.fairy_house_level != loaded_state.FAIRY_HOUSE_MAX_LEVEL:
 		fail("Fairy House level should survive save/load")
+	if not bool(reloaded_state.get_fairy_data("Sol").get("IsUnlocked", false)):
+		fail("Recruited Sol should survive save/load")
+	if not bool(reloaded_state.get_fairy_data("Mira").get("IsUnlocked", false)):
+		fail("Recruited Mira should survive save/load")
 
 	print("Fairy worker assignment behavior check passed")
 	quit(0)

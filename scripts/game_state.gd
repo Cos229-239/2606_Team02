@@ -60,6 +60,10 @@ const FAIRY_HOUSE_UPGRADE_COSTS := {
 	4: {"Mana": 220, "Coins": 90, "Spirit": 5},
 	5: {"Mana": 320, "Coins": 150, "Spirit": 10}
 }
+const FAIRY_RECRUIT_COSTS := {
+	"Sol": {"Mana": 120, "Coins": 40, "Spirit": 0, POTION_INGREDIENT_MANA_CRYSTAL: 1, POTION_INGREDIENT_DREAMBLOOM: 2, POTION_INGREDIENT_EMPTY_VIAL: 0},
+	"Mira": {"Mana": 180, "Coins": 75, "Spirit": 4, POTION_INGREDIENT_MANA_CRYSTAL: 2, POTION_INGREDIENT_DREAMBLOOM: 2, POTION_INGREDIENT_EMPTY_VIAL: 1}
+}
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -1529,7 +1533,7 @@ func get_fairy_house_upgrade_summary() -> String:
 		4:
 			benefit = "+30% task speed and +25% task rewards"
 		5:
-			benefit = "+40% task speed, role training, and +2 XP per task"
+			benefit = "+40% task speed, +1 fairy capacity, role training, and +2 XP per task"
 		_:
 			benefit = "More fairy support"
 	return "Next Level %d: %s\nCost: %d Mana, %d Coins, %d Spirit" % [
@@ -1564,7 +1568,7 @@ func upgrade_fairy_house() -> Dictionary:
 	total_coins -= int(cost.get("Coins", 0))
 	sacred_pond_spirit_energy -= int(cost.get("Spirit", 0))
 	fairy_house_level = target_level
-	if fairy_house_level == 3:
+	if fairy_house_level == 3 or fairy_house_level == 5:
 		fairy_max_residents += 1
 	recalculate_fairy_bonuses()
 	resources_changed.emit()
@@ -1614,6 +1618,110 @@ func get_fairy_data(fairy_name: String) -> Dictionary:
 		if fairy.get("FairyName", "") == fairy_name:
 			return fairy.duplicate(true)
 	return {}
+
+
+func get_unlocked_fairy_count() -> int:
+	var count := 0
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			count += 1
+	return count
+
+
+func get_recruitable_fairy_cards() -> Array[Dictionary]:
+	var cards: Array[Dictionary] = []
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			continue
+		var fairy_name := String(fairy.get("FairyName", "Fairy"))
+		cards.append({
+			"FairyName": fairy_name,
+			"FairyRole": String(fairy.get("FairyRole", "Helper")),
+			"WorkBonus": float(fairy.get("WorkBonus", 1.0)),
+			"SpecialtyText": get_fairy_specialty_text(fairy),
+			"CostText": get_fairy_recruit_cost_text(fairy_name),
+			"CanRecruit": can_recruit_fairy(fairy_name)
+		})
+	return cards
+
+
+func get_fairy_recruit_cost(fairy_name: String) -> Dictionary:
+	if not FAIRY_RECRUIT_COSTS.has(fairy_name):
+		return {}
+	return (FAIRY_RECRUIT_COSTS[fairy_name] as Dictionary).duplicate(true)
+
+
+func get_fairy_recruit_cost_text(fairy_name: String) -> String:
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		return "Recruit cost unavailable"
+	var parts: Array[String] = []
+	for key in ["Mana", "Coins", "Spirit", POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		var amount := int(cost.get(key, 0))
+		if amount <= 0:
+			continue
+		if key == POTION_INGREDIENT_MANA_CRYSTAL or key == POTION_INGREDIENT_DREAMBLOOM or key == POTION_INGREDIENT_EMPTY_VIAL:
+			parts.append("%d %s" % [amount, get_potion_ingredient_name(key)])
+		else:
+			parts.append("%d %s" % [amount, key])
+	return ", ".join(parts)
+
+
+func can_recruit_fairy(fairy_name: String) -> bool:
+	var fairy := _get_fairy_index(fairy_name)
+	if fairy < 0:
+		return false
+	if bool(fairies[fairy].get("IsUnlocked", false)):
+		return false
+	if get_unlocked_fairy_count() >= fairy_max_residents:
+		return false
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		return false
+	return total_mana >= int(cost.get("Mana", 0)) and total_coins >= int(cost.get("Coins", 0)) and sacred_pond_spirit_energy >= int(cost.get("Spirit", 0)) and get_potion_ingredient_count(POTION_INGREDIENT_MANA_CRYSTAL) >= int(cost.get(POTION_INGREDIENT_MANA_CRYSTAL, 0)) and get_potion_ingredient_count(POTION_INGREDIENT_DREAMBLOOM) >= int(cost.get(POTION_INGREDIENT_DREAMBLOOM, 0)) and get_potion_ingredient_count(POTION_INGREDIENT_EMPTY_VIAL) >= int(cost.get(POTION_INGREDIENT_EMPTY_VIAL, 0))
+
+
+func recruit_fairy(fairy_name: String) -> Dictionary:
+	var fairy_index := _get_fairy_index(fairy_name)
+	if fairy_index < 0:
+		save_status_changed.emit("Fairy not found.")
+		return {"Success": false, "Message": "Fairy not found."}
+	if bool(fairies[fairy_index].get("IsUnlocked", false)):
+		save_status_changed.emit("%s already lives here." % fairy_name)
+		return {"Success": false, "Message": "%s already lives here." % fairy_name}
+	if get_unlocked_fairy_count() >= fairy_max_residents:
+		save_status_changed.emit("Upgrade the Fairy House for more room.")
+		return {"Success": false, "Message": "Upgrade the Fairy House for more room."}
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		save_status_changed.emit("Recruit cost unavailable.")
+		return {"Success": false, "Message": "Recruit cost unavailable."}
+	if not can_recruit_fairy(fairy_name):
+		save_status_changed.emit("Not enough resources to recruit %s." % fairy_name)
+		return {"Success": false, "Message": "Not enough resources to recruit %s." % fairy_name}
+
+	total_mana -= int(cost.get("Mana", 0))
+	total_coins -= int(cost.get("Coins", 0))
+	sacred_pond_spirit_energy -= int(cost.get("Spirit", 0))
+	potion_ingredients[POTION_INGREDIENT_MANA_CRYSTAL] = get_potion_ingredient_count(POTION_INGREDIENT_MANA_CRYSTAL) - int(cost.get(POTION_INGREDIENT_MANA_CRYSTAL, 0))
+	potion_ingredients[POTION_INGREDIENT_DREAMBLOOM] = get_potion_ingredient_count(POTION_INGREDIENT_DREAMBLOOM) - int(cost.get(POTION_INGREDIENT_DREAMBLOOM, 0))
+	potion_ingredients[POTION_INGREDIENT_EMPTY_VIAL] = get_potion_ingredient_count(POTION_INGREDIENT_EMPTY_VIAL) - int(cost.get(POTION_INGREDIENT_EMPTY_VIAL, 0))
+	fairies[fairy_index]["IsUnlocked"] = true
+	fairies[fairy_index]["AssignedArea"] = FAIRY_AREA_UNASSIGNED
+	recalculate_fairy_bonuses()
+	resources_changed.emit()
+	fairy_house_changed.emit()
+	save_game()
+	var message := "%s joined the Fairy House!" % fairy_name
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func _get_fairy_index(fairy_name: String) -> int:
+	for index in range(fairies.size()):
+		if String(fairies[index].get("FairyName", "")) == fairy_name:
+			return index
+	return -1
 
 
 func get_fairy_xp_to_next_level(fairy: Dictionary) -> int:
@@ -1670,7 +1778,28 @@ func _reset_fairies_to_defaults() -> void:
 		"FairyXP": 0,
 		"IsUnlocked": true
 	})
+	_add_default_fairy_if_missing("Sol", "Gatherer", 1.5, false)
+	_add_default_fairy_if_missing("Mira", "Pond Keeper", 1.5, false)
 	_reset_fairy_tasks_to_defaults()
+
+
+func _add_default_fairy_if_missing(fairy_name: String, role: String, work_bonus: float, is_unlocked: bool) -> void:
+	if _get_fairy_index(fairy_name) >= 0:
+		return
+	fairies.append({
+		"FairyName": fairy_name,
+		"FairyLevel": 1,
+		"FairyRole": role,
+		"AssignedArea": FAIRY_AREA_UNASSIGNED,
+		"WorkBonus": work_bonus,
+		"FairyXP": 0,
+		"IsUnlocked": is_unlocked
+	})
+
+
+func _sync_recruitable_fairies() -> void:
+	_add_default_fairy_if_missing("Sol", "Gatherer", 1.5, false)
+	_add_default_fairy_if_missing("Mira", "Pond Keeper", 1.5, false)
 
 
 func _reset_fairy_tasks_to_defaults() -> void:
@@ -2144,6 +2273,7 @@ func apply_save_data(data: Dictionary) -> void:
 				})
 	else:
 		_reset_fairies_to_defaults()
+	_sync_recruitable_fairies()
 	_apply_saved_fairy_tasks(data.get("fairy_task_progress", {}), data.get("fairy_task_ready_counts", {}))
 	recalculate_fairy_bonuses()
 	update_sacred_pond_level_and_rewards()

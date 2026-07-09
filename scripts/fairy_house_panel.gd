@@ -257,9 +257,10 @@ func _rebuild_fairy_cards() -> void:
 	_clear_cards()
 
 	for fairy in GameState.fairies:
-		if not bool(fairy.get("IsUnlocked", false)):
-			continue
-		fairy_cards_container.add_child(_make_fairy_card(fairy))
+		if bool(fairy.get("IsUnlocked", false)):
+			fairy_cards_container.add_child(_make_fairy_card(fairy))
+		else:
+			fairy_cards_container.add_child(_make_recruit_card(fairy))
 
 
 func _rebuild_task_cards() -> void:
@@ -571,6 +572,67 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	buttons.add_child(_make_assignment_button("Pond", ASSIGN_POND_TEXT, fairy_name, GameState.FAIRY_AREA_SACRED_POND, assigned_area))
 	buttons.add_child(_make_assignment_button("Rest", UNASSIGN_TEXT, fairy_name, GameState.FAIRY_AREA_UNASSIGNED, assigned_area))
 
+	return card
+
+
+func _make_recruit_card(fairy: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(Color("#7f7290"), Color(0.020, 0.018, 0.028, 0.94)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	margin.add_child(layout)
+
+	var fairy_name := String(fairy.get("FairyName", "Fairy"))
+	var title := Label.new()
+	title.text = "%s\nRecruit" % fairy_name
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#d8c8ff"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = "%s\nLevel 1\n\n%s\n\nCost:\n%s" % [
+		String(fairy.get("FairyRole", "Helper")),
+		GameState.get_fairy_specialty_text(fairy),
+		GameState.get_fairy_recruit_cost_text(fairy_name)
+	]
+	body.custom_minimum_size = Vector2(1, 205)
+	body.add_theme_font_size_override("font_size", 16)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var recruit := Button.new()
+	recruit.text = "Recruit"
+	recruit.custom_minimum_size = Vector2(1, 48)
+	recruit.add_theme_font_size_override("font_size", 18)
+	recruit.disabled = not GameState.can_recruit_fairy(fairy_name)
+	recruit.pressed.connect(func() -> void:
+		SoundManager.play_click()
+		var result: Dictionary = GameState.recruit_fairy(fairy_name)
+		feedback_label.text = String(result.get("Message", ""))
+		_show_floating_text(feedback_label.text, Vector2(260, 780), Color("#a8ff9b") if bool(result.get("Success", false)) else Color("#ff9f8a"))
+		active_view = "workers"
+		_refresh()
+	)
+	layout.add_child(recruit)
 	return card
 
 
