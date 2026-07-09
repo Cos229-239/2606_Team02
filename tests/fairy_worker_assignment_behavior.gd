@@ -46,6 +46,9 @@ func _init() -> void:
 	var ingredient_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FORAGE_INGREDIENTS)
 	if not bool(ingredient_reward.get("Success", false)):
 		fail("Ingredient fairy task reward should be collectable")
+	var luna_after_tasks: Dictionary = state.get_fairy_data("Luna")
+	if int(luna_after_tasks.get("FairyXP", 0)) != 2:
+		fail("Luna should gain XP from completed mana and ingredient tasks")
 	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_MANA_CRYSTAL) != 1:
 		fail("Ingredient forage should add Mana Crystal")
 	if state.get_potion_ingredient_count(state.POTION_INGREDIENT_DREAMBLOOM) != 2:
@@ -99,6 +102,30 @@ func _init() -> void:
 		fail("Loaded Flower Grove bonus should be recalculated")
 	if loaded_state.get_sacred_pond_fairy_restore_bonus() != 3:
 		fail("Loaded Sacred Pond bonus should be recalculated")
+
+	var level_message: String = loaded_state.assign_fairy_to_area("Nim", "Flower Grove")
+	if level_message != "Nim assigned to Flower Grove":
+		fail("Expected Nim to be assignable before leveling")
+	loaded_state.fairy_task_ready_counts[loaded_state.FAIRY_TASK_FORAGE_INGREDIENTS] = 3
+	for reward_index in range(3):
+		var forage_reward: Dictionary = loaded_state.collect_fairy_task_reward(loaded_state.FAIRY_TASK_FORAGE_INGREDIENTS)
+		if not bool(forage_reward.get("Success", false)):
+			fail("Forage reward %d should be collectable for leveling" % reward_index)
+	var leveled_nim: Dictionary = loaded_state.get_fairy_data("Nim")
+	if int(leveled_nim.get("FairyLevel", 1)) != 2:
+		fail("Nim should reach level 2 after repeated forage work")
+	if int(leveled_nim.get("FairyXP", 0)) != 0:
+		fail("Nim XP should roll over after leveling")
+	if float(leveled_nim.get("WorkBonus", 1.0)) < 1.5:
+		fail("Nim should gain work bonus after leveling")
+	var leveled_data: Dictionary = loaded_state.get_save_data()
+	var reloaded_state = load("res://scripts/game_state.gd").new()
+	reloaded_state.apply_save_data(leveled_data)
+	var reloaded_nim: Dictionary = reloaded_state.get_fairy_data("Nim")
+	if int(reloaded_nim.get("FairyLevel", 1)) != 2:
+		fail("Fairy level should survive save/load")
+	if float(reloaded_nim.get("WorkBonus", 1.0)) < 1.5:
+		fail("Fairy work bonus should survive save/load")
 
 	print("Fairy worker assignment behavior check passed")
 	quit(0)

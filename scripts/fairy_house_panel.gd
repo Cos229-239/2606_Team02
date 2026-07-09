@@ -465,13 +465,18 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	content_row.add_child(portrait)
 
 	var details := Label.new()
+	var fairy_level := int(fairy.get("FairyLevel", 1))
+	var fairy_xp := int(fairy.get("FairyXP", 0))
+	var xp_text := "MAX" if fairy_level >= GameState.FAIRY_MAX_LEVEL else "%d/%d" % [fairy_xp, GameState.get_fairy_xp_to_next_level(fairy)]
 	details.name = "Details"
 	details.text = (
-		"%s\n%s\nLevel %d\n\nWorking:\n%s\n\n%s"
+		"%s\n%s\nLevel %d\nXP %s\n\n%s\n\nWorking:\n%s\n%s"
 		% [
 			fairy_name,
 			String(fairy.get("FairyRole", "Helper")),
-			int(fairy.get("FairyLevel", 1)),
+			fairy_level,
+			xp_text,
+			GameState.get_fairy_specialty_text(fairy),
 			assigned_area,
 			GameState.get_fairy_bonus_text(fairy)
 		]

@@ -51,6 +51,8 @@ const FAIRY_TASK_FLOWER_GROVE := "flower_grove"
 const FAIRY_TASK_FORAGE_INGREDIENTS := "forage_ingredients"
 const FAIRY_TASK_SACRED_POND := "sacred_pond"
 const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
+const FAIRY_MAX_LEVEL := 5
+const FAIRY_WORK_BONUS_PER_LEVEL := 0.5
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -1259,11 +1261,13 @@ func update_fairy_tasks(delta: float) -> void:
 	if delta <= 0.0:
 		return
 	var changed := false
-	var flower_speed := _get_fairy_task_speed(FAIRY_AREA_FLOWER_GROVE)
+	var flower_speed := _get_fairy_task_speed(FAIRY_TASK_FLOWER_GROVE)
 	if flower_speed > 0.0:
 		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * delta) or changed
-		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, flower_speed * delta * 0.75) or changed
-	var pond_speed := _get_fairy_task_speed(FAIRY_AREA_SACRED_POND)
+	var forage_speed := _get_fairy_task_speed(FAIRY_TASK_FORAGE_INGREDIENTS)
+	if forage_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, forage_speed * delta * 0.75) or changed
+	var pond_speed := _get_fairy_task_speed(FAIRY_TASK_SACRED_POND)
 	if pond_speed > 0.0:
 		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * delta) or changed
 	if changed:
@@ -1283,15 +1287,52 @@ func _advance_fairy_task(task_id: String, amount: float) -> bool:
 	return changed
 
 
-func _get_fairy_task_speed(area: String) -> float:
+func _get_fairy_task_speed(task_id: String) -> float:
 	var speed := 0.0
 	for fairy in fairies:
 		if not bool(fairy.get("IsUnlocked", false)):
 			continue
-		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != area:
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != _get_fairy_task_area(task_id):
 			continue
-		speed += max(0.5, float(fairy.get("WorkBonus", 1.0)))
+		speed += _get_fairy_task_contribution(fairy, task_id)
 	return speed
+
+
+func _get_fairy_task_area(task_id: String) -> String:
+	if task_id == FAIRY_TASK_SACRED_POND:
+		return FAIRY_AREA_SACRED_POND
+	return FAIRY_AREA_FLOWER_GROVE
+
+
+func _get_fairy_task_contribution(fairy: Dictionary, task_id: String) -> float:
+	var work_bonus: float = max(0.5, float(fairy.get("WorkBonus", 1.0)))
+	return work_bonus * _get_fairy_role_task_multiplier(fairy, task_id)
+
+
+func _get_fairy_role_task_multiplier(fairy: Dictionary, task_id: String) -> float:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		if role == "Gatherer":
+			return 1.0
+		if role == "Forager":
+			return 0.9
+		if role == "Pond Keeper":
+			return 0.85
+	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+		if role == "Forager":
+			return 1.6
+		if role == "Gatherer":
+			return 0.75
+		if role == "Pond Keeper":
+			return 0.65
+	if task_id == FAIRY_TASK_SACRED_POND:
+		if role == "Pond Keeper":
+			return 1.0
+		if role == "Gatherer":
+			return 0.9
+		if role == "Forager":
+			return 0.8
+	return 1.0
 
 
 func get_fairy_task_progress_percent(task_id: String) -> int:
@@ -1359,13 +1400,14 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 
 	var reward_amount := get_fairy_task_reward_amount(task_id)
 	fairy_task_ready_counts[task_id] = ready_count - 1
+	var level_up_names := _grant_fairy_task_xp(task_id)
 	if task_id == FAIRY_TASK_FLOWER_GROVE:
 		total_mana += reward_amount
 		add_quest_progress(QUEST_GOAL_COLLECT_MANA, reward_amount)
 		resources_changed.emit()
 		fairy_house_changed.emit()
 		save_game()
-		var mana_message := "Fairies delivered %d Mana." % reward_amount
+		var mana_message := _append_fairy_level_message("Fairies delivered %d Mana." % reward_amount, level_up_names)
 		save_status_changed.emit(mana_message)
 		return {"Success": true, "Message": mana_message}
 	if task_id == FAIRY_TASK_SACRED_POND:
@@ -1374,7 +1416,7 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		sacred_pond_changed.emit()
 		fairy_house_changed.emit()
 		save_game()
-		var pond_message := "Fairies gathered %d Spirit Energy." % reward_amount
+		var pond_message := _append_fairy_level_message("Fairies gathered %d Spirit Energy." % reward_amount, level_up_names)
 		save_status_changed.emit(pond_message)
 		return {"Success": true, "Message": pond_message}
 	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
@@ -1383,10 +1425,42 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		add_potion_ingredient(POTION_INGREDIENT_EMPTY_VIAL, 1)
 		fairy_house_changed.emit()
 		save_game()
-		var ingredient_message := "Fairies delivered potion ingredients."
+		var ingredient_message := _append_fairy_level_message("Fairies delivered potion ingredients.", level_up_names)
 		save_status_changed.emit(ingredient_message)
 		return {"Success": true, "Message": ingredient_message}
 	return {"Success": false, "Message": "Unknown fairy task."}
+
+
+func _grant_fairy_task_xp(task_id: String) -> Array[String]:
+	var level_up_names: Array[String] = []
+	var task_area := _get_fairy_task_area(task_id)
+	for index in range(fairies.size()):
+		if not bool(fairies[index].get("IsUnlocked", false)):
+			continue
+		if String(fairies[index].get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != task_area:
+			continue
+		if int(fairies[index].get("FairyLevel", 1)) >= FAIRY_MAX_LEVEL:
+			fairies[index]["FairyXP"] = 0
+			continue
+		fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) + 1
+		var xp_to_next := get_fairy_xp_to_next_level(fairies[index])
+		if int(fairies[index].get("FairyXP", 0)) >= xp_to_next:
+			fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) - xp_to_next
+			fairies[index]["FairyLevel"] = min(FAIRY_MAX_LEVEL, int(fairies[index].get("FairyLevel", 1)) + 1)
+			fairies[index]["WorkBonus"] = float(fairies[index].get("WorkBonus", 1.0)) + FAIRY_WORK_BONUS_PER_LEVEL
+			level_up_names.append(String(fairies[index].get("FairyName", "Fairy")))
+	recalculate_fairy_bonuses()
+	if not level_up_names.is_empty():
+		resources_changed.emit()
+		flower_grove_changed.emit()
+		sacred_pond_changed.emit()
+	return level_up_names
+
+
+func _append_fairy_level_message(base_message: String, level_up_names: Array[String]) -> String:
+	if level_up_names.is_empty():
+		return base_message
+	return "%s %s leveled up!" % [base_message, ", ".join(level_up_names)]
 
 
 func recalculate_fairy_bonuses() -> void:
@@ -1421,6 +1495,28 @@ func get_fairy_assigned_area(fairy_name: String) -> String:
 	return FAIRY_AREA_UNASSIGNED
 
 
+func get_fairy_data(fairy_name: String) -> Dictionary:
+	for fairy in fairies:
+		if fairy.get("FairyName", "") == fairy_name:
+			return fairy.duplicate(true)
+	return {}
+
+
+func get_fairy_xp_to_next_level(fairy: Dictionary) -> int:
+	return max(3, int(fairy.get("FairyLevel", 1)) * 3)
+
+
+func get_fairy_specialty_text(fairy: Dictionary) -> String:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return "Best at mana gathering"
+	if role == "Pond Keeper":
+		return "Best at tending waters"
+	if role == "Forager":
+		return "Best at ingredient foraging"
+	return "Flexible helper"
+
+
 func get_fairy_bonus_text(fairy: Dictionary) -> String:
 	var assigned_area := String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED))
 	var work_bonus := float(fairy.get("WorkBonus", 0.0))
@@ -1439,6 +1535,7 @@ func _reset_fairies_to_defaults() -> void:
 		"FairyRole": "Gatherer",
 		"AssignedArea": FAIRY_AREA_FLOWER_GROVE,
 		"WorkBonus": 2.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
 	fairies.append({
@@ -1447,14 +1544,16 @@ func _reset_fairies_to_defaults() -> void:
 		"FairyRole": "Pond Keeper",
 		"AssignedArea": FAIRY_AREA_SACRED_POND,
 		"WorkBonus": 1.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
 	fairies.append({
 		"FairyName": "Nim",
 		"FairyLevel": 1,
-		"FairyRole": "Helper",
+		"FairyRole": "Forager",
 		"AssignedArea": FAIRY_AREA_UNASSIGNED,
 		"WorkBonus": 1.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
 	_reset_fairy_tasks_to_defaults()
@@ -1926,6 +2025,7 @@ func apply_save_data(data: Dictionary) -> void:
 					"FairyRole": String(saved_fairy.get("FairyRole", "Helper")),
 					"AssignedArea": String(saved_fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)),
 					"WorkBonus": float(saved_fairy.get("WorkBonus", 1.0)),
+					"FairyXP": int(saved_fairy.get("FairyXP", 0)),
 					"IsUnlocked": bool(saved_fairy.get("IsUnlocked", true))
 				})
 	else:
