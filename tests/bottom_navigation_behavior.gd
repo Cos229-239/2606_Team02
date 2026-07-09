@@ -15,6 +15,11 @@ func _run() -> void:
 	var village = load("res://scenes/MainVillage.tscn").instantiate()
 	root.add_child(village)
 	await process_frame
+	var fairy_layer: Node = village.get_node_or_null("Fairy Worker Visuals")
+	if fairy_layer == null:
+		fail("Main Village should render assigned fairy worker visuals")
+	if fairy_layer.get_child_count() < 9:
+		fail("Fairy worker visuals should include sprite, glow, and label for each default fairy")
 
 	village._open_sacred_pond()
 	if village.open_panel == null or village.open_panel.name != "SacredPondPanel":

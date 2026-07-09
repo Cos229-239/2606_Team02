@@ -46,6 +46,7 @@ var open_panel: Control
 var attention_layer: Control
 var restoration_visual_layer: Control
 var pond_decoration_visual_layer: Control
+var fairy_worker_visual_layer: Control
 var quests_button: TextureButton
 var quests_badge: Label
 
@@ -57,11 +58,14 @@ func _ready() -> void:
 	GameState.resources_changed.connect(_refresh_attention_indicators)
 	GameState.resources_changed.connect(_refresh_restoration_visuals)
 	GameState.flower_grove_changed.connect(_refresh_attention_indicators)
+	GameState.flower_grove_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.fairy_house_changed.connect(_refresh_attention_indicators)
+	GameState.fairy_house_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.potion_shop_changed.connect(_refresh_attention_indicators)
 	GameState.sacred_pond_changed.connect(_refresh_restoration_visuals)
 	GameState.sacred_pond_changed.connect(_refresh_pond_decoration_visuals)
 	GameState.sacred_pond_changed.connect(_refresh_attention_indicators)
+	GameState.sacred_pond_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.quests_changed.connect(_refresh_quest_button)
 	GameState.quests_changed.connect(_refresh_attention_indicators)
 	GameState.save_status_changed.connect(_show_feedback)
@@ -92,6 +96,7 @@ func _build_screen() -> void:
 	_add_area_button("Fairy House", _get_placement_rect("FairyHousePlacement", Rect2(156, 1260, 288, 244)), Color("#6b4a24"), _open_fairy_house, "Luna Assigned")
 	_add_area_button("Market Stall", _get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)), Color("#7a3f1f"), _open_market_stall, "Trade Orders")
 	_add_area_button("Arcane Forge", _get_placement_rect("ArcaneForgePlacement", Rect2(760, 1030, 250, 235)), Color("#2c516f"), _open_arcane_forge, "Gear Upgrades")
+	_build_fairy_worker_visual_layer()
 	_build_attention_layer()
 	_build_pond_decoration_visual_layer()
 	_build_hud()
@@ -806,6 +811,150 @@ func _add_cottage_details(rect: Rect2) -> void:
 
 func _add_potion_shop_details(rect: Rect2) -> void:
 	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.90), Vector2(rect.size.x * 0.44, max(18.0, rect.size.y * 0.11)), 0.20)
+
+
+func _build_fairy_worker_visual_layer() -> void:
+	fairy_worker_visual_layer = Control.new()
+	fairy_worker_visual_layer.name = "Fairy Worker Visuals"
+	fairy_worker_visual_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fairy_worker_visual_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fairy_worker_visual_layer.z_index = 24
+	add_child(fairy_worker_visual_layer)
+	_refresh_fairy_worker_visuals()
+
+
+func _refresh_fairy_worker_visuals() -> void:
+	if fairy_worker_visual_layer == null:
+		return
+	for child in fairy_worker_visual_layer.get_children():
+		child.queue_free()
+
+	var flower_rect := _get_placement_rect("FlowerGrovePlacement", Rect2(392, 807, 308, 238))
+	var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
+	var fairy_rect := _get_placement_rect("FairyHousePlacement", Rect2(156, 1260, 288, 244))
+	var flower_index := 0
+	var pond_index := 0
+	var resting_index := 0
+
+	for fairy in GameState.fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		var assigned_area := String(fairy.get("AssignedArea", GameState.FAIRY_AREA_UNASSIGNED))
+		var fairy_name := String(fairy.get("FairyName", "Fairy"))
+		if assigned_area == GameState.FAIRY_AREA_FLOWER_GROVE:
+			_add_fairy_worker_visual(fairy, _get_flower_fairy_position(flower_rect, flower_index), "%s gathering" % fairy_name)
+			flower_index += 1
+		elif assigned_area == GameState.FAIRY_AREA_SACRED_POND:
+			_add_fairy_worker_visual(fairy, _get_pond_fairy_position(pond_rect, pond_index), "%s tending" % fairy_name)
+			pond_index += 1
+		else:
+			_add_fairy_worker_visual(fairy, _get_resting_fairy_position(fairy_rect, resting_index), "%s resting" % fairy_name, true)
+			resting_index += 1
+
+
+func _get_flower_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.18, 0.18),
+		Vector2(0.72, 0.24),
+		Vector2(0.46, 0.66),
+		Vector2(0.30, 0.52)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _get_pond_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.18, 0.30),
+		Vector2(0.78, 0.34),
+		Vector2(0.58, 0.72),
+		Vector2(0.34, 0.66)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _get_resting_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.72, 0.18),
+		Vector2(0.30, 0.76),
+		Vector2(0.54, 0.88),
+		Vector2(0.18, 0.38)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _add_fairy_worker_visual(fairy: Dictionary, center_position: Vector2, label_text: String, resting: bool = false) -> void:
+	var fairy_name := String(fairy.get("FairyName", "Fairy"))
+	var role_color := _get_fairy_role_color(fairy)
+	var orb := _add_layer_sprite(
+		fairy_worker_visual_layer,
+		"res://assets/sprites/effects/glow_orb.png",
+		center_position - Vector2(26, 20),
+		Vector2(52, 52),
+		Color(role_color.r, role_color.g, role_color.b, 0.52 if resting else 0.74)
+	)
+	orb.z_index = 1
+
+	var sprite := _add_layer_sprite(
+		fairy_worker_visual_layer,
+		_get_home_fairy_sprite_path(fairy_name),
+		center_position - Vector2(24, 42),
+		Vector2(48, 76),
+		Color(1.0, 1.0, 1.0, 0.72 if resting else 0.96)
+	)
+	sprite.z_index = 2
+
+	var label := Label.new()
+	label.text = label_text
+	label.position = center_position + Vector2(-56, 30)
+	label.size = Vector2(112, 30)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", role_color)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	fairy_worker_visual_layer.add_child(label)
+
+	_animate_fairy_worker(sprite, orb, label, resting)
+
+
+func _animate_fairy_worker(sprite: Sprite2D, orb: Sprite2D, label: Label, resting: bool) -> void:
+	var bob_distance := 5.0 if resting else 9.0
+	var duration := 1.45 if resting else 1.05
+	var sprite_start := sprite.position
+	var orb_start := orb.position
+	var label_start := label.position
+	var tween := create_tween()
+	tween.set_loops()
+	tween.tween_property(sprite, "position", sprite_start + Vector2(0, -bob_distance), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(orb, "position", orb_start + Vector2(0, -bob_distance * 0.55), duration)
+	tween.parallel().tween_property(label, "position", label_start + Vector2(0, -bob_distance * 0.25), duration)
+	tween.tween_property(sprite, "position", sprite_start, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(orb, "position", orb_start, duration)
+	tween.parallel().tween_property(label, "position", label_start, duration)
+	tween.tween_interval(0.02)
+
+
+func _get_home_fairy_sprite_path(fairy_name: String) -> String:
+	match fairy_name:
+		"Luna":
+			return "res://assets/sprites/characters/fairy_luna.png"
+		"Pip":
+			return "res://assets/sprites/characters/fairy_pond_keeper.png"
+		"Nim":
+			return "res://assets/sprites/characters/fairy_potion_maker.png"
+	return "res://assets/sprites/characters/fairy_placeholder.png"
+
+
+func _get_fairy_role_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color("#f3d57a")
+	if role == "Pond Keeper":
+		return Color("#80d6ff")
+	if role == "Forager":
+		return Color("#c784ff")
+	return Color("#b98c43")
 
 
 func _build_attention_layer() -> void:
