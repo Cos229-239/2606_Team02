@@ -26,6 +26,21 @@ func _init() -> void:
 	for task in task_cards:
 		if String(task.get("TaskRateText", "")) == "":
 			fail("Fairy task cards should expose visible task rate text")
+		if String(task.get("StatusText", "")) == "":
+			fail("Fairy task cards should expose visible status text")
+		if String(task.get("WorkerText", "")) == "":
+			fail("Fairy task cards should expose worker contribution text")
+		if String(task.get("ProgressText", "")) == "":
+			fail("Fairy task cards should expose visible progress text")
+		if String(task.get("TimeRemainingText", "")) == "":
+			fail("Fairy task cards should expose visible ETA text")
+		if not task.has("IsReady") or not task.has("IsActive"):
+			fail("Fairy task cards should expose ready and active flags")
+	var first_mana_task: Dictionary = task_cards[0]
+	if String(first_mana_task.get("StatusText", "")) != "Working":
+		fail("Mana task should show working when Luna is assigned")
+	if not String(first_mana_task.get("WorkerText", "")).contains("Luna"):
+		fail("Mana task should show Luna as a working fairy")
 	if state.get_fairy_house_task_speed_multiplier() != 1.0:
 		fail("Fairy House level 1 should not alter task speed")
 	if state.get_fairy_house_reward_multiplier() != 1.0:
@@ -36,6 +51,11 @@ func _init() -> void:
 		fail("Luna should complete one Flower Grove fairy task after 30 seconds")
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_SACRED_POND) != 0:
 		fail("Pip should need more time before a Sacred Pond fairy task is ready")
+	var ready_task: Dictionary = state.get_fairy_task_cards()[0]
+	if String(ready_task.get("StatusText", "")) != "Ready to collect":
+		fail("Completed mana task should advertise that a reward is ready")
+	if not bool(ready_task.get("IsReady", false)):
+		fail("Completed mana task should expose ready flag")
 
 	var mana_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FLOWER_GROVE)
 	if not bool(mana_reward.get("Success", false)):

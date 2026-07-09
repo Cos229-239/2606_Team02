@@ -10,6 +10,7 @@ var workers_button: BaseButton
 var tasks_button: BaseButton
 var upgrades_button: BaseButton
 var active_view: String = "workers"
+var task_refresh_elapsed: float = 0.0
 
 const ASSIGN_FLOWER_TEXT := "Assign to Flower Grove"
 const ASSIGN_POND_TEXT := "Assign to Sacred Pond"
@@ -25,10 +26,21 @@ func _ready() -> void:
 		_bind_scene_ui()
 	else:
 		_build_panel()
+	set_process(true)
 	GameState.flower_grove_changed.connect(_refresh)
 	GameState.sacred_pond_changed.connect(_refresh)
 	GameState.fairy_house_changed.connect(_refresh)
 	_refresh()
+
+
+func _process(delta: float) -> void:
+	if active_view != "tasks":
+		task_refresh_elapsed = 0.0
+		return
+	task_refresh_elapsed += delta
+	if task_refresh_elapsed >= 1.0:
+		task_refresh_elapsed = 0.0
+		_refresh()
 
 
 func _bind_scene_ui() -> void:
@@ -395,18 +407,31 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	card.custom_minimum_size = Vector2(286, 338)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
-	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+	var is_ready := bool(task.get("IsReady", false))
+	var is_active := bool(task.get("IsActive", false))
+	var border_color := Color("#a8ff9b") if is_ready else Color("#80d6ff") if is_active else Color("#7f7290")
+	var bg_color := Color(0.028, 0.042, 0.030, 0.93) if is_ready else Color(0.018, 0.030, 0.046, 0.92) if is_active else Color(0.020, 0.018, 0.028, 0.92)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(border_color, bg_color))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
 	card.add_child(margin)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 10)
+	layout.add_theme_constant_override("separation", 8)
 	margin.add_child(layout)
+
+	var status := Label.new()
+	status.text = String(task.get("StatusText", "Idle")).to_upper()
+	status.add_theme_font_size_override("font_size", 15)
+	status.add_theme_color_override("font_color", Color("#a8ff9b") if is_ready else Color("#80d6ff") if is_active else Color("#cbbf9a"))
+	status.add_theme_color_override("font_shadow_color", Color.BLACK)
+	status.add_theme_constant_override("shadow_offset_x", 2)
+	status.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(status)
 
 	var title := Label.new()
 	title.text = String(task.get("Title", "Fairy Task"))
@@ -418,19 +443,15 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(title)
 
-	var workers: Array = task.get("Workers", [])
-	var worker_text := "No fairies assigned."
-	if not workers.is_empty():
-		worker_text = ", ".join(workers)
 	var details := Label.new()
-	details.text = "%s\nWorkers: %s\nReward: %s\nRate: %s" % [
+	details.text = "%s\nWorkers: %s\nReward: %s\n%s" % [
 		String(task.get("Area", "")),
-		worker_text,
+		String(task.get("WorkerText", "No fairies assigned")),
 		String(task.get("RewardText", "")),
 		String(task.get("TaskRateText", "Idle"))
 	]
-	details.custom_minimum_size = Vector2(1, 112)
-	details.add_theme_font_size_override("font_size", 17)
+	details.custom_minimum_size = Vector2(1, 98)
+	details.add_theme_font_size_override("font_size", 15)
 	details.add_theme_color_override("font_color", Color("#fff0c2"))
 	details.add_theme_color_override("font_shadow_color", Color.BLACK)
 	details.add_theme_constant_override("shadow_offset_x", 2)
@@ -446,9 +467,22 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	progress.custom_minimum_size = Vector2(1, 32)
 	layout.add_child(progress)
 
+	var progress_text := Label.new()
+	progress_text.text = "%s   %s" % [
+		String(task.get("ProgressText", "0 / 60 progress")),
+		String(task.get("TimeRemainingText", "Assign a fairy to begin"))
+	]
+	progress_text.add_theme_font_size_override("font_size", 14)
+	progress_text.add_theme_color_override("font_color", Color("#d7ecff") if is_active else Color("#cbbf9a"))
+	progress_text.add_theme_color_override("font_shadow_color", Color.BLACK)
+	progress_text.add_theme_constant_override("shadow_offset_x", 2)
+	progress_text.add_theme_constant_override("shadow_offset_y", 2)
+	progress_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(progress_text)
+
 	var ready_count := int(task.get("ReadyCount", 0))
 	var ready := Label.new()
-	ready.text = "Ready: %d" % ready_count
+	ready.text = "Ready Rewards: %d" % ready_count
 	ready.add_theme_font_size_override("font_size", 18)
 	ready.add_theme_color_override("font_color", Color("#aeea84") if ready_count > 0 else Color("#cbbf9a"))
 	ready.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -457,7 +491,9 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	layout.add_child(ready)
 
 	var collect := Button.new()
-	collect.text = "Collect"
+	collect.text = "Collect Reward"
+	if ready_count > 1:
+		collect.text = "Collect Reward x%d" % ready_count
 	collect.custom_minimum_size = Vector2(1, 52)
 	collect.add_theme_font_size_override("font_size", 20)
 	collect.disabled = ready_count <= 0

@@ -1352,8 +1352,32 @@ func get_fairy_task_progress_percent(task_id: String) -> int:
 	return int(floor((float(fairy_task_progress.get(task_id, 0.0)) / FAIRY_TASK_REQUIRED_PROGRESS) * 100.0))
 
 
+func get_fairy_task_progress_text(task_id: String) -> String:
+	var progress := float(fairy_task_progress.get(task_id, 0.0))
+	return "%d / %d progress" % [int(floor(progress)), int(FAIRY_TASK_REQUIRED_PROGRESS)]
+
+
 func get_fairy_task_ready_count(task_id: String) -> int:
 	return int(fairy_task_ready_counts.get(task_id, 0))
+
+
+func get_fairy_task_status_text(task_id: String) -> String:
+	var ready_count := get_fairy_task_ready_count(task_id)
+	if ready_count > 0:
+		return "Ready to collect"
+	if _get_fairy_task_speed(task_id) > 0.0:
+		return "Working"
+	return "Idle"
+
+
+func get_fairy_task_time_remaining_text(task_id: String) -> String:
+	if get_fairy_task_ready_count(task_id) > 0:
+		return "Reward waiting"
+	var speed: float = _get_adjusted_fairy_task_speed(task_id)
+	if speed <= 0.0:
+		return "Assign a fairy to begin"
+	var remaining: float = max(0.0, FAIRY_TASK_REQUIRED_PROGRESS - float(fairy_task_progress.get(task_id, 0.0)))
+	return "Next reward in about %ds" % int(ceil(remaining / speed))
 
 
 func get_fairy_task_cards() -> Array[Dictionary]:
@@ -1363,30 +1387,48 @@ func get_fairy_task_cards() -> Array[Dictionary]:
 			"Title": "Gather Mana",
 			"Area": FAIRY_AREA_FLOWER_GROVE,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_FLOWER_GROVE),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_FLOWER_GROVE),
 			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FLOWER_GROVE),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_FLOWER_GROVE),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FLOWER_GROVE),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_FLOWER_GROVE),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE),
-			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE)
+			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE),
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_FLOWER_GROVE) > 0.0
 		},
 		{
 			"TaskID": FAIRY_TASK_FORAGE_INGREDIENTS,
 			"Title": "Forage Ingredients",
 			"Area": FAIRY_AREA_FLOWER_GROVE,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS),
-			"RewardText": "Crystals, blooms, and vials"
+			"RewardText": "Mana Crystal, Dreambloom x2, Empty Vial",
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_FORAGE_INGREDIENTS) > 0.0
 		},
 		{
 			"TaskID": FAIRY_TASK_SACRED_POND,
 			"Title": "Tend Waters",
 			"Area": FAIRY_AREA_SACRED_POND,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_SACRED_POND),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_SACRED_POND),
 			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_SACRED_POND),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_SACRED_POND),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_SACRED_POND),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_SACRED_POND),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND),
-			"RewardText": "+%d Spirit Energy" % get_fairy_task_reward_amount(FAIRY_TASK_SACRED_POND)
+			"RewardText": "+%d Spirit Energy" % get_fairy_task_reward_amount(FAIRY_TASK_SACRED_POND),
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_SACRED_POND) > 0.0
 		}
 	]
 
@@ -1401,11 +1443,32 @@ func _get_fairies_for_assignment(area: String) -> Array[String]:
 	return names
 
 
-func get_fairy_task_rate_text(task_id: String) -> String:
+func get_fairy_task_worker_text(task_id: String) -> String:
+	var area := _get_fairy_task_area(task_id)
+	var parts: Array[String] = []
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != area:
+			continue
+		parts.append("%s %.1fx" % [
+			String(fairy.get("FairyName", "Fairy")),
+			_get_fairy_task_contribution(fairy, task_id)
+		])
+	if parts.is_empty():
+		return "No fairies assigned"
+	return ", ".join(parts)
+
+
+func _get_adjusted_fairy_task_speed(task_id: String) -> float:
 	var speed := _get_fairy_task_speed(task_id) * get_fairy_house_task_speed_multiplier()
-	if speed <= 0.0:
+	return speed * (0.75 if task_id == FAIRY_TASK_FORAGE_INGREDIENTS else 1.0)
+
+
+func get_fairy_task_rate_text(task_id: String) -> String:
+	var adjusted_speed := _get_adjusted_fairy_task_speed(task_id)
+	if adjusted_speed <= 0.0:
 		return "Idle"
-	var adjusted_speed := speed * (0.75 if task_id == FAIRY_TASK_FORAGE_INGREDIENTS else 1.0)
 	var seconds := FAIRY_TASK_REQUIRED_PROGRESS / adjusted_speed
 	return "%.1fx speed, about %ds" % [adjusted_speed, int(ceil(seconds))]
 
