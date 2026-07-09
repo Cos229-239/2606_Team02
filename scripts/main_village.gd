@@ -82,7 +82,7 @@ func _build_screen() -> void:
 	_build_village_background()
 	_build_building_hit_layer()
 	_build_restoration_focus()
-	_add_placeholder_area_button("Ancient Tree", _get_placement_rect("AncientTreePlacement", Rect2(350, 140, 380, 418)), _open_ancient_tree)
+	_add_landmark_hit_button("Ancient Tree", _get_placement_rect("AncientTreePlacement", Rect2(350, 140, 380, 418)), _open_ancient_tree)
 	_build_restoration_visual_layer()
 
 	_add_area_button("Sacred Koi Pond", _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276)), Color("#123e7a"), _open_sacred_pond, "Water Purity")
@@ -90,9 +90,8 @@ func _build_screen() -> void:
 	_add_area_button("Potion Shop", _get_placement_rect("PotionShopPlacement", Rect2(714, 502, 278, 254)), Color("#5c2e78"), _open_potion_shop, "Mana Potion")
 	_add_area_button("Flower Grove", _get_placement_rect("FlowerGrovePlacement", Rect2(392, 807, 308, 238)), Color("#4b2670"), _open_flower_grove, "Mana Garden")
 	_add_area_button("Fairy House", _get_placement_rect("FairyHousePlacement", Rect2(156, 1260, 288, 244)), Color("#6b4a24"), _open_fairy_house, "Luna Assigned")
-	_build_market_stall_placeholder(_get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)))
-	_add_placeholder_area_button("Market Stall", _get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)), _open_market_stall)
-	_add_placeholder_area_button("Arcane Forge", _get_placement_rect("ArcaneForgePlacement", Rect2(760, 1030, 250, 235)), _open_arcane_forge)
+	_add_area_button("Market Stall", _get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)), Color("#7a3f1f"), _open_market_stall, "Trade Orders")
+	_add_area_button("Arcane Forge", _get_placement_rect("ArcaneForgePlacement", Rect2(760, 1030, 250, 235)), Color("#2c516f"), _open_arcane_forge, "Gear Upgrades")
 	_build_attention_layer()
 	_build_pond_decoration_visual_layer()
 	_build_hud()
@@ -809,10 +808,6 @@ func _add_potion_shop_details(rect: Rect2) -> void:
 	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.90), Vector2(rect.size.x * 0.44, max(18.0, rect.size.y * 0.11)), 0.20)
 
 
-func _build_market_stall_placeholder(rect: Rect2) -> void:
-	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.93), Vector2(rect.size.x * 0.44, max(18.0, rect.size.y * 0.12)), 0.17)
-
-
 func _build_attention_layer() -> void:
 	attention_layer = Control.new()
 	attention_layer.name = "Home Attention Indicators"
@@ -918,7 +913,7 @@ func _animate_koi_loop(koi: Sprite2D, start_position: Vector2, end_position: Vec
 	tween.parallel().tween_property(koi, "rotation", (start_position - end_position).angle() - 0.12, duration * 0.5)
 
 
-func _add_placeholder_area_button(title: String, rect: Rect2, callback: Callable) -> void:
+func _add_landmark_hit_button(title: String, rect: Rect2, callback: Callable) -> void:
 	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.93), Vector2(rect.size.x * 0.42, max(18.0, rect.size.y * 0.12)), 0.16)
 	_add_tappable_glow(rect)
 
@@ -935,23 +930,6 @@ func _add_placeholder_area_button(title: String, rect: Rect2, callback: Callable
 	hit_area.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	hit_area.pressed.connect(callback)
 	building_hit_layer.add_child(hit_area)
-
-	var label := Button.new()
-	label.text = title
-	if title == "Ancient Tree":
-		return
-	var label_rect := _get_area_label_rect(title, rect)
-	label.size = label_rect.size
-	label.position = label_rect.position
-	label.custom_minimum_size = label.size
-	label.focus_mode = Control.FOCUS_NONE
-	label.z_index = 25
-	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_font_size_override("font_size", 17)
-	_apply_sign_style(label)
-	label.pressed.connect(callback)
-	add_child(label)
 
 
 func _add_home_label(text: String, position: Vector2, size: Vector2) -> Button:
