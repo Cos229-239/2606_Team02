@@ -33,6 +33,7 @@ tests=(
   tests/main_village_tutorial_gate_behavior.gd
   tests/market_stall_polish_behavior.gd
   tests/pond_decoration_behavior.gd
+  tests/pond_decorate_visual_behavior.gd
   tests/panel_interaction_polish_behavior.gd
   tests/potion_shop_behavior.gd
   tests/quest_panel_polish_behavior.gd

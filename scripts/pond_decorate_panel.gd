@@ -116,38 +116,43 @@ func _prepare_bound_scene_layout() -> void:
 			layout.add_child(title)
 			layout.add_child(value)
 
+	var bound_pond_layer := get_node_or_null("Root/PondLayer") as Control
+	if bound_pond_layer:
+		bound_pond_layer.position = Vector2.ZERO
+		bound_pond_layer.size = DESIGN_SIZE
+
 	var tray := get_node_or_null("Root/DecorationTray") as Control
 	if tray:
-		tray.position = Vector2(38, 1138)
-		tray.size = Vector2(1004, 516)
+		tray.position = Vector2(38, 1340)
+		tray.size = Vector2(1004, 318)
 		tray.scale = Vector2.ONE
 		var background := tray.get_node_or_null("TrayBackground") as Control
 		if background:
 			background.position = Vector2.ZERO
-			background.size = Vector2(1004, 516)
+			background.size = Vector2(1004, 318)
 			if background is ColorRect:
 				(background as ColorRect).color = PANEL_SOFT
 		var title := tray.get_node_or_null("TrayTitle") as Label
 		if title:
-			title.position = Vector2(0, 16)
-			title.size = Vector2(1004, 54)
-			title.add_theme_font_size_override("font_size", 34)
+			title.position = Vector2(0, 14)
+			title.size = Vector2(1004, 42)
+			title.add_theme_font_size_override("font_size", 28)
 		var legacy_row := tray.get_node_or_null("DecorationRow") as HBoxContainer
 		if legacy_row:
-			legacy_row.position = Vector2(24, 86)
-			legacy_row.size = Vector2(956, 386)
+			legacy_row.position = Vector2(24, 66)
+			legacy_row.size = Vector2(956, 230)
 
 	var feedback_backing := get_node_or_null("Root/FeedbackBacking") as PanelContainer
 	if feedback_backing == null and has_node("Root"):
 		feedback_backing = PanelContainer.new()
 		feedback_backing.name = "FeedbackBacking"
-		feedback_backing.position = Vector2(118, 1076)
+		feedback_backing.position = Vector2(118, 1266)
 		feedback_backing.size = Vector2(844, 58)
 		feedback_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		feedback_backing.add_theme_stylebox_override("panel", _make_panel_style(Color(0.0, 0.02, 0.045, 0.58), Color("#4fa7bf"), 1, 12))
 		get_node("Root").add_child(feedback_backing)
 	if feedback_label:
-		feedback_label.position = Vector2(140, 1088)
+		feedback_label.position = Vector2(140, 1278)
 		feedback_label.size = Vector2(800, 36)
 		feedback_label.add_theme_font_size_override("font_size", 24)
 
@@ -194,7 +199,7 @@ func _build_ui() -> void:
 	_build_slots()
 
 	feedback_label = _make_label("", 26, GOLD)
-	feedback_label.position = Vector2(140, 1088)
+	feedback_label.position = Vector2(140, 1278)
 	feedback_label.size = Vector2(800, 36)
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(feedback_label)
@@ -254,8 +259,8 @@ func _build_slots() -> void:
 
 func _build_decoration_tray(parent: Control) -> void:
 	var tray := PanelContainer.new()
-	tray.position = Vector2(38, 1138)
-	tray.size = Vector2(1004, 516)
+	tray.position = Vector2(38, 1340)
+	tray.size = Vector2(1004, 318)
 	tray.mouse_filter = Control.MOUSE_FILTER_STOP
 	tray.add_theme_stylebox_override("panel", _make_panel_style(PANEL_SOFT, Color("#b88b36"), 2, 18))
 	parent.add_child(tray)
@@ -277,7 +282,7 @@ func _build_decoration_tray(parent: Control) -> void:
 
 	var scroller := ScrollContainer.new()
 	scroller.name = "DecorationScroller"
-	scroller.custom_minimum_size = Vector2(956, 386)
+	scroller.custom_minimum_size = Vector2(956, 230)
 	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroller)
@@ -300,7 +305,7 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 	for index in range(GameState.pond_decorations.size()):
 		var decoration := GameState.pond_decorations[index]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(188, 360)
+		button.custom_minimum_size = Vector2(228, 224)
 		button.text = "%s\nCost %d\nBeauty +%d" % [
 			_decoration_display_name(String(decoration.get("DecorationName", ""))),
 			int(decoration.get("CostMana", 0)),
@@ -310,7 +315,7 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 		button.expand_icon = true
 		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-		button.add_theme_font_size_override("font_size", 17)
+		button.add_theme_font_size_override("font_size", 20)
 		button.add_theme_color_override("font_color", TEXT_LIGHT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", GOLD)
@@ -330,7 +335,7 @@ func _get_or_create_decoration_scroll_row() -> HBoxContainer:
 		scroller = ScrollContainer.new()
 		scroller.name = "DecorationScroller"
 		scroller.position = row.position if row else Vector2(35, 278)
-		scroller.size = row.size if row else Vector2(956, 386)
+		scroller.size = row.size if row else Vector2(956, 230)
 		scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		tray.add_child(scroller)
