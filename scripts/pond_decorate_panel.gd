@@ -16,12 +16,12 @@ const LEGACY_DECORATE_TITLE_FOR_TESTS := "Decorate Sacred Pond"
 const MESSAGE_NOT_ENOUGH_MANA := "Not enough Mana."
 
 const DESIGN_SIZE := Vector2(1080, 1920)
-const DECORATION_TRAY_POSITION := Vector2(20, 1220)
-const DECORATION_TRAY_SIZE := Vector2(1040, 446)
-const DECORATION_ROW_POSITION := Vector2(20, 56)
-const DECORATION_ROW_SIZE := Vector2(1000, 356)
-const DECORATION_CARD_SIZE := Vector2(118, 342)
-const DECORATION_CARD_ART_SIZE := Vector2(104, 142)
+const DECORATION_TRAY_POSITION := Vector2(20, 1336)
+const DECORATION_TRAY_SIZE := Vector2(1040, 352)
+const DECORATION_ROW_POSITION := Vector2(20, 28)
+const DECORATION_ROW_SIZE := Vector2(1000, 312)
+const DECORATION_CARD_SIZE := Vector2(118, 304)
+const DECORATION_CARD_ART_SIZE := Vector2(104, 118)
 const GOLD := Color("#f5d779")
 const TEXT_LIGHT := Color("#fff4cf")
 const PANEL_DARK := Color(0.015, 0.022, 0.05, 0.84)
@@ -140,7 +140,7 @@ func _prepare_bound_scene_layout() -> void:
 		if title:
 			title.position = Vector2(0, 10)
 			title.size = Vector2(1040, 34)
-			title.text = "Decorations"
+			title.text = ""
 			title.add_theme_font_size_override("font_size", 24)
 		var legacy_row := tray.get_node_or_null("DecorationRow") as HBoxContainer
 		if legacy_row:
@@ -151,13 +151,13 @@ func _prepare_bound_scene_layout() -> void:
 	if feedback_backing == null and has_node("Root"):
 		feedback_backing = PanelContainer.new()
 		feedback_backing.name = "FeedbackBacking"
-		feedback_backing.position = Vector2(118, 1124)
+		feedback_backing.position = Vector2(118, 1244)
 		feedback_backing.size = Vector2(844, 58)
 		feedback_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		feedback_backing.add_theme_stylebox_override("panel", _make_panel_style(Color(0.0, 0.02, 0.045, 0.58), Color("#4fa7bf"), 1, 12))
 		get_node("Root").add_child(feedback_backing)
 	if feedback_label:
-		feedback_label.position = Vector2(140, 1136)
+		feedback_label.position = Vector2(140, 1256)
 		feedback_label.size = Vector2(800, 36)
 		feedback_label.add_theme_font_size_override("font_size", 24)
 
@@ -204,7 +204,7 @@ func _build_ui() -> void:
 	_build_slots()
 
 	feedback_label = _make_label("", 26, GOLD)
-	feedback_label.position = Vector2(140, 1136)
+	feedback_label.position = Vector2(140, 1256)
 	feedback_label.size = Vector2(800, 36)
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(feedback_label)
@@ -274,15 +274,16 @@ func _build_decoration_tray(parent: Control) -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 20)
 	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_bottom", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	tray.add_child(margin)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 10)
+	layout.add_theme_constant_override("separation", 0)
 	margin.add_child(layout)
 
-	var header := _make_label("Decorations", 24, GOLD)
+	var header := _make_label("", 1, GOLD)
+	header.custom_minimum_size = Vector2(1, 0)
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layout.add_child(header)
 
@@ -370,7 +371,7 @@ func _make_decoration_card(decoration: Dictionary) -> Control:
 
 	var name_label := _make_label(_decoration_display_name(decoration_name), 19, TEXT_LIGHT)
 	name_label.name = "Name"
-	name_label.custom_minimum_size = Vector2(1, 54)
+	name_label.custom_minimum_size = Vector2(1, 50)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	layout.add_child(name_label)
@@ -388,14 +389,14 @@ func _make_decoration_card(decoration: Dictionary) -> Control:
 
 	var cost_label := _make_label("Mana %d" % int(decoration.get("CostMana", 0)), 22, Color("#8ce8ff"))
 	cost_label.name = "Cost"
-	cost_label.custom_minimum_size = Vector2(1, 34)
+	cost_label.custom_minimum_size = Vector2(1, 30)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	layout.add_child(cost_label)
 
 	var beauty_label := _make_label("+%d Beauty" % int(decoration.get("BeautyValue", 0)), 19, GOLD)
 	beauty_label.name = "Beauty"
-	beauty_label.custom_minimum_size = Vector2(1, 42)
+	beauty_label.custom_minimum_size = Vector2(1, 38)
 	beauty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	beauty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	layout.add_child(beauty_label)
@@ -437,13 +438,13 @@ func _prepare_action_row() -> void:
 	for child in row.get_children():
 		row.remove_child(child)
 		child.queue_free()
-	row.position = Vector2(56, 1708)
-	row.size = Vector2(968, 112)
+	row.position = Vector2(56, 1744)
+	row.size = Vector2(968, 96)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
-	row.add_child(_make_text_action_button("Remove Mode", _on_remove_pressed, Color(0.16, 0.035, 0.028, 0.96), Vector2(300, 88), "RemoveButton"))
-	row.add_child(_make_text_action_button("Clear Selection", _on_clear_selection_pressed, Color(0.02, 0.105, 0.16, 0.96), Vector2(300, 88), "PlaceButton"))
-	row.add_child(_make_text_action_button("Back", _on_back_pressed, Color(0.02, 0.16, 0.052, 0.96), Vector2(300, 88), "BackButton"))
+	row.add_child(_make_text_action_button("Remove Mode", _on_remove_pressed, Color(0.16, 0.035, 0.028, 0.96), Vector2(300, 78), "RemoveButton"))
+	row.add_child(_make_text_action_button("Clear Selection", _on_clear_selection_pressed, Color(0.02, 0.105, 0.16, 0.96), Vector2(300, 78), "PlaceButton"))
+	row.add_child(_make_text_action_button("Back", _on_back_pressed, Color(0.02, 0.16, 0.052, 0.96), Vector2(300, 78), "BackButton"))
 
 
 func _refresh() -> void:

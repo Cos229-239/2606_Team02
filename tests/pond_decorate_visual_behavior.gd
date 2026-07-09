@@ -32,7 +32,7 @@ func _run() -> void:
 	if tray == null:
 		fail("Decorate screen should expose the decoration tray")
 		return
-	if tray.position.y < 1180.0:
+	if tray.position.y < 1320.0:
 		fail("Decoration tray should sit low enough to keep the pond visible")
 		return
 	if tray.position.y <= GameState.POND_DECORATION_EDITOR_RECT.end.y:
@@ -51,7 +51,7 @@ func _run() -> void:
 	if first_card == null:
 		fail("Decoration choices should be visible cards")
 		return
-	if first_card.custom_minimum_size.x < 110.0 or first_card.custom_minimum_size.y < 330.0:
+	if first_card.custom_minimum_size.x < 110.0 or first_card.custom_minimum_size.y < 300.0:
 		fail("Decoration choices should be tall inventory cards")
 		return
 	if first_card.custom_minimum_size.x > 130.0:
@@ -68,7 +68,7 @@ func _run() -> void:
 		fail("Decoration names should stack cleanly on narrow cards")
 		return
 	var art := first_card.find_child("Art", true, false) as TextureRect
-	if art == null or art.custom_minimum_size.x < 100.0 or art.custom_minimum_size.y < 130.0:
+	if art == null or art.custom_minimum_size.x < 100.0 or art.custom_minimum_size.y < 110.0:
 		fail("Decoration cards should reserve a large art area")
 		return
 	var click_target := first_card.get_node_or_null("ClickTarget") as Button
