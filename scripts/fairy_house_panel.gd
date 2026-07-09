@@ -204,6 +204,13 @@ func _make_card_panel_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_tinted_card_panel_style(border_color: Color, bg_color: Color = Color(0.015, 0.018, 0.028, 0.78)) -> StyleBoxFlat:
+	var style := _make_card_panel_style()
+	style.border_color = border_color
+	style.bg_color = bg_color
+	return style
+
+
 func _refresh() -> void:
 	stats_label.text = (
 		"Residents  %d / %d        Workers Active  %d        Resting  %d        House Level  %d"
@@ -360,13 +367,14 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	if not workers.is_empty():
 		worker_text = ", ".join(workers)
 	var details := Label.new()
-	details.text = "%s\nWorkers: %s\nReward: %s" % [
+	details.text = "%s\nWorkers: %s\nReward: %s\nRate: %s" % [
 		String(task.get("Area", "")),
 		worker_text,
-		String(task.get("RewardText", ""))
+		String(task.get("RewardText", "")),
+		String(task.get("TaskRateText", "Idle"))
 	]
-	details.custom_minimum_size = Vector2(1, 94)
-	details.add_theme_font_size_override("font_size", 18)
+	details.custom_minimum_size = Vector2(1, 112)
+	details.add_theme_font_size_override("font_size", 17)
 	details.add_theme_color_override("font_color", Color("#fff0c2"))
 	details.add_theme_color_override("font_shadow_color", Color.BLACK)
 	details.add_theme_constant_override("shadow_offset_x", 2)
@@ -379,7 +387,7 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	progress.max_value = 100
 	progress.value = int(task.get("ProgressPercent", 0))
 	progress.show_percentage = true
-	progress.custom_minimum_size = Vector2(1, 26)
+	progress.custom_minimum_size = Vector2(1, 32)
 	layout.add_child(progress)
 
 	var ready_count := int(task.get("ReadyCount", 0))
@@ -399,8 +407,15 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	collect.disabled = ready_count <= 0
 	var task_id := String(task.get("TaskID", ""))
 	collect.pressed.connect(func() -> void:
+		SoundManager.play_collect()
 		var result: Dictionary = GameState.collect_fairy_task_reward(task_id)
-		feedback_label.text = String(result.get("Message", ""))
+		var message := String(result.get("Message", ""))
+		feedback_label.text = message
+		var float_text := String(result.get("FloatingText", message))
+		var level_up_names: Array = result.get("LevelUpNames", [])
+		_show_floating_text(float_text, Vector2(340, 790), Color("#f3d57a"))
+		if not level_up_names.is_empty():
+			_show_floating_text("%s leveled up!" % ", ".join(level_up_names), Vector2(280, 720), Color("#a8ff9b"))
 		active_view = "tasks"
 		_refresh()
 	)
@@ -425,7 +440,8 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	card.custom_minimum_size = Vector2(286, 338)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
-	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+	var role_color := _get_fairy_role_color(fairy)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(role_color, _get_fairy_role_bg_color(fairy)))
 
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
@@ -532,7 +548,9 @@ func _make_assignment_button(text: String, tooltip: String, fairy_name: String, 
 	button.add_theme_font_size_override("font_size", 14)
 	button.disabled = area == assigned_area
 	button.pressed.connect(func() -> void:
+		SoundManager.play_click()
 		feedback_label.text = GameState.assign_fairy_to_area(fairy_name, area)
+		_show_floating_text(feedback_label.text, Vector2(290, 790), Color("#a8ff9b"))
 		active_view = "workers"
 		_refresh()
 	)
@@ -559,6 +577,46 @@ func _show_upgrades_view() -> void:
 	SoundManager.play_click()
 	feedback_label.text = "House upgrade plan shown."
 	_set_active_view("upgrades")
+
+
+func _get_fairy_role_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color("#f3d57a")
+	if role == "Pond Keeper":
+		return Color("#80d6ff")
+	if role == "Forager":
+		return Color("#c784ff")
+	return Color("#b98c43")
+
+
+func _get_fairy_role_bg_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color(0.070, 0.050, 0.020, 0.90)
+	if role == "Pond Keeper":
+		return Color(0.020, 0.045, 0.070, 0.90)
+	if role == "Forager":
+		return Color(0.055, 0.030, 0.075, 0.90)
+	return Color(0.015, 0.018, 0.028, 0.90)
+
+
+func _show_floating_text(text: String, start_position: Vector2, color: Color) -> void:
+	if text == "":
+		return
+	var label := Label.new()
+	label.text = text
+	label.position = start_position
+	label.add_theme_font_size_override("font_size", 32)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 3)
+	label.add_theme_constant_override("shadow_offset_y", 3)
+	add_child(label)
+	var tween := create_tween()
+	tween.tween_property(label, "position", start_position + Vector2(0, -86), 0.78)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.78)
+	tween.tween_callback(label.queue_free)
 
 
 func _on_back_pressed() -> void:

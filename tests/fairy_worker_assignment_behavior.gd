@@ -18,6 +18,10 @@ func _init() -> void:
 		fail("Expected Luna and Pip to count as active workers")
 	if state.get_fairy_task_cards().size() != 3:
 		fail("Expected Fairy House to expose mana, ingredient, and pond task cards")
+	var task_cards: Array[Dictionary] = state.get_fairy_task_cards()
+	for task in task_cards:
+		if String(task.get("TaskRateText", "")) == "":
+			fail("Fairy task cards should expose visible task rate text")
 
 	state.update_fairy_tasks(30.0)
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 1:
@@ -111,6 +115,8 @@ func _init() -> void:
 		var forage_reward: Dictionary = loaded_state.collect_fairy_task_reward(loaded_state.FAIRY_TASK_FORAGE_INGREDIENTS)
 		if not bool(forage_reward.get("Success", false)):
 			fail("Forage reward %d should be collectable for leveling" % reward_index)
+		if not forage_reward.has("LevelUpNames"):
+			fail("Fairy rewards should expose level-up names for UI feedback")
 	var leveled_nim: Dictionary = loaded_state.get_fairy_data("Nim")
 	if int(leveled_nim.get("FairyLevel", 1)) != 2:
 		fail("Nim should reach level 2 after repeated forage work")

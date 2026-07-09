@@ -1350,6 +1350,7 @@ func get_fairy_task_cards() -> Array[Dictionary]:
 			"Title": "Gather Mana",
 			"Area": FAIRY_AREA_FLOWER_GROVE,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FLOWER_GROVE),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FLOWER_GROVE),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE),
 			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE)
@@ -1359,6 +1360,7 @@ func get_fairy_task_cards() -> Array[Dictionary]:
 			"Title": "Forage Ingredients",
 			"Area": FAIRY_AREA_FLOWER_GROVE,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS),
 			"RewardText": "Crystals, blooms, and vials"
@@ -1368,6 +1370,7 @@ func get_fairy_task_cards() -> Array[Dictionary]:
 			"Title": "Tend Waters",
 			"Area": FAIRY_AREA_SACRED_POND,
 			"Workers": _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_SACRED_POND),
 			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_SACRED_POND),
 			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND),
 			"RewardText": "+%d Spirit Energy" % get_fairy_task_reward_amount(FAIRY_TASK_SACRED_POND)
@@ -1383,6 +1386,15 @@ func _get_fairies_for_assignment(area: String) -> Array[String]:
 		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) == area:
 			names.append(String(fairy.get("FairyName", "Fairy")))
 	return names
+
+
+func get_fairy_task_rate_text(task_id: String) -> String:
+	var speed := _get_fairy_task_speed(task_id)
+	if speed <= 0.0:
+		return "Idle"
+	var adjusted_speed := speed * (0.75 if task_id == FAIRY_TASK_FORAGE_INGREDIENTS else 1.0)
+	var seconds := FAIRY_TASK_REQUIRED_PROGRESS / adjusted_speed
+	return "%.1fx speed, about %ds" % [adjusted_speed, int(ceil(seconds))]
 
 
 func get_fairy_task_reward_amount(task_id: String) -> int:
@@ -1409,7 +1421,7 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		save_game()
 		var mana_message := _append_fairy_level_message("Fairies delivered %d Mana." % reward_amount, level_up_names)
 		save_status_changed.emit(mana_message)
-		return {"Success": true, "Message": mana_message}
+		return {"Success": true, "Message": mana_message, "LevelUpNames": level_up_names, "FloatingText": "+%d Mana" % reward_amount}
 	if task_id == FAIRY_TASK_SACRED_POND:
 		sacred_pond_spirit_energy += reward_amount
 		resources_changed.emit()
@@ -1418,7 +1430,7 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		save_game()
 		var pond_message := _append_fairy_level_message("Fairies gathered %d Spirit Energy." % reward_amount, level_up_names)
 		save_status_changed.emit(pond_message)
-		return {"Success": true, "Message": pond_message}
+		return {"Success": true, "Message": pond_message, "LevelUpNames": level_up_names, "FloatingText": "+%d Spirit" % reward_amount}
 	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
 		add_potion_ingredient(POTION_INGREDIENT_MANA_CRYSTAL, 1)
 		add_potion_ingredient(POTION_INGREDIENT_DREAMBLOOM, 2)
@@ -1427,7 +1439,7 @@ func collect_fairy_task_reward(task_id: String) -> Dictionary:
 		save_game()
 		var ingredient_message := _append_fairy_level_message("Fairies delivered potion ingredients.", level_up_names)
 		save_status_changed.emit(ingredient_message)
-		return {"Success": true, "Message": ingredient_message}
+		return {"Success": true, "Message": ingredient_message, "LevelUpNames": level_up_names, "FloatingText": "+Ingredients"}
 	return {"Success": false, "Message": "Unknown fairy task."}
 
 
