@@ -39,6 +39,7 @@ tests=(
   tests/quest_system_behavior.gd
   tests/reset_save_onboarding_shows_tutorial_behavior.gd
   tests/reset_save_reopens_tutorial_behavior.gd
+  tests/sacred_pond_panel_completion_behavior.gd
   tests/sacred_pond_level_rewards_behavior.gd
   tests/save_compatibility_behavior.gd
   tests/settings_panel_polish_behavior.gd

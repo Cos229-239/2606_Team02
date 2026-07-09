@@ -357,6 +357,9 @@ func _sync_flower_grid_unlocks() -> void:
 
 
 func restore_sacred_pond() -> bool:
+	if sacred_pond_water_purity >= 100:
+		save_status_changed.emit("Sacred Pond is fully restored.")
+		return false
 	if total_mana < sacred_pond_restore_cost:
 		save_status_changed.emit("Not enough mana.")
 		return false
@@ -387,6 +390,10 @@ func get_sacred_pond_fairy_restore_bonus() -> int:
 
 func get_sacred_pond_total_restore_amount() -> int:
 	return sacred_pond_base_restore_amount + sacred_pond_fairy_restore_bonus + get_pond_decoration_restore_bonus()
+
+
+func can_restore_sacred_pond() -> bool:
+	return sacred_pond_water_purity < 100 and total_mana >= sacred_pond_restore_cost
 
 
 func get_pond_decoration_restore_bonus() -> int:

@@ -12,7 +12,6 @@ const PANEL_BUTTONS := {
 	"Back": "res://assets/sprites/ui/panel_back.png",
 	"Decorate": "res://assets/sprites/ui/panel_decorate.png",
 	"Restore": "res://assets/sprites/ui/panel_restore.png",
-	"Upgrades": "res://assets/sprites/ui/panel_upgrades.png",
 }
 
 func _ready() -> void:
@@ -37,11 +36,9 @@ func _bind_scene_ui() -> void:
 
 	var restore_button := get_node("Root/ActionRow/RestoreButton") as TextureButton
 	var decorate_button := get_node("Root/ActionRow/DecorateButton") as TextureButton
-	var upgrades_button := get_node("Root/ActionRow/UpgradesButton") as TextureButton
 	var back_button := get_node("Root/ActionRow/BackButton") as TextureButton
 	restore_button.pressed.connect(_on_restore_pressed)
 	decorate_button.pressed.connect(_on_decorate_pressed)
-	upgrades_button.pressed.connect(_on_upgrades_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 
 
@@ -110,7 +107,6 @@ func _build_panel() -> void:
 	button_panel.add_child(buttons)
 	buttons.add_child(_make_panel_nav_button("Restore", _on_restore_pressed))
 	buttons.add_child(_make_panel_nav_button("Decorate", _on_decorate_pressed))
-	buttons.add_child(_make_panel_nav_button("Upgrades", _on_upgrades_pressed))
 	buttons.add_child(_make_panel_nav_button("Back", _on_back_pressed))
 
 
@@ -264,17 +260,19 @@ func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 
 
 func _refresh() -> void:
+	var completion_text := "Fully Restored" if GameState.sacred_pond_water_purity >= 100 else "Restoring"
 	stats_label.text = (
-		"Water Purity: %d%%    Spirit Energy: %d    Pond Beauty: %d\nRestore Cost: %d Mana    Base Restore Amount: +%d%%    Fairy Restore Bonus: +%d%%\nDecoration Bonus: +%d%%    Total Restore Amount: +%d%%\nActive Pond Bonus: %s\nNext Reward: %s"
+		"Water Purity: %d%%    Status: %s    Spirit Energy: %d\nPond Beauty: %d    Restore Cost: %d Mana    Total Restore Amount: +%d%%\nBase: +%d%%    Fairy: +%d%%    Decor: +%d%%\nActive Pond Bonus: %s\nNext Reward: %s"
 		% [
 			GameState.sacred_pond_water_purity,
+			completion_text,
 			GameState.sacred_pond_spirit_energy,
 			GameState.pond_beauty,
 			GameState.sacred_pond_restore_cost,
+			GameState.get_sacred_pond_total_restore_amount(),
 			GameState.get_sacred_pond_base_restore_amount(),
 			GameState.get_sacred_pond_fairy_restore_bonus(),
 			GameState.get_pond_decoration_restore_bonus(),
-			GameState.get_sacred_pond_total_restore_amount(),
 			GameState.get_active_pond_bonus_text(),
 			GameState.get_next_pond_reward_text()
 		]
@@ -376,6 +374,9 @@ func _on_restore_pressed() -> void:
 		feedback_label.text = "Water Purity +%d%%" % restore_amount
 		_show_floating_text("Water Purity +%d%%" % restore_amount, Vector2(330, 830), Color("#80d6ff"))
 		_flash_panel()
+	elif GameState.sacred_pond_water_purity >= 100:
+		feedback_label.text = "Sacred Pond is fully restored."
+		_show_floating_text("Fully Restored", Vector2(330, 830), Color("#9ef0c0"))
 	else:
 		feedback_label.text = "Not enough Mana"
 		_show_floating_text("Not enough Mana", Vector2(330, 830), Color("#ff9f8a"))
@@ -384,12 +385,6 @@ func _on_restore_pressed() -> void:
 func _on_decorate_pressed() -> void:
 	SoundManager.play_click()
 	decorate_requested.emit()
-
-
-func _on_upgrades_pressed() -> void:
-	SoundManager.play_click()
-	feedback_label.text = "Pond upgrades coming soon."
-	_show_floating_text("Pond upgrades coming soon", Vector2(250, 1450), Color("#f3d57a"))
 
 
 func _on_remove_pressed() -> void:

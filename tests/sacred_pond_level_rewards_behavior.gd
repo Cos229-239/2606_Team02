@@ -80,6 +80,19 @@ func _init() -> void:
 		fail("Restore should still work after Sun Koi Guardian unlock")
 	if state.sacred_pond_spirit_energy != spirit_before + 11:
 		fail("Sun Koi Guardian should add 11 total Spirit Energy after unlock")
+	if state.sacred_pond_water_purity != 100:
+		fail("Restore should cap water purity at 100")
+	var maxed_mana: int = state.sacred_pond_restore_cost
+	var maxed_spirit: int = state.sacred_pond_spirit_energy
+	state.total_mana = maxed_mana
+	if state.restore_sacred_pond():
+		fail("Restore should not run when the Sacred Pond is fully restored")
+	if state.total_mana != maxed_mana:
+		fail("Full pond restore attempt should not spend Mana")
+	if state.sacred_pond_spirit_energy != maxed_spirit:
+		fail("Full pond restore attempt should not add Spirit Energy")
+	if state.can_restore_sacred_pond():
+		fail("Full pond should not report restorable")
 
 	var data: Dictionary = state.get_save_data()
 	if not data.has("active_pond_bonus"):
