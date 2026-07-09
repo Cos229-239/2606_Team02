@@ -49,6 +49,7 @@ var pond_decoration_visual_layer: Control
 var fairy_worker_visual_layer: Control
 var quests_button: TextureButton
 var quests_badge: Label
+var fairy_visual_refresh_elapsed: float = 0.0
 
 func _ready() -> void:
 	_hide_editor_label_previews()
@@ -80,6 +81,18 @@ func _ready() -> void:
 			GameState.mark_tutorial_seen()
 		else:
 			_show_tutorial()
+
+
+func _process(delta: float) -> void:
+	if fairy_worker_visual_layer == null:
+		return
+	if open_panel != null:
+		fairy_visual_refresh_elapsed = 0.0
+		return
+	fairy_visual_refresh_elapsed += delta
+	if fairy_visual_refresh_elapsed >= 1.0:
+		fairy_visual_refresh_elapsed = 0.0
+		_refresh_fairy_worker_visuals()
 
 
 func _build_screen() -> void:
@@ -842,13 +855,13 @@ func _refresh_fairy_worker_visuals() -> void:
 		var assigned_area := String(fairy.get("AssignedArea", GameState.FAIRY_AREA_UNASSIGNED))
 		var fairy_name := String(fairy.get("FairyName", "Fairy"))
 		if assigned_area == GameState.FAIRY_AREA_FLOWER_GROVE:
-			_add_fairy_worker_visual(fairy, _get_flower_fairy_position(flower_rect, flower_index), "%s gathering" % fairy_name)
+			_add_fairy_worker_visual(fairy, _get_flower_fairy_position(flower_rect, flower_index), "Gathering", _get_area_ready_count(GameState.FAIRY_AREA_FLOWER_GROVE))
 			flower_index += 1
 		elif assigned_area == GameState.FAIRY_AREA_SACRED_POND:
-			_add_fairy_worker_visual(fairy, _get_pond_fairy_position(pond_rect, pond_index), "%s tending" % fairy_name)
+			_add_fairy_worker_visual(fairy, _get_pond_fairy_position(pond_rect, pond_index), "Tending", _get_area_ready_count(GameState.FAIRY_AREA_SACRED_POND))
 			pond_index += 1
 		else:
-			_add_fairy_worker_visual(fairy, _get_resting_fairy_position(fairy_rect, resting_index), "%s resting" % fairy_name, true)
+			_add_fairy_worker_visual(fairy, _get_resting_fairy_position(fairy_rect, resting_index), "Resting", 0, true)
 			resting_index += 1
 
 
@@ -882,14 +895,22 @@ func _get_resting_fairy_position(rect: Rect2, index: int) -> Vector2:
 	return rect.position + rect.size * offsets[index % offsets.size()]
 
 
-func _add_fairy_worker_visual(fairy: Dictionary, center_position: Vector2, label_text: String, resting: bool = false) -> void:
+func _get_area_ready_count(area: String) -> int:
+	if area == GameState.FAIRY_AREA_SACRED_POND:
+		return GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_SACRED_POND)
+	if area == GameState.FAIRY_AREA_FLOWER_GROVE:
+		return GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_FLOWER_GROVE) + GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_FORAGE_INGREDIENTS)
+	return 0
+
+
+func _add_fairy_worker_visual(fairy: Dictionary, center_position: Vector2, status_text: String, ready_count: int = 0, resting: bool = false) -> void:
 	var fairy_name := String(fairy.get("FairyName", "Fairy"))
 	var role_color := _get_fairy_role_color(fairy)
 	var orb := _add_layer_sprite(
 		fairy_worker_visual_layer,
 		"res://assets/sprites/effects/glow_orb.png",
-		center_position - Vector2(26, 20),
-		Vector2(52, 52),
+		center_position - Vector2(34, 25),
+		Vector2(68, 68),
 		Color(role_color.r, role_color.g, role_color.b, 0.52 if resting else 0.74)
 	)
 	orb.z_index = 1
@@ -897,41 +918,83 @@ func _add_fairy_worker_visual(fairy: Dictionary, center_position: Vector2, label
 	var sprite := _add_layer_sprite(
 		fairy_worker_visual_layer,
 		_get_home_fairy_sprite_path(fairy_name),
-		center_position - Vector2(24, 42),
-		Vector2(48, 76),
+		center_position - Vector2(30, 54),
+		Vector2(60, 94),
 		Color(1.0, 1.0, 1.0, 0.72 if resting else 0.96)
 	)
 	sprite.z_index = 2
 
+	var badge := _make_fairy_status_badge(fairy_name, status_text, role_color, center_position, ready_count, resting)
+	fairy_worker_visual_layer.add_child(badge)
+
+	if ready_count > 0:
+		var ready_badge := _make_fairy_ready_badge(center_position, ready_count)
+		fairy_worker_visual_layer.add_child(ready_badge)
+
+	_animate_fairy_worker(sprite, orb, badge, resting)
+
+
+func _make_fairy_status_badge(fairy_name: String, status_text: String, role_color: Color, center_position: Vector2, ready_count: int, resting: bool) -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.name = "FairyStatus_%s" % fairy_name
+	badge.position = center_position + Vector2(-72, 28)
+	badge.custom_minimum_size = Vector2(144, 48)
+	badge.size = badge.custom_minimum_size
+	badge.z_index = 4
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var border_color := Color("#f3d57a") if ready_count > 0 else role_color
+	var bg_color := Color(0.040, 0.030, 0.014, 0.86) if ready_count > 0 else Color(0.012, 0.018, 0.028, 0.78)
+	if resting:
+		bg_color = Color(0.018, 0.018, 0.030, 0.72)
+	badge.add_theme_stylebox_override("panel", _make_style(bg_color, border_color, 2, 10))
+
 	var label := Label.new()
-	label.text = label_text
-	label.position = center_position + Vector2(-56, 30)
-	label.size = Vector2(112, 30)
+	label.text = "%s\n%s" % [fairy_name, "Ready x%d" % ready_count if ready_count > 0 else status_text]
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 13)
-	label.add_theme_color_override("font_color", role_color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color("#fff2a8") if ready_count > 0 else role_color)
 	label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
-	fairy_worker_visual_layer.add_child(label)
+	badge.add_child(label)
+	return badge
 
-	_animate_fairy_worker(sprite, orb, label, resting)
+
+func _make_fairy_ready_badge(center_position: Vector2, ready_count: int) -> Label:
+	var label := Label.new()
+	label.name = "FairyReadyBadge"
+	label.text = "!"
+	if ready_count > 1:
+		label.text = "%d" % ready_count
+	label.position = center_position + Vector2(28, -56)
+	label.size = Vector2(36, 36)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.z_index = 5
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color("#061014"))
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_stylebox_override("normal", _make_style(Color("#f3d57a"), Color("#fff2a8"), 2, 18))
+	return label
 
 
-func _animate_fairy_worker(sprite: Sprite2D, orb: Sprite2D, label: Label, resting: bool) -> void:
+func _animate_fairy_worker(sprite: Sprite2D, orb: Sprite2D, badge: Control, resting: bool) -> void:
 	var bob_distance := 5.0 if resting else 9.0
 	var duration := 1.45 if resting else 1.05
 	var sprite_start := sprite.position
 	var orb_start := orb.position
-	var label_start := label.position
+	var badge_start := badge.position
 	var tween := create_tween()
 	tween.set_loops()
 	tween.tween_property(sprite, "position", sprite_start + Vector2(0, -bob_distance), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.parallel().tween_property(orb, "position", orb_start + Vector2(0, -bob_distance * 0.55), duration)
-	tween.parallel().tween_property(label, "position", label_start + Vector2(0, -bob_distance * 0.25), duration)
+	tween.parallel().tween_property(badge, "position", badge_start + Vector2(0, -bob_distance * 0.25), duration)
 	tween.tween_property(sprite, "position", sprite_start, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.parallel().tween_property(orb, "position", orb_start, duration)
-	tween.parallel().tween_property(label, "position", label_start, duration)
+	tween.parallel().tween_property(badge, "position", badge_start, duration)
 	tween.tween_interval(0.02)
 
 

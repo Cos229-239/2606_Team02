@@ -20,6 +20,15 @@ func _run() -> void:
 		fail("Main Village should render assigned fairy worker visuals")
 	if fairy_layer.get_child_count() < 9:
 		fail("Fairy worker visuals should include sprite, glow, and label for each default fairy")
+	if _find_named_node(fairy_layer, "FairyStatus_Luna") == null:
+		fail("Main Village should show Luna's map activity status")
+	if _find_named_node(fairy_layer, "FairyStatus_Pip") == null:
+		fail("Main Village should show Pip's map activity status")
+	game_state.fairy_task_ready_counts[game_state.FAIRY_TASK_FLOWER_GROVE] = 1
+	village._refresh_fairy_worker_visuals()
+	await process_frame
+	if _find_named_node(fairy_layer, "FairyReadyBadge") == null:
+		fail("Main Village should show a ready reward badge for working fairies")
 
 	village._open_sacred_pond()
 	if village.open_panel == null or village.open_panel.name != "SacredPondPanel":
@@ -106,6 +115,16 @@ func _find_button(node: Node, identifier: String) -> BaseButton:
 		return node
 	for child in node.get_children():
 		var found := _find_button(child, identifier)
+		if found:
+			return found
+	return null
+
+
+func _find_named_node(node: Node, node_name: String) -> Node:
+	if String(node.name) == node_name:
+		return node
+	for child in node.get_children():
+		var found := _find_named_node(child, node_name)
 		if found:
 			return found
 	return null
