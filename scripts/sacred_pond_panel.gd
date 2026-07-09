@@ -7,6 +7,9 @@ var stats_label: Label
 var feedback_label: Label
 var pond_preview: CanvasItem
 var decoration_preview_layer: Control
+var stat_value_labels: Dictionary = {}
+var purity_progress: ProgressBar
+var bonus_summary_label: Label
 
 const PANEL_BUTTONS := {
 	"Back": "res://assets/sprites/ui/panel_back.png",
@@ -33,6 +36,7 @@ func _bind_scene_ui() -> void:
 	stats_label = get_node("Root/StatsLabel") as Label
 	feedback_label = get_node("Root/FeedbackLabel") as Label
 	pond_preview = get_node_or_null("Root/PondBackground") as CanvasItem
+	_polish_bound_scene_layout()
 
 	var restore_button := get_node("Root/ActionRow/RestoreButton") as TextureButton
 	var decorate_button := get_node("Root/ActionRow/DecorateButton") as TextureButton
@@ -40,6 +44,131 @@ func _bind_scene_ui() -> void:
 	restore_button.pressed.connect(_on_restore_pressed)
 	decorate_button.pressed.connect(_on_decorate_pressed)
 	back_button.pressed.connect(_on_back_pressed)
+
+
+func _polish_bound_scene_layout() -> void:
+	var root := get_node("Root") as Control
+	var stats_background := root.get_node_or_null("StatsPanelBackground") as Control
+	if stats_background:
+		stats_background.position = Vector2(54, 1186)
+		stats_background.size = Vector2(972, 326)
+	if stats_label:
+		stats_label.visible = false
+	if feedback_label:
+		feedback_label.position = Vector2(98, 1528)
+		feedback_label.size = Vector2(884, 56)
+		feedback_label.add_theme_font_size_override("font_size", 26)
+
+	var action_background := root.get_node_or_null("ActionBarBackground") as Control
+	if action_background:
+		action_background.position = Vector2(54, 1610)
+		action_background.size = Vector2(972, 164)
+	var action_row := root.get_node_or_null("ActionRow") as HBoxContainer
+	if action_row:
+		action_row.position = Vector2(74, 1628)
+		action_row.size = Vector2(932, 130)
+		action_row.add_theme_constant_override("separation", 18)
+
+	if root.get_node_or_null("PondStatusCards") == null:
+		_build_status_cards(root)
+
+
+func _build_status_cards(root: Control) -> void:
+	stat_value_labels.clear()
+	var cards_layer := Control.new()
+	cards_layer.name = "PondStatusCards"
+	cards_layer.position = Vector2(78, 1208)
+	cards_layer.size = Vector2(924, 282)
+	cards_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(cards_layer)
+
+	var row := HBoxContainer.new()
+	row.position = Vector2.ZERO
+	row.size = Vector2(924, 118)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	cards_layer.add_child(row)
+	row.add_child(_make_stat_card("Water Purity", "purity", Vector2(296, 118)))
+	row.add_child(_make_stat_card("Spirit Energy", "spirit", Vector2(296, 118)))
+	row.add_child(_make_stat_card("Pond Beauty", "beauty", Vector2(296, 118)))
+
+	purity_progress = ProgressBar.new()
+	purity_progress.name = "PurityProgress"
+	purity_progress.position = Vector2(14, 134)
+	purity_progress.size = Vector2(896, 24)
+	purity_progress.max_value = 100
+	purity_progress.show_percentage = false
+	purity_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	purity_progress.add_theme_stylebox_override("background", _make_progress_style(Color(0.01, 0.03, 0.06, 0.85), Color("#23536a")))
+	purity_progress.add_theme_stylebox_override("fill", _make_progress_style(Color("#5ad9ff"), Color("#d8fbff")))
+	cards_layer.add_child(purity_progress)
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.name = "PondSummaryPanel"
+	summary_panel.position = Vector2(14, 170)
+	summary_panel.size = Vector2(896, 104)
+	summary_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	summary_panel.add_theme_stylebox_override("panel", _make_dark_panel_style(0.62))
+	cards_layer.add_child(summary_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	summary_panel.add_child(margin)
+
+	bonus_summary_label = Label.new()
+	bonus_summary_label.name = "BonusSummary"
+	bonus_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bonus_summary_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bonus_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bonus_summary_label.add_theme_font_size_override("font_size", 20)
+	bonus_summary_label.add_theme_color_override("font_color", Color("#fff4cf"))
+	bonus_summary_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	bonus_summary_label.add_theme_constant_override("shadow_offset_x", 2)
+	bonus_summary_label.add_theme_constant_override("shadow_offset_y", 2)
+	margin.add_child(bonus_summary_label)
+
+
+func _make_stat_card(title_text: String, key: String, card_size: Vector2) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = card_size
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", _make_dark_panel_style(0.72))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 4)
+	margin.add_child(box)
+
+	var title := Label.new()
+	title.text = title_text
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 19)
+	title.add_theme_color_override("font_color", Color("#f5d779"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	box.add_child(title)
+
+	var value := Label.new()
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_size_override("font_size", 36)
+	value.add_theme_color_override("font_color", Color("#fff4cf"))
+	value.add_theme_color_override("font_shadow_color", Color.BLACK)
+	value.add_theme_constant_override("shadow_offset_x", 2)
+	value.add_theme_constant_override("shadow_offset_y", 2)
+	box.add_child(value)
+	stat_value_labels[key] = value
+	return card
 
 
 func _build_panel() -> void:
@@ -243,6 +372,18 @@ func _make_button_bar_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_progress_style(fill: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	return style
+
+
 func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg_color
@@ -261,6 +402,22 @@ func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 
 func _refresh() -> void:
 	var completion_text := "Fully Restored" if GameState.sacred_pond_water_purity >= 100 else "Restoring"
+	if stat_value_labels.has("purity"):
+		(stat_value_labels["purity"] as Label).text = "%d%%" % GameState.sacred_pond_water_purity
+	if stat_value_labels.has("spirit"):
+		(stat_value_labels["spirit"] as Label).text = str(GameState.sacred_pond_spirit_energy)
+	if stat_value_labels.has("beauty"):
+		(stat_value_labels["beauty"] as Label).text = str(GameState.pond_beauty)
+	if purity_progress:
+		purity_progress.value = GameState.sacred_pond_water_purity
+	if bonus_summary_label:
+		bonus_summary_label.text = "Status: %s    Restore +%d%% for %d Mana\n%s    Next: %s" % [
+			completion_text,
+			GameState.get_sacred_pond_total_restore_amount(),
+			GameState.sacred_pond_restore_cost,
+			GameState.get_active_pond_bonus_text(),
+			GameState.get_next_pond_reward_text()
+		]
 	stats_label.text = (
 		"Water Purity: %d%%    Status: %s    Spirit Energy: %d\nPond Beauty: %d    Restore Cost: %d Mana    Total Restore Amount: +%d%%\nBase: +%d%%    Fairy: +%d%%    Decor: +%d%%\nActive Pond Bonus: %s\nNext Reward: %s"
 		% [

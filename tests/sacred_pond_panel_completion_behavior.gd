@@ -26,6 +26,12 @@ func _run() -> void:
 	if stats == null or not stats.text.contains("Fully Restored"):
 		fail("Sacred Pond panel should show fully restored status")
 		return
+	if panel.get_node_or_null("Root/PondStatusCards") == null:
+		fail("Sacred Pond panel should build polished status cards")
+		return
+	if panel.get_node_or_null("Root/PondStatusCards/PurityProgress") == null:
+		fail("Sacred Pond panel should show water purity progress")
+		return
 
 	var restore_button := _find_button(panel, "RestoreButton")
 	if restore_button == null:
