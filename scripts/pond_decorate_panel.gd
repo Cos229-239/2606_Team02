@@ -16,6 +16,12 @@ const LEGACY_DECORATE_TITLE_FOR_TESTS := "Decorate Sacred Pond"
 const MESSAGE_NOT_ENOUGH_MANA := "Not enough Mana."
 
 const DESIGN_SIZE := Vector2(1080, 1920)
+const DECORATION_TRAY_POSITION := Vector2(20, 1220)
+const DECORATION_TRAY_SIZE := Vector2(1040, 446)
+const DECORATION_ROW_POSITION := Vector2(20, 56)
+const DECORATION_ROW_SIZE := Vector2(1000, 356)
+const DECORATION_CARD_SIZE := Vector2(118, 342)
+const DECORATION_CARD_ICON_WIDTH := 104
 const GOLD := Color("#f5d779")
 const TEXT_LIGHT := Color("#fff4cf")
 const PANEL_DARK := Color(0.015, 0.022, 0.05, 0.84)
@@ -123,24 +129,25 @@ func _prepare_bound_scene_layout() -> void:
 
 	var tray := get_node_or_null("Root/DecorationTray") as Control
 	if tray:
-		tray.position = Vector2(38, 1192)
-		tray.size = Vector2(1004, 474)
+		tray.position = DECORATION_TRAY_POSITION
+		tray.size = DECORATION_TRAY_SIZE
 		tray.scale = Vector2.ONE
 		var background := tray.get_node_or_null("TrayBackground") as Control
 		if background:
 			background.position = Vector2.ZERO
-			background.size = Vector2(1004, 474)
+			background.size = DECORATION_TRAY_SIZE
 			if background is ColorRect:
-				(background as ColorRect).color = Color(0.006, 0.018, 0.04, 0.9)
+				(background as ColorRect).color = Color(0.004, 0.012, 0.028, 0.94)
 		var title := tray.get_node_or_null("TrayTitle") as Label
 		if title:
-			title.position = Vector2(0, 16)
-			title.size = Vector2(1004, 48)
-			title.add_theme_font_size_override("font_size", 32)
+			title.position = Vector2(0, 10)
+			title.size = Vector2(1040, 34)
+			title.text = "Decorations"
+			title.add_theme_font_size_override("font_size", 24)
 		var legacy_row := tray.get_node_or_null("DecorationRow") as HBoxContainer
 		if legacy_row:
-			legacy_row.position = Vector2(24, 78)
-			legacy_row.size = Vector2(956, 360)
+			legacy_row.position = DECORATION_ROW_POSITION
+			legacy_row.size = DECORATION_ROW_SIZE
 
 	var feedback_backing := get_node_or_null("Root/FeedbackBacking") as PanelContainer
 	if feedback_backing == null and has_node("Root"):
@@ -259,30 +266,30 @@ func _build_slots() -> void:
 
 func _build_decoration_tray(parent: Control) -> void:
 	var tray := PanelContainer.new()
-	tray.position = Vector2(38, 1192)
-	tray.size = Vector2(1004, 474)
+	tray.position = DECORATION_TRAY_POSITION
+	tray.size = DECORATION_TRAY_SIZE
 	tray.mouse_filter = Control.MOUSE_FILTER_STOP
-	tray.add_theme_stylebox_override("panel", _make_panel_style(Color(0.006, 0.018, 0.04, 0.9), Color("#f5d779"), 3, 18))
+	tray.add_theme_stylebox_override("panel", _make_panel_style(Color(0.004, 0.012, 0.028, 0.94), Color("#f5d779"), 3, 18))
 	parent.add_child(tray)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 14)
 	tray.add_child(margin)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 16)
+	layout.add_theme_constant_override("separation", 10)
 	margin.add_child(layout)
 
-	var header := _make_label("Select a Decoration", 32, GOLD)
+	var header := _make_label("Decorations", 24, GOLD)
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layout.add_child(header)
 
 	var scroller := ScrollContainer.new()
 	scroller.name = "DecorationScroller"
-	scroller.custom_minimum_size = Vector2(956, 360)
+	scroller.custom_minimum_size = DECORATION_ROW_SIZE
 	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroller)
@@ -290,7 +297,7 @@ func _build_decoration_tray(parent: Control) -> void:
 	var row := HBoxContainer.new()
 	row.name = "DecorationRow"
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 8)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroller.add_child(row)
 
@@ -305,7 +312,7 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 	for index in range(GameState.pond_decorations.size()):
 		var decoration := GameState.pond_decorations[index]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(300, 340)
+		button.custom_minimum_size = DECORATION_CARD_SIZE
 		button.text = "%s\nCost %d\nBeauty +%d" % [
 			_decoration_display_name(String(decoration.get("DecorationName", ""))),
 			int(decoration.get("CostMana", 0)),
@@ -315,14 +322,14 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 		button.expand_icon = true
 		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-		button.add_theme_constant_override("icon_max_width", 210)
-		button.add_theme_font_size_override("font_size", 22)
+		button.add_theme_constant_override("icon_max_width", DECORATION_CARD_ICON_WIDTH)
+		button.add_theme_font_size_override("font_size", 17)
 		button.add_theme_color_override("font_color", TEXT_LIGHT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", GOLD)
-		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.012, 0.028, 0.055, 0.96), Color("#f5d779"), 3, 10))
-		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.045, 0.07, 0.11, 0.98), Color("#d9f2ff"), 4, 10))
-		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.02, 0.07, 0.09, 1.0), Color("#ffffff"), 4, 10))
+		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.01, 0.016, 0.038, 0.98), Color("#c8943f"), 2, 8))
+		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.032, 0.05, 0.09, 1.0), GOLD, 3, 8))
+		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.02, 0.07, 0.09, 1.0), Color("#ffffff"), 3, 8))
 		button.pressed.connect(_select_decoration.bind(index))
 		row.add_child(button)
 		decoration_buttons.append(button)
@@ -336,7 +343,7 @@ func _get_or_create_decoration_scroll_row() -> HBoxContainer:
 		scroller = ScrollContainer.new()
 		scroller.name = "DecorationScroller"
 		scroller.position = row.position if row else Vector2(35, 278)
-		scroller.size = row.size if row else Vector2(956, 360)
+		scroller.size = row.size if row else DECORATION_ROW_SIZE
 		scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		tray.add_child(scroller)
@@ -347,7 +354,7 @@ func _get_or_create_decoration_scroll_row() -> HBoxContainer:
 		row.get_parent().remove_child(row)
 	row.position = Vector2.ZERO
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 8)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroller.add_child(row)
 	return row
@@ -615,12 +622,30 @@ func _decoration_sprite_path(decoration_name: String) -> String:
 
 
 func _decoration_display_name(decoration_name: String) -> String:
+	if decoration_name == "Moon Lantern":
+		return "Moon\nLantern"
+	if decoration_name == "Spirit Stone":
+		return "Spirit\nStone"
 	if decoration_name == "Stone Koi Statue":
-		return "Stone Koi"
+		return "Stone\nKoi"
 	if decoration_name == "Bloom Lilypad":
-		return "Bloom Pads"
+		return "Bloom\nLilypad"
+	if decoration_name == "Sacred Bridge":
+		return "Sacred\nBridge"
+	if decoration_name == "Crystal Lotus":
+		return "Crystal\nLotus"
+	if decoration_name == "Crystal Pillar":
+		return "Crystal\nPillar"
 	if decoration_name == "Moonstone Steps":
-		return "Moon Steps"
+		return "Moon\nSteps"
+	if decoration_name == "Fern Spring":
+		return "Fern\nSpring"
+	if decoration_name == "Flame Basin":
+		return "Flame\nBasin"
+	if decoration_name == "Reed Cluster":
+		return "Reed\nCluster"
+	if decoration_name == "Willow Arch":
+		return "Willow\nArch"
 	return decoration_name
 
 

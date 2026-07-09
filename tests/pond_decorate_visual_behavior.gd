@@ -51,11 +51,21 @@ func _run() -> void:
 	if first_card == null:
 		fail("Decoration choices should be visible buttons")
 		return
-	if first_card.custom_minimum_size.x < 300.0 or first_card.custom_minimum_size.y < 340.0:
-		fail("Decoration choices should be large enough to see and tap")
+	if first_card.custom_minimum_size.x < 110.0 or first_card.custom_minimum_size.y < 330.0:
+		fail("Decoration choices should be tall inventory cards")
 		return
-	if first_card.get_theme_constant("icon_max_width") < 200:
+	if first_card.custom_minimum_size.x > 130.0:
+		fail("Decoration cards should be compact enough to show a full bottom strip")
+		return
+	if first_card.get_theme_constant("icon_max_width") < 100:
 		fail("Decoration choices should reserve a large icon area")
+		return
+	var visible_card_width := first_card.custom_minimum_size.x * 8.0 + float(row.get_theme_constant("separation")) * 7.0
+	if visible_card_width > row.size.x:
+		fail("Decoration tray should fit eight visible cards like the reference strip")
+		return
+	if not first_card.text.contains("\n"):
+		fail("Decoration names should stack cleanly on narrow cards")
 		return
 	if not first_card.text.contains("Cost") or not first_card.text.contains("Beauty"):
 		fail("Decoration choices should clearly show cost and beauty")
