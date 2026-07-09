@@ -32,7 +32,7 @@ func _run() -> void:
 	if tray == null:
 		fail("Decorate screen should expose the decoration tray")
 		return
-	if tray.position.y < 1320.0:
+	if tray.position.y < 1180.0:
 		fail("Decoration tray should sit low enough to keep the pond visible")
 		return
 	if tray.position.y <= GameState.POND_DECORATION_EDITOR_RECT.end.y:
@@ -51,8 +51,11 @@ func _run() -> void:
 	if first_card == null:
 		fail("Decoration choices should be visible buttons")
 		return
-	if first_card.custom_minimum_size.x < 220.0 or first_card.custom_minimum_size.y < 220.0:
+	if first_card.custom_minimum_size.x < 300.0 or first_card.custom_minimum_size.y < 340.0:
 		fail("Decoration choices should be large enough to see and tap")
+		return
+	if first_card.get_theme_constant("icon_max_width") < 200:
+		fail("Decoration choices should reserve a large icon area")
 		return
 	if not first_card.text.contains("Cost") or not first_card.text.contains("Beauty"):
 		fail("Decoration choices should clearly show cost and beauty")

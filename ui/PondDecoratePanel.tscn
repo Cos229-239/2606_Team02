@@ -49,12 +49,12 @@ corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rfg4q"]
-bg_color = Color(0.01, 0.016, 0.035, 0.88)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+bg_color = Color(0.012, 0.028, 0.055, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -73,12 +73,12 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yuays"]
-bg_color = Color(0.01, 0.016, 0.035, 0.88)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+bg_color = Color(0.012, 0.028, 0.055, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -97,12 +97,12 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i83we"]
-bg_color = Color(0.01, 0.016, 0.035, 0.88)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+bg_color = Color(0.012, 0.028, 0.055, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -121,12 +121,12 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ieefk"]
-bg_color = Color(0.01, 0.016, 0.035, 0.88)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.54901963, 0.41568628, 0.18039216, 1)
+bg_color = Color(0.012, 0.028, 0.055, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -377,9 +377,9 @@ stretch_mode = 0
 [node name="FeedbackLabel" type="Label" parent="Root" unique_id=1288412110]
 layout_mode = 0
 offset_left = 140.0
-offset_top = 1278.0
+offset_top = 1136.0
 offset_right = 940.0
-offset_bottom = 1314.0
+offset_bottom = 1172.0
 theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
@@ -391,27 +391,27 @@ vertical_alignment = 1
 [node name="DecorationTray" type="Control" parent="Root" unique_id=255915665]
 anchors_preset = 0
 offset_left = 38.0
-offset_top = 1340.0
+offset_top = 1192.0
 offset_right = 1042.0
-offset_bottom = 1658.0
+offset_bottom = 1666.0
 
 [node name="TrayBackground" type="ColorRect" parent="Root/DecorationTray" unique_id=1118473493]
 layout_mode = 0
 offset_right = 1004.0
-offset_bottom = 318.0
+offset_bottom = 474.0
 mouse_filter = 2
-color = Color(0.01, 0.026, 0.055, 0.76)
+color = Color(0.006, 0.018, 0.04, 0.9)
 
 [node name="TrayTitle" type="Label" parent="Root/DecorationTray" unique_id=330065732]
 layout_mode = 0
-offset_top = 14.0
+offset_top = 16.0
 offset_right = 1004.0
-offset_bottom = 56.0
+offset_bottom = 64.0
 theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 32
 text = "Select a Decoration"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -419,17 +419,18 @@ vertical_alignment = 1
 [node name="DecorationRow" type="HBoxContainer" parent="Root/DecorationTray" unique_id=369058997]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 66.0
+offset_top = 78.0
 offset_right = 980.0
-offset_bottom = 296.0
+offset_bottom = 438.0
 theme_override_constants/separation = 14
 alignment = 1
 
 [node name="DecorationCard0" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=1215274383]
-custom_minimum_size = Vector2(228, 224)
+custom_minimum_size = Vector2(300, 340)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_constants/icon_max_width = 210
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_rfg4q")
 theme_override_styles/hover = SubResource("StyleBoxFlat_2q7xk")
 text = "Moon Lantern
@@ -440,10 +441,11 @@ vertical_icon_alignment = 0
 expand_icon = true
 
 [node name="DecorationCard1" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=35977224]
-custom_minimum_size = Vector2(228, 224)
+custom_minimum_size = Vector2(300, 340)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_constants/icon_max_width = 210
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_yuays")
 theme_override_styles/hover = SubResource("StyleBoxFlat_4kudc")
 text = "Spirit Stone
@@ -454,10 +456,11 @@ vertical_icon_alignment = 0
 expand_icon = true
 
 [node name="DecorationCard2" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=1016074505]
-custom_minimum_size = Vector2(228, 224)
+custom_minimum_size = Vector2(300, 340)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_constants/icon_max_width = 210
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_i83we")
 theme_override_styles/hover = SubResource("StyleBoxFlat_secq1")
 text = "Bloom Lilypad
@@ -468,10 +471,11 @@ vertical_icon_alignment = 0
 expand_icon = true
 
 [node name="DecorationCard3" type="Button" parent="Root/DecorationTray/DecorationRow" unique_id=109169495]
-custom_minimum_size = Vector2(228, 224)
+custom_minimum_size = Vector2(300, 340)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_constants/icon_max_width = 210
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_ieefk")
 theme_override_styles/hover = SubResource("StyleBoxFlat_d6m4j")
 text = "Sacred Bridge
