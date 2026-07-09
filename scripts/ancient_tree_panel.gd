@@ -2,7 +2,7 @@ extends Control
 
 signal closed
 
-const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_zoom.jpg"
+const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
 const BLUE := Color("#58d9ff")
@@ -104,19 +104,19 @@ func _add_top_resource_bar() -> void:
 
 func _add_resource_chip(parent: Node, icon_text: String, title: String, icon_color: Color) -> Label:
 	var chip := HBoxContainer.new()
-	chip.custom_minimum_size = Vector2(186, 72)
+	chip.custom_minimum_size = Vector2(190, 72)
 	chip.alignment = BoxContainer.ALIGNMENT_CENTER
-	chip.add_theme_constant_override("separation", 8)
+	chip.add_theme_constant_override("separation", 6)
 	parent.add_child(chip)
 
 	var icon := _make_icon_badge(icon_text, icon_color, Vector2(38, 38), 19)
 	chip.add_child(icon)
 
-	var label := _make_label("%s " % title, 23, SOFT_GOLD)
+	var label := _make_label("%s " % title, 20, SOFT_GOLD)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	chip.add_child(label)
 
-	var value := _make_label("0", 23, SOFT_GOLD)
+	var value := _make_label("0", 20, SOFT_GOLD)
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	chip.add_child(value)
 	return value
@@ -189,7 +189,6 @@ func _add_action_buttons() -> void:
 	upgrade_button.size = Vector2(438, 112)
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
-	_add_button_icon(upgrade_button, "^", Color("#f1c45c"))
 
 	water_button = _make_action_button("WATER", Color("#07395c"), Color("#34aee2"))
 	water_button.name = "RestoreButton"
@@ -197,7 +196,6 @@ func _add_action_buttons() -> void:
 	water_button.size = Vector2(438, 112)
 	water_button.pressed.connect(_on_water_pressed)
 	add_child(water_button)
-	_add_button_icon(water_button, "W", BLUE)
 
 
 func _add_bottom_navigation() -> void:
@@ -283,7 +281,7 @@ func _make_label(text: String, font_size: int, color: Color, alignment: Horizont
 	label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	label.add_theme_constant_override("shadow_offset_x", 3)
 	label.add_theme_constant_override("shadow_offset_y", 3)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	return label
 
 
