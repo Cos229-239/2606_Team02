@@ -55,8 +55,9 @@ func _setup_moment_player() -> void:
 
 
 func _apply_volumes() -> void:
-	set_music_volume(GameState.music_volume)
-	set_sfx_volume(GameState.sfx_volume)
+	var game_state := _get_game_state()
+	set_music_volume(float(game_state.get("music_volume")) if game_state else 0.75)
+	set_sfx_volume(float(game_state.get("sfx_volume")) if game_state else 0.75)
 
 
 func set_music_volume(linear: float) -> void:
@@ -147,3 +148,10 @@ func play_collect() -> void:
 
 func play_invalid() -> void:
 	play_sfx(SFX_INVALID)
+
+
+func _get_game_state() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("GameState")

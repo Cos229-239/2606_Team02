@@ -6,12 +6,15 @@ signal decorate_requested
 var stats_label: Label
 var feedback_label: Label
 var pond_preview: CanvasItem
+var decoration_preview_layer: Control
+var stat_value_labels: Dictionary = {}
+var purity_progress: ProgressBar
+var bonus_summary_label: Label
 
 const PANEL_BUTTONS := {
 	"Back": "res://assets/sprites/ui/panel_back.png",
 	"Decorate": "res://assets/sprites/ui/panel_decorate.png",
 	"Restore": "res://assets/sprites/ui/panel_restore.png",
-	"Upgrades": "res://assets/sprites/ui/panel_upgrades.png",
 }
 
 func _ready() -> void:
@@ -19,6 +22,7 @@ func _ready() -> void:
 		_bind_scene_ui()
 	else:
 		_build_panel()
+	_build_decoration_preview_layer()
 	GameState.sacred_pond_changed.connect(_refresh)
 	GameState.resources_changed.connect(_refresh)
 	_refresh()
@@ -32,15 +36,139 @@ func _bind_scene_ui() -> void:
 	stats_label = get_node("Root/StatsLabel") as Label
 	feedback_label = get_node("Root/FeedbackLabel") as Label
 	pond_preview = get_node_or_null("Root/PondBackground") as CanvasItem
+	_polish_bound_scene_layout()
 
 	var restore_button := get_node("Root/ActionRow/RestoreButton") as TextureButton
 	var decorate_button := get_node("Root/ActionRow/DecorateButton") as TextureButton
-	var upgrades_button := get_node("Root/ActionRow/UpgradesButton") as TextureButton
 	var back_button := get_node("Root/ActionRow/BackButton") as TextureButton
 	restore_button.pressed.connect(_on_restore_pressed)
 	decorate_button.pressed.connect(_on_decorate_pressed)
-	upgrades_button.pressed.connect(_on_upgrades_pressed)
 	back_button.pressed.connect(_on_back_pressed)
+
+
+func _polish_bound_scene_layout() -> void:
+	var root := get_node("Root") as Control
+	var stats_background := root.get_node_or_null("StatsPanelBackground") as Control
+	if stats_background:
+		stats_background.position = Vector2(54, 1186)
+		stats_background.size = Vector2(972, 326)
+	if stats_label:
+		stats_label.visible = false
+	if feedback_label:
+		feedback_label.position = Vector2(98, 1528)
+		feedback_label.size = Vector2(884, 56)
+		feedback_label.add_theme_font_size_override("font_size", 26)
+
+	var action_background := root.get_node_or_null("ActionBarBackground") as Control
+	if action_background:
+		action_background.position = Vector2(54, 1610)
+		action_background.size = Vector2(972, 164)
+	var action_row := root.get_node_or_null("ActionRow") as HBoxContainer
+	if action_row:
+		action_row.position = Vector2(74, 1628)
+		action_row.size = Vector2(932, 130)
+		action_row.add_theme_constant_override("separation", 18)
+
+	if root.get_node_or_null("PondStatusCards") == null:
+		_build_status_cards(root)
+
+
+func _build_status_cards(root: Control) -> void:
+	stat_value_labels.clear()
+	var cards_layer := Control.new()
+	cards_layer.name = "PondStatusCards"
+	cards_layer.position = Vector2(78, 1208)
+	cards_layer.size = Vector2(924, 282)
+	cards_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(cards_layer)
+
+	var row := HBoxContainer.new()
+	row.position = Vector2.ZERO
+	row.size = Vector2(924, 118)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	cards_layer.add_child(row)
+	row.add_child(_make_stat_card("Water Purity", "purity", Vector2(296, 118)))
+	row.add_child(_make_stat_card("Spirit Energy", "spirit", Vector2(296, 118)))
+	row.add_child(_make_stat_card("Pond Beauty", "beauty", Vector2(296, 118)))
+
+	purity_progress = ProgressBar.new()
+	purity_progress.name = "PurityProgress"
+	purity_progress.position = Vector2(14, 134)
+	purity_progress.size = Vector2(896, 24)
+	purity_progress.max_value = 100
+	purity_progress.show_percentage = false
+	purity_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	purity_progress.add_theme_stylebox_override("background", _make_progress_style(Color(0.01, 0.03, 0.06, 0.85), Color("#23536a")))
+	purity_progress.add_theme_stylebox_override("fill", _make_progress_style(Color("#5ad9ff"), Color("#d8fbff")))
+	cards_layer.add_child(purity_progress)
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.name = "PondSummaryPanel"
+	summary_panel.position = Vector2(14, 170)
+	summary_panel.size = Vector2(896, 104)
+	summary_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	summary_panel.add_theme_stylebox_override("panel", _make_dark_panel_style(0.62))
+	cards_layer.add_child(summary_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	summary_panel.add_child(margin)
+
+	bonus_summary_label = Label.new()
+	bonus_summary_label.name = "BonusSummary"
+	bonus_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bonus_summary_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bonus_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bonus_summary_label.add_theme_font_size_override("font_size", 20)
+	bonus_summary_label.add_theme_color_override("font_color", Color("#fff4cf"))
+	bonus_summary_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	bonus_summary_label.add_theme_constant_override("shadow_offset_x", 2)
+	bonus_summary_label.add_theme_constant_override("shadow_offset_y", 2)
+	margin.add_child(bonus_summary_label)
+
+
+func _make_stat_card(title_text: String, key: String, card_size: Vector2) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = card_size
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", _make_dark_panel_style(0.72))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 4)
+	margin.add_child(box)
+
+	var title := Label.new()
+	title.text = title_text
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 19)
+	title.add_theme_color_override("font_color", Color("#f5d779"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	box.add_child(title)
+
+	var value := Label.new()
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_size_override("font_size", 36)
+	value.add_theme_color_override("font_color", Color("#fff4cf"))
+	value.add_theme_color_override("font_shadow_color", Color.BLACK)
+	value.add_theme_constant_override("shadow_offset_x", 2)
+	value.add_theme_constant_override("shadow_offset_y", 2)
+	box.add_child(value)
+	stat_value_labels[key] = value
+	return card
 
 
 func _build_panel() -> void:
@@ -108,7 +236,6 @@ func _build_panel() -> void:
 	button_panel.add_child(buttons)
 	buttons.add_child(_make_panel_nav_button("Restore", _on_restore_pressed))
 	buttons.add_child(_make_panel_nav_button("Decorate", _on_decorate_pressed))
-	buttons.add_child(_make_panel_nav_button("Upgrades", _on_upgrades_pressed))
 	buttons.add_child(_make_panel_nav_button("Back", _on_back_pressed))
 
 
@@ -245,6 +372,18 @@ func _make_button_bar_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_progress_style(fill: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	return style
+
+
 func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg_color
@@ -262,21 +401,127 @@ func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 
 
 func _refresh() -> void:
+	var completion_text := "Fully Restored" if GameState.sacred_pond_water_purity >= 100 else "Restoring"
+	if stat_value_labels.has("purity"):
+		(stat_value_labels["purity"] as Label).text = "%d%%" % GameState.sacred_pond_water_purity
+	if stat_value_labels.has("spirit"):
+		(stat_value_labels["spirit"] as Label).text = str(GameState.sacred_pond_spirit_energy)
+	if stat_value_labels.has("beauty"):
+		(stat_value_labels["beauty"] as Label).text = str(GameState.pond_beauty)
+	if purity_progress:
+		purity_progress.value = GameState.sacred_pond_water_purity
+	if bonus_summary_label:
+		bonus_summary_label.text = "Status: %s    Restore +%d%% for %d Mana\n%s    Next: %s" % [
+			completion_text,
+			GameState.get_sacred_pond_total_restore_amount(),
+			GameState.sacred_pond_restore_cost,
+			GameState.get_active_pond_bonus_text(),
+			GameState.get_next_pond_reward_text()
+		]
 	stats_label.text = (
-		"Water Purity: %d%%    Spirit Energy: %d    Pond Beauty: %d\nRestore Cost: %d Mana    Base Restore Amount: +%d%%    Fairy Restore Bonus: +%d%%\nDecoration Bonus: +%d%%    Total Restore Amount: +%d%%\nActive Pond Bonus: %s\nNext Reward: %s"
+		"Water Purity: %d%%    Status: %s    Spirit Energy: %d\nPond Beauty: %d    Restore Cost: %d Mana    Total Restore Amount: +%d%%\nBase: +%d%%    Fairy: +%d%%    Decor: +%d%%\nActive Pond Bonus: %s\nNext Reward: %s"
 		% [
 			GameState.sacred_pond_water_purity,
+			completion_text,
 			GameState.sacred_pond_spirit_energy,
 			GameState.pond_beauty,
 			GameState.sacred_pond_restore_cost,
+			GameState.get_sacred_pond_total_restore_amount(),
 			GameState.get_sacred_pond_base_restore_amount(),
 			GameState.get_sacred_pond_fairy_restore_bonus(),
 			GameState.get_pond_decoration_restore_bonus(),
-			GameState.get_sacred_pond_total_restore_amount(),
 			GameState.get_active_pond_bonus_text(),
 			GameState.get_next_pond_reward_text()
 		]
 	)
+	_refresh_decoration_preview()
+
+
+func _build_decoration_preview_layer() -> void:
+	decoration_preview_layer = Control.new()
+	decoration_preview_layer.name = "Pond Decoration Preview"
+	decoration_preview_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	decoration_preview_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if has_node("Root"):
+		get_node("Root").add_child(decoration_preview_layer)
+	else:
+		add_child(decoration_preview_layer)
+
+
+func _refresh_decoration_preview() -> void:
+	if decoration_preview_layer == null:
+		return
+	for child in decoration_preview_layer.get_children():
+		child.queue_free()
+	for decoration in GameState.pond_decorations:
+		if not bool(decoration.get("IsPlaced", false)):
+			continue
+		var decoration_name := String(decoration.get("DecorationName", ""))
+		var marker_size := _pond_decoration_preview_size(decoration_name)
+		var marker := _add_sprite(
+			decoration_preview_layer,
+			_pond_decoration_sprite_path(decoration_name),
+			GameState.get_pond_decoration_position(decoration) - marker_size * 0.5,
+			marker_size
+		)
+		marker.z_index = 4
+		marker.modulate.a = 0.94
+
+
+func _pond_decoration_sprite_path(decoration_name: String) -> String:
+	if decoration_name == "Moon Lantern":
+		return "res://assets/sprites/environment/moon_lantern.png"
+	if decoration_name == "Spirit Stone":
+		return "res://assets/sprites/environment/spirit_stone.png"
+	if decoration_name == "Bloom Lilypad":
+		return "res://assets/sprites/environment/bloom_lilypad.png"
+	if decoration_name == "Sacred Bridge":
+		return "res://assets/sprites/environment/sacred_bridge.png"
+	if decoration_name == "Crystal Lotus":
+		return "res://assets/sprites/environment/crystal_lotus.png"
+	if decoration_name == "Stone Koi Statue":
+		return "res://assets/sprites/environment/stone_koi_statue.png"
+	if decoration_name == "Crystal Pillar":
+		return "res://assets/sprites/environment/crystal_pillar.png"
+	if decoration_name == "Moonstone Steps":
+		return "res://assets/sprites/environment/moonstone_steps.png"
+	if decoration_name == "Fern Spring":
+		return "res://assets/sprites/environment/fern_spring.png"
+	if decoration_name == "Flame Basin":
+		return "res://assets/sprites/environment/flame_basin.png"
+	if decoration_name == "Reed Cluster":
+		return "res://assets/sprites/environment/reed_cluster.png"
+	if decoration_name == "Willow Arch":
+		return "res://assets/sprites/environment/willow_arch.png"
+	return "res://assets/sprites/effects/glow_orb.png"
+
+
+func _pond_decoration_preview_size(decoration_name: String) -> Vector2:
+	if decoration_name == "Moon Lantern":
+		return Vector2(110, 136)
+	if decoration_name == "Spirit Stone":
+		return Vector2(120, 120)
+	if decoration_name == "Bloom Lilypad":
+		return Vector2(128, 94)
+	if decoration_name == "Sacred Bridge":
+		return Vector2(154, 100)
+	if decoration_name == "Crystal Lotus":
+		return Vector2(132, 164)
+	if decoration_name == "Stone Koi Statue":
+		return Vector2(132, 166)
+	if decoration_name == "Crystal Pillar":
+		return Vector2(118, 166)
+	if decoration_name == "Moonstone Steps":
+		return Vector2(150, 116)
+	if decoration_name == "Fern Spring":
+		return Vector2(146, 136)
+	if decoration_name == "Flame Basin":
+		return Vector2(148, 126)
+	if decoration_name == "Reed Cluster":
+		return Vector2(118, 170)
+	if decoration_name == "Willow Arch":
+		return Vector2(154, 180)
+	return Vector2(108, 108)
 
 
 func _on_restore_pressed() -> void:
@@ -286,6 +531,9 @@ func _on_restore_pressed() -> void:
 		feedback_label.text = "Water Purity +%d%%" % restore_amount
 		_show_floating_text("Water Purity +%d%%" % restore_amount, Vector2(330, 830), Color("#80d6ff"))
 		_flash_panel()
+	elif GameState.sacred_pond_water_purity >= 100:
+		feedback_label.text = "Sacred Pond is fully restored."
+		_show_floating_text("Fully Restored", Vector2(330, 830), Color("#9ef0c0"))
 	else:
 		feedback_label.text = "Not enough Mana"
 		_show_floating_text("Not enough Mana", Vector2(330, 830), Color("#ff9f8a"))
@@ -294,12 +542,6 @@ func _on_restore_pressed() -> void:
 func _on_decorate_pressed() -> void:
 	SoundManager.play_click()
 	decorate_requested.emit()
-
-
-func _on_upgrades_pressed() -> void:
-	SoundManager.play_click()
-	feedback_label.text = "Pond upgrades coming soon."
-	_show_floating_text("Pond upgrades coming soon", Vector2(250, 1450), Color("#f3d57a"))
 
 
 func _on_remove_pressed() -> void:

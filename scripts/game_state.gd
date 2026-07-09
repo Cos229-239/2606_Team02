@@ -8,6 +8,7 @@ signal potion_shop_changed
 signal market_stall_changed
 signal ancient_tree_changed
 signal arcane_forge_changed
+signal inventory_changed
 signal quests_changed
 signal save_status_changed(message: String)
 signal save_reset
@@ -31,6 +32,12 @@ const QUEST_GOAL_RESTORE_TREE := "restore_tree"
 const QUEST_GOAL_FORGE_UPGRADE := "forge_upgrade"
 const QUEST_REWARD_MANA := "Mana"
 const QUEST_REWARD_COINS := "Coins"
+const SUN_KOI_GUARDIAN_SPIRIT_BONUS := 1
+const POTION_RECIPE_MANA := "mana_potion"
+const POTION_RECIPE_SPIRIT_TONIC := "spirit_tonic"
+const POTION_INGREDIENT_MANA_CRYSTAL := "mana_crystal"
+const POTION_INGREDIENT_DREAMBLOOM := "dreambloom"
+const POTION_INGREDIENT_EMPTY_VIAL := "empty_vial"
 const FLOWER_GRID_COLUMNS := 3
 const FLOWER_GRID_ROWS := 4
 const FLOWER_GRID_SLOT_COUNT := 12
@@ -39,6 +46,25 @@ const FLOWER_TIER_SEED := 1
 const FLOWER_TIER_FLOWER := 2
 const FLOWER_TIER_BLOOM := 3
 const FLOWER_TIER_RARE_BLOSSOM := 4
+const POND_DECORATION_EDITOR_RECT := Rect2(140, 320, 800, 830)
+const FAIRY_TASK_FLOWER_GROVE := "flower_grove"
+const FAIRY_TASK_FORAGE_INGREDIENTS := "forage_ingredients"
+const FAIRY_TASK_SACRED_POND := "sacred_pond"
+const FAIRY_TASK_IDS := [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]
+const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
+const FAIRY_MAX_LEVEL := 5
+const FAIRY_WORK_BONUS_PER_LEVEL := 0.5
+const FAIRY_HOUSE_MAX_LEVEL := 5
+const FAIRY_HOUSE_UPGRADE_COSTS := {
+	2: {"Mana": 80, "Coins": 25, "Spirit": 0},
+	3: {"Mana": 140, "Coins": 50, "Spirit": 2},
+	4: {"Mana": 220, "Coins": 90, "Spirit": 5},
+	5: {"Mana": 320, "Coins": 150, "Spirit": 10}
+}
+const FAIRY_RECRUIT_COSTS := {
+	"Sol": {"Mana": 120, "Coins": 40, "Spirit": 0, POTION_INGREDIENT_MANA_CRYSTAL: 1, POTION_INGREDIENT_DREAMBLOOM: 2, POTION_INGREDIENT_EMPTY_VIAL: 0},
+	"Mira": {"Mana": 180, "Coins": 75, "Spirit": 4, POTION_INGREDIENT_MANA_CRYSTAL: 2, POTION_INGREDIENT_DREAMBLOOM: 2, POTION_INGREDIENT_EMPTY_VIAL: 1}
+}
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -74,16 +100,22 @@ var fairy_max_residents: int = 3
 var fairy_workers_active: int = 2
 var fairy_current_assignment: String = "Flower Grove"
 var fairies: Array[Dictionary] = []
+var fairy_task_progress: Dictionary = {}
+var fairy_task_ready_counts: Dictionary = {}
 var potion_shop_level: int = 1
 var mana_potion_count: int = 0
 var potion_mana_cost: int = 25
 var potion_base_craft_time: int = 5
 var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
+var potion_crafting_recipe_id: String = POTION_RECIPE_MANA
+var potion_inventory: Dictionary = {}
+var potion_ingredients: Dictionary = {}
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
 var market_reputation: int = 1
 var market_orders_completed: int = 0
+var inventory_notes: Array[String] = []
 var ancient_tree_level: int = 1
 var ancient_tree_restore_cost: int = 75
 var ancient_tree_claimed_rewards: Array[int] = []
@@ -111,6 +143,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	generate_flower_mana(delta)
+	update_fairy_tasks(delta)
 	update_potion_crafting(delta)
 
 
@@ -349,13 +382,16 @@ func _sync_flower_grid_unlocks() -> void:
 
 
 func restore_sacred_pond() -> bool:
+	if sacred_pond_water_purity >= 100:
+		save_status_changed.emit("Sacred Pond is fully restored.")
+		return false
 	if total_mana < sacred_pond_restore_cost:
 		save_status_changed.emit("Not enough mana.")
 		return false
 
 	total_mana -= sacred_pond_restore_cost
 	sacred_pond_water_purity = min(sacred_pond_water_purity + get_sacred_pond_total_restore_amount(), 100)
-	sacred_pond_spirit_energy += 10
+	sacred_pond_spirit_energy += 10 + get_sun_koi_guardian_spirit_bonus()
 	sacred_pond_restore_cost = int(ceil(float(sacred_pond_restore_cost) * 1.25))
 	grove_restoration = sacred_pond_water_purity
 	update_sacred_pond_level_and_rewards()
@@ -381,8 +417,18 @@ func get_sacred_pond_total_restore_amount() -> int:
 	return sacred_pond_base_restore_amount + sacred_pond_fairy_restore_bonus + get_pond_decoration_restore_bonus()
 
 
+func can_restore_sacred_pond() -> bool:
+	return sacred_pond_water_purity < 100 and total_mana >= sacred_pond_restore_cost
+
+
 func get_pond_decoration_restore_bonus() -> int:
 	return int(floor(float(pond_beauty) / 10.0))
+
+
+func get_sun_koi_guardian_spirit_bonus() -> int:
+	if is_pond_reward_unlocked(POND_BONUS_SUN_KOI_GUARDIAN):
+		return SUN_KOI_GUARDIAN_SPIRIT_BONUS
+	return 0
 
 
 func get_pond_decoration_slot_name(slot_index: int) -> String:
@@ -406,6 +452,17 @@ func get_first_empty_pond_decoration_slot() -> int:
 
 
 func place_pond_decoration(decoration_name: String, requested_slot_index: int = -1) -> bool:
+	var slot_index := requested_slot_index
+	if slot_index < 0:
+		slot_index = get_first_empty_pond_decoration_slot()
+	if slot_index < 0:
+		last_pond_decoration_message = "No empty decoration slots."
+		save_status_changed.emit(last_pond_decoration_message)
+		return false
+	return place_pond_decoration_at(decoration_name, get_default_pond_decoration_position(slot_index), slot_index)
+
+
+func place_pond_decoration_at(decoration_name: String, pond_position: Vector2, requested_slot_index: int = -1) -> bool:
 	for index in range(pond_decorations.size()):
 		if String(pond_decorations[index].get("DecorationName", "")) != decoration_name:
 			continue
@@ -418,14 +475,7 @@ func place_pond_decoration(decoration_name: String, requested_slot_index: int = 
 			save_status_changed.emit(last_pond_decoration_message)
 			return false
 
-		var slot_index := requested_slot_index
-		if slot_index < 0:
-			slot_index = get_first_empty_pond_decoration_slot()
-		if slot_index < 0:
-			last_pond_decoration_message = "No empty decoration slots."
-			save_status_changed.emit(last_pond_decoration_message)
-			return false
-		if is_pond_slot_occupied(slot_index):
+		if requested_slot_index >= 0 and is_pond_slot_occupied(requested_slot_index):
 			last_pond_decoration_message = "No empty decoration slots."
 			save_status_changed.emit(last_pond_decoration_message)
 			return false
@@ -438,7 +488,10 @@ func place_pond_decoration(decoration_name: String, requested_slot_index: int = 
 
 		total_mana -= cost
 		pond_decorations[index]["IsPlaced"] = true
-		pond_decorations[index]["SlotIndex"] = slot_index
+		pond_decorations[index]["SlotIndex"] = requested_slot_index
+		var normalized_position := get_pond_decoration_normalized_from_editor_position(pond_position)
+		pond_decorations[index]["PositionX"] = normalized_position.x
+		pond_decorations[index]["PositionY"] = normalized_position.y
 		recalculate_pond_beauty()
 		last_pond_decoration_message = "Decoration placed!"
 		resources_changed.emit()
@@ -462,6 +515,8 @@ func remove_pond_decoration(decoration_name: String) -> bool:
 			return false
 		pond_decorations[index]["IsPlaced"] = false
 		pond_decorations[index]["SlotIndex"] = -1
+		pond_decorations[index]["PositionX"] = -1.0
+		pond_decorations[index]["PositionY"] = -1.0
 		recalculate_pond_beauty()
 		last_pond_decoration_message = "Decoration removed."
 		sacred_pond_changed.emit()
@@ -469,6 +524,77 @@ func remove_pond_decoration(decoration_name: String) -> bool:
 		save_status_changed.emit(last_pond_decoration_message)
 		return true
 	return false
+
+
+func move_pond_decoration(decoration_name: String, pond_position: Vector2, save_immediately: bool = true) -> bool:
+	for index in range(pond_decorations.size()):
+		if String(pond_decorations[index].get("DecorationName", "")) != decoration_name:
+			continue
+		if not bool(pond_decorations[index].get("IsPlaced", false)):
+			last_pond_decoration_message = "Decoration is not placed."
+			save_status_changed.emit(last_pond_decoration_message)
+			return false
+		var normalized_position := get_pond_decoration_normalized_from_editor_position(pond_position)
+		pond_decorations[index]["PositionX"] = normalized_position.x
+		pond_decorations[index]["PositionY"] = normalized_position.y
+		pond_decorations[index]["SlotIndex"] = -1
+		last_pond_decoration_message = "Decoration moved."
+		sacred_pond_changed.emit()
+		if save_immediately:
+			save_game()
+		return true
+	last_pond_decoration_message = "Decoration not found."
+	save_status_changed.emit(last_pond_decoration_message)
+	return false
+
+
+func get_pond_decoration_position(decoration: Dictionary) -> Vector2:
+	return get_pond_decoration_screen_position(decoration, POND_DECORATION_EDITOR_RECT)
+
+
+func get_pond_decoration_screen_position(decoration: Dictionary, target_rect: Rect2) -> Vector2:
+	var normalized := get_pond_decoration_normalized_position(decoration)
+	return target_rect.position + target_rect.size * normalized
+
+
+func get_pond_decoration_normalized_position(decoration: Dictionary) -> Vector2:
+	var x := float(decoration.get("PositionX", -1.0))
+	var y := float(decoration.get("PositionY", -1.0))
+	if x >= 0.0 and y >= 0.0:
+		if x <= 1.0 and y <= 1.0:
+			return Vector2(clamp(x, 0.0, 1.0), clamp(y, 0.0, 1.0))
+		return get_pond_decoration_normalized_from_editor_position(Vector2(x, y))
+	var slot_index := int(decoration.get("SlotIndex", -1))
+	if slot_index >= 0:
+		return get_pond_decoration_normalized_from_editor_position(get_default_pond_decoration_position(slot_index))
+	return Vector2(0.5, 0.5)
+
+
+func get_default_pond_decoration_position(slot_index: int) -> Vector2:
+	var positions := [
+		Vector2(300, 438),
+		Vector2(810, 535),
+		Vector2(218, 900),
+		Vector2(742, 1005),
+		Vector2(548, 394),
+		Vector2(540, 1038)
+	]
+	return positions[clamp(slot_index, 0, positions.size() - 1)]
+
+
+func clamp_pond_decoration_position(pond_position: Vector2) -> Vector2:
+	return Vector2(
+		clamp(pond_position.x, POND_DECORATION_EDITOR_RECT.position.x, POND_DECORATION_EDITOR_RECT.end.x),
+		clamp(pond_position.y, POND_DECORATION_EDITOR_RECT.position.y, POND_DECORATION_EDITOR_RECT.end.y)
+	)
+
+
+func get_pond_decoration_normalized_from_editor_position(pond_position: Vector2) -> Vector2:
+	var clamped_position := clamp_pond_decoration_position(pond_position)
+	return Vector2(
+		inverse_lerp(POND_DECORATION_EDITOR_RECT.position.x, POND_DECORATION_EDITOR_RECT.end.x, clamped_position.x),
+		inverse_lerp(POND_DECORATION_EDITOR_RECT.position.y, POND_DECORATION_EDITOR_RECT.end.y, clamped_position.y)
+	)
 
 
 func recalculate_pond_beauty() -> void:
@@ -479,39 +605,201 @@ func recalculate_pond_beauty() -> void:
 
 
 func get_potion_mana_cost() -> int:
-	return potion_mana_cost
+	return int(get_potion_recipe_data(POTION_RECIPE_MANA).get("CostMana", potion_mana_cost))
 
 
-func get_potion_craft_time() -> int:
-	return max(2, potion_base_craft_time - (potion_shop_level - 1))
+func get_potion_craft_time(recipe_id: String = POTION_RECIPE_MANA) -> int:
+	var recipe := get_potion_recipe_data(recipe_id)
+	var base_time := int(recipe.get("BaseCraftTime", potion_base_craft_time))
+	return max(2, base_time - (potion_shop_level - 1))
 
 
-func get_potion_sell_value() -> int:
-	return potion_sell_value
+func get_potion_sell_value(recipe_id: String = POTION_RECIPE_MANA) -> int:
+	var recipe := get_potion_recipe_data(recipe_id)
+	return int(recipe.get("SellValue", potion_sell_value))
 
 
 func get_potion_craft_progress() -> float:
 	if not potion_crafting_active:
 		return 0.0
-	var craft_time := float(get_potion_craft_time())
+	var craft_time := float(get_potion_craft_time(potion_crafting_recipe_id))
 	return clamp((craft_time - potion_current_craft_time) / craft_time, 0.0, 1.0)
 
 
-func start_mana_potion_craft() -> bool:
+func get_potion_recipe_data(recipe_id: String) -> Dictionary:
+	match recipe_id:
+		POTION_RECIPE_MANA:
+			return {
+				"RecipeID": POTION_RECIPE_MANA,
+				"Name": "Mana Potion",
+				"CostMana": potion_mana_cost,
+				"CostSpirit": 0,
+				"Ingredients": {
+					POTION_INGREDIENT_MANA_CRYSTAL: 1,
+					POTION_INGREDIENT_EMPTY_VIAL: 1
+				},
+				"BaseCraftTime": potion_base_craft_time,
+				"SellValue": potion_sell_value,
+				"Description": "A reliable village staple brewed from gathered Mana."
+			}
+		POTION_RECIPE_SPIRIT_TONIC:
+			return {
+				"RecipeID": POTION_RECIPE_SPIRIT_TONIC,
+				"Name": "Spirit Tonic",
+				"CostMana": 20,
+				"CostSpirit": 5,
+				"Ingredients": {
+					POTION_INGREDIENT_MANA_CRYSTAL: 1,
+					POTION_INGREDIENT_DREAMBLOOM: 2,
+					POTION_INGREDIENT_EMPTY_VIAL: 1
+				},
+				"BaseCraftTime": potion_base_craft_time + 2,
+				"SellValue": potion_sell_value + 45,
+				"Description": "A bright pond-infused tonic that sells for a premium."
+			}
+	return {}
+
+
+func get_potion_recipes() -> Array[Dictionary]:
+	return [
+		get_potion_recipe_data(POTION_RECIPE_MANA),
+		get_potion_recipe_data(POTION_RECIPE_SPIRIT_TONIC)
+	]
+
+
+func get_potion_ingredient_name(ingredient_id: String) -> String:
+	match ingredient_id:
+		POTION_INGREDIENT_MANA_CRYSTAL:
+			return "Mana Crystal"
+		POTION_INGREDIENT_DREAMBLOOM:
+			return "Dreambloom"
+		POTION_INGREDIENT_EMPTY_VIAL:
+			return "Empty Vial"
+	return "Ingredient"
+
+
+func get_potion_ingredient_count(ingredient_id: String) -> int:
+	_sync_potion_ingredients()
+	return int(potion_ingredients.get(ingredient_id, 0))
+
+
+func get_potion_ingredient_requirements(recipe_id: String) -> Dictionary:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		return {}
+	var ingredients = recipe.get("Ingredients", {})
+	return ingredients if ingredients is Dictionary else {}
+
+
+func has_potion_ingredients(recipe_id: String) -> bool:
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	for ingredient_id in requirements.keys():
+		if get_potion_ingredient_count(String(ingredient_id)) < int(requirements.get(ingredient_id, 0)):
+			return false
+	return true
+
+
+func get_potion_ingredient_requirement_text(recipe_id: String) -> String:
+	var lines: Array[String] = []
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	for ingredient_id in requirements.keys():
+		var clean_id := String(ingredient_id)
+		lines.append("%s %d / %d" % [
+			get_potion_ingredient_name(clean_id),
+			get_potion_ingredient_count(clean_id),
+			int(requirements.get(ingredient_id, 0))
+		])
+	return "\n".join(lines)
+
+
+func add_potion_ingredient(ingredient_id: String, amount: int) -> void:
+	if amount <= 0:
+		return
+	_sync_potion_ingredients()
+	potion_ingredients[ingredient_id] = get_potion_ingredient_count(ingredient_id) + amount
+	inventory_changed.emit()
+	potion_shop_changed.emit()
+
+
+func _spend_potion_ingredients(recipe_id: String) -> void:
+	var requirements := get_potion_ingredient_requirements(recipe_id)
+	_sync_potion_ingredients()
+	for ingredient_id in requirements.keys():
+		var clean_id := String(ingredient_id)
+		potion_ingredients[clean_id] = max(0, get_potion_ingredient_count(clean_id) - int(requirements.get(ingredient_id, 0)))
+
+
+func buy_potion_ingredient_bundle() -> Dictionary:
+	var cost := 30
+	if total_coins < cost:
+		save_status_changed.emit("Not enough Coins.")
+		return {"Success": false, "Message": "Not enough Coins."}
+	total_coins -= cost
+	add_potion_ingredient(POTION_INGREDIENT_MANA_CRYSTAL, 2)
+	add_potion_ingredient(POTION_INGREDIENT_DREAMBLOOM, 2)
+	add_potion_ingredient(POTION_INGREDIENT_EMPTY_VIAL, 2)
+	resources_changed.emit()
+	save_game()
+	var message := "Bought potion ingredients."
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func get_potion_count(recipe_id: String) -> int:
+	_sync_potion_inventory_from_legacy()
+	return int(potion_inventory.get(recipe_id, 0))
+
+
+func get_total_potion_count() -> int:
+	_sync_potion_inventory_from_legacy()
+	var count := 0
+	for recipe_id in potion_inventory.keys():
+		count += int(potion_inventory.get(recipe_id, 0))
+	return count
+
+
+func can_craft_potion(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty() or potion_crafting_active:
+		return false
+	return total_mana >= int(recipe.get("CostMana", 0)) and sacred_pond_spirit_energy >= int(recipe.get("CostSpirit", 0)) and has_potion_ingredients(recipe_id)
+
+
+func start_potion_craft(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		save_status_changed.emit("Unknown recipe.")
+		return false
 	if potion_crafting_active:
 		save_status_changed.emit("Potion already crafting.")
 		return false
-	if total_mana < potion_mana_cost:
+	var cost_mana := int(recipe.get("CostMana", 0))
+	var cost_spirit := int(recipe.get("CostSpirit", 0))
+	if total_mana < cost_mana:
 		save_status_changed.emit("Not enough Mana.")
 		return false
+	if sacred_pond_spirit_energy < cost_spirit:
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return false
+	if not has_potion_ingredients(recipe_id):
+		save_status_changed.emit("Missing potion ingredients.")
+		return false
 
-	total_mana -= potion_mana_cost
-	potion_current_craft_time = float(get_potion_craft_time())
+	total_mana -= cost_mana
+	sacred_pond_spirit_energy -= cost_spirit
+	_spend_potion_ingredients(recipe_id)
+	potion_current_craft_time = float(get_potion_craft_time(recipe_id))
+	potion_crafting_recipe_id = recipe_id
 	potion_crafting_active = true
 	resources_changed.emit()
 	potion_shop_changed.emit()
+	inventory_changed.emit()
 	save_game()
 	return true
+
+
+func start_mana_potion_craft() -> bool:
+	return start_potion_craft(POTION_RECIPE_MANA)
 
 
 func update_potion_crafting(delta: float) -> void:
@@ -521,8 +809,9 @@ func update_potion_crafting(delta: float) -> void:
 	potion_current_craft_time = max(0.0, potion_current_craft_time - delta)
 	if potion_current_craft_time <= 0.0:
 		potion_crafting_active = false
-		mana_potion_count += 1
+		_add_potion_to_inventory(potion_crafting_recipe_id, 1)
 		add_quest_progress(QUEST_GOAL_CRAFT_POTION, 1)
+		inventory_changed.emit()
 		potion_shop_changed.emit()
 		save_game()
 	else:
@@ -530,16 +819,75 @@ func update_potion_crafting(delta: float) -> void:
 
 
 func sell_mana_potion() -> bool:
-	if mana_potion_count <= 0:
-		save_status_changed.emit("No potions to sell.")
+	return sell_potion(POTION_RECIPE_MANA)
+
+
+func sell_potion(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		save_status_changed.emit("Unknown recipe.")
+		return false
+	_sync_potion_inventory_from_legacy()
+	if get_potion_count(recipe_id) <= 0:
+		save_status_changed.emit("No %s to sell." % String(recipe.get("Name", "potions")))
 		return false
 
-	mana_potion_count -= 1
-	total_coins += potion_sell_value
+	potion_inventory[recipe_id] = get_potion_count(recipe_id) - 1
+	_sync_legacy_mana_potion_count()
+	total_coins += get_potion_sell_value(recipe_id)
 	resources_changed.emit()
+	inventory_changed.emit()
 	potion_shop_changed.emit()
 	save_game()
 	return true
+
+
+func _add_potion_to_inventory(recipe_id: String, amount: int) -> void:
+	if amount <= 0:
+		return
+	_sync_potion_inventory_from_legacy()
+	potion_inventory[recipe_id] = get_potion_count(recipe_id) + amount
+	_sync_legacy_mana_potion_count()
+
+
+func _sync_potion_inventory_from_legacy() -> void:
+	if not potion_inventory.has(POTION_RECIPE_MANA):
+		potion_inventory[POTION_RECIPE_MANA] = mana_potion_count
+	elif mana_potion_count > int(potion_inventory.get(POTION_RECIPE_MANA, 0)):
+		potion_inventory[POTION_RECIPE_MANA] = mana_potion_count
+
+
+func _sync_legacy_mana_potion_count() -> void:
+	mana_potion_count = int(potion_inventory.get(POTION_RECIPE_MANA, 0))
+
+
+func _set_potion_inventory_from_save(saved_inventory) -> void:
+	potion_inventory.clear()
+	if saved_inventory is Dictionary:
+		for recipe_id in saved_inventory.keys():
+			var clean_recipe_id := String(recipe_id)
+			if get_potion_recipe_data(clean_recipe_id).is_empty():
+				continue
+			potion_inventory[clean_recipe_id] = max(0, int(saved_inventory.get(recipe_id, 0)))
+	_sync_potion_inventory_from_legacy()
+	_sync_legacy_mana_potion_count()
+
+
+func _sync_potion_ingredients() -> void:
+	for ingredient_id in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		if not potion_ingredients.has(ingredient_id):
+			potion_ingredients[ingredient_id] = 0
+
+
+func _set_potion_ingredients_from_save(saved_ingredients) -> void:
+	potion_ingredients.clear()
+	if saved_ingredients is Dictionary:
+		for ingredient_id in saved_ingredients.keys():
+			var clean_id := String(ingredient_id)
+			if clean_id not in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+				continue
+			potion_ingredients[clean_id] = max(0, int(saved_ingredients.get(ingredient_id, 0)))
+	_sync_potion_ingredients()
 
 
 func upgrade_potion_shop() -> bool:
@@ -629,6 +977,7 @@ func fulfill_market_order(order_id: String) -> Dictionary:
 	add_quest_progress(QUEST_GOAL_MARKET_TRADE, 1)
 
 	resources_changed.emit()
+	inventory_changed.emit()
 	market_stall_changed.emit()
 	potion_shop_changed.emit()
 	sacred_pond_changed.emit()
@@ -877,7 +1226,7 @@ func get_active_pond_bonus_text() -> String:
 	if active_pond_bonus == POND_BONUS_FAIRY_BLESSING:
 		return "Fairy Blessing +1 Fairy House Capacity"
 	if active_pond_bonus == POND_BONUS_SUN_KOI_GUARDIAN:
-		return "Sun Koi Guardian Spirit Guardian Placeholder"
+		return "Sun Koi Guardian +1 Spirit Energy per Restore"
 	return "None"
 
 
@@ -920,6 +1269,448 @@ func assign_fairy_to_area(fairy_name: String, area: String) -> String:
 	return "%s is not available." % fairy_name
 
 
+func update_fairy_tasks(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	var changed := false
+	var house_speed_multiplier := get_fairy_house_task_speed_multiplier()
+	var flower_speed := _get_fairy_task_speed(FAIRY_TASK_FLOWER_GROVE)
+	if flower_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * house_speed_multiplier * delta) or changed
+	var forage_speed := _get_fairy_task_speed(FAIRY_TASK_FORAGE_INGREDIENTS)
+	if forage_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, forage_speed * house_speed_multiplier * delta * 0.75) or changed
+	var pond_speed := _get_fairy_task_speed(FAIRY_TASK_SACRED_POND)
+	if pond_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * house_speed_multiplier * delta) or changed
+	if changed:
+		fairy_house_changed.emit()
+
+
+func _advance_fairy_task(task_id: String, amount: float) -> bool:
+	var progress := float(fairy_task_progress.get(task_id, 0.0)) + amount
+	var ready_count := int(fairy_task_ready_counts.get(task_id, 0))
+	var changed := false
+	while progress >= FAIRY_TASK_REQUIRED_PROGRESS:
+		progress -= FAIRY_TASK_REQUIRED_PROGRESS
+		ready_count += 1
+		changed = true
+	fairy_task_progress[task_id] = progress
+	fairy_task_ready_counts[task_id] = ready_count
+	return changed
+
+
+func _get_fairy_task_speed(task_id: String) -> float:
+	var speed := 0.0
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != _get_fairy_task_area(task_id):
+			continue
+		speed += _get_fairy_task_contribution(fairy, task_id)
+	return speed
+
+
+func _get_fairy_task_area(task_id: String) -> String:
+	if task_id == FAIRY_TASK_SACRED_POND:
+		return FAIRY_AREA_SACRED_POND
+	return FAIRY_AREA_FLOWER_GROVE
+
+
+func _get_fairy_task_contribution(fairy: Dictionary, task_id: String) -> float:
+	var work_bonus: float = max(0.5, float(fairy.get("WorkBonus", 1.0)))
+	return work_bonus * _get_fairy_role_task_multiplier(fairy, task_id)
+
+
+func _get_fairy_role_task_multiplier(fairy: Dictionary, task_id: String) -> float:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	var training_bonus := get_fairy_house_role_training_bonus()
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		if role == "Gatherer":
+			return 1.0 + training_bonus
+		if role == "Forager":
+			return 0.9
+		if role == "Pond Keeper":
+			return 0.85
+	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+		if role == "Forager":
+			return 1.6 + training_bonus
+		if role == "Gatherer":
+			return 0.75
+		if role == "Pond Keeper":
+			return 0.65
+	if task_id == FAIRY_TASK_SACRED_POND:
+		if role == "Pond Keeper":
+			return 1.0 + training_bonus
+		if role == "Gatherer":
+			return 0.9
+		if role == "Forager":
+			return 0.8
+	return 1.0
+
+
+func get_fairy_task_progress_percent(task_id: String) -> int:
+	return int(floor((float(fairy_task_progress.get(task_id, 0.0)) / FAIRY_TASK_REQUIRED_PROGRESS) * 100.0))
+
+
+func get_fairy_task_progress_text(task_id: String) -> String:
+	var progress := float(fairy_task_progress.get(task_id, 0.0))
+	return "%d / %d progress" % [int(floor(progress)), int(FAIRY_TASK_REQUIRED_PROGRESS)]
+
+
+func get_fairy_task_ready_count(task_id: String) -> int:
+	return int(fairy_task_ready_counts.get(task_id, 0))
+
+
+func get_total_fairy_task_ready_count() -> int:
+	var total := 0
+	for task_id in FAIRY_TASK_IDS:
+		total += get_fairy_task_ready_count(task_id)
+	return total
+
+
+func get_fairy_task_inbox_text() -> String:
+	var ready_count := get_total_fairy_task_ready_count()
+	if ready_count > 0:
+		return "%d fairy reward%s ready to collect." % [ready_count, "" if ready_count == 1 else "s"]
+	var active_count := 0
+	for task_id in FAIRY_TASK_IDS:
+		if _get_fairy_task_speed(task_id) > 0.0:
+			active_count += 1
+	if active_count > 0:
+		return "%d fairy task%s in progress." % [active_count, "" if active_count == 1 else "s"]
+	return "Assign fairies to begin gathering rewards."
+
+
+func get_fairy_task_status_text(task_id: String) -> String:
+	var ready_count := get_fairy_task_ready_count(task_id)
+	if ready_count > 0:
+		return "Ready to collect"
+	if _get_fairy_task_speed(task_id) > 0.0:
+		return "Working"
+	return "Idle"
+
+
+func get_fairy_task_time_remaining_text(task_id: String) -> String:
+	if get_fairy_task_ready_count(task_id) > 0:
+		return "Reward waiting"
+	var speed: float = _get_adjusted_fairy_task_speed(task_id)
+	if speed <= 0.0:
+		return "Assign a fairy to begin"
+	var remaining: float = max(0.0, FAIRY_TASK_REQUIRED_PROGRESS - float(fairy_task_progress.get(task_id, 0.0)))
+	return "Next reward in about %ds" % int(ceil(remaining / speed))
+
+
+func get_fairy_task_cards() -> Array[Dictionary]:
+	return [
+		{
+			"TaskID": FAIRY_TASK_FLOWER_GROVE,
+			"Title": "Gather Mana",
+			"Area": FAIRY_AREA_FLOWER_GROVE,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_FLOWER_GROVE),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_FLOWER_GROVE),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FLOWER_GROVE),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_FLOWER_GROVE),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FLOWER_GROVE),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_FLOWER_GROVE),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE),
+			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE),
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_FLOWER_GROVE) > 0.0
+		},
+		{
+			"TaskID": FAIRY_TASK_FORAGE_INGREDIENTS,
+			"Title": "Forage Ingredients",
+			"Area": FAIRY_AREA_FLOWER_GROVE,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS),
+			"RewardText": "Mana Crystal, Dreambloom x2, Empty Vial",
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_FORAGE_INGREDIENTS) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_FORAGE_INGREDIENTS) > 0.0
+		},
+		{
+			"TaskID": FAIRY_TASK_SACRED_POND,
+			"Title": "Tend Waters",
+			"Area": FAIRY_AREA_SACRED_POND,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND),
+			"WorkerText": get_fairy_task_worker_text(FAIRY_TASK_SACRED_POND),
+			"StatusText": get_fairy_task_status_text(FAIRY_TASK_SACRED_POND),
+			"TaskRateText": get_fairy_task_rate_text(FAIRY_TASK_SACRED_POND),
+			"TimeRemainingText": get_fairy_task_time_remaining_text(FAIRY_TASK_SACRED_POND),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_SACRED_POND),
+			"ProgressText": get_fairy_task_progress_text(FAIRY_TASK_SACRED_POND),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND),
+			"RewardText": "+%d Spirit Energy" % get_fairy_task_reward_amount(FAIRY_TASK_SACRED_POND),
+			"IsReady": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND) > 0,
+			"IsActive": _get_fairy_task_speed(FAIRY_TASK_SACRED_POND) > 0.0
+		}
+	]
+
+
+func _get_fairies_for_assignment(area: String) -> Array[String]:
+	var names: Array[String] = []
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) == area:
+			names.append(String(fairy.get("FairyName", "Fairy")))
+	return names
+
+
+func get_fairy_task_worker_text(task_id: String) -> String:
+	var area := _get_fairy_task_area(task_id)
+	var parts: Array[String] = []
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != area:
+			continue
+		parts.append("%s %.1fx" % [
+			String(fairy.get("FairyName", "Fairy")),
+			_get_fairy_task_contribution(fairy, task_id)
+		])
+	if parts.is_empty():
+		return "No fairies assigned"
+	return ", ".join(parts)
+
+
+func _get_adjusted_fairy_task_speed(task_id: String) -> float:
+	var speed := _get_fairy_task_speed(task_id) * get_fairy_house_task_speed_multiplier()
+	return speed * (0.75 if task_id == FAIRY_TASK_FORAGE_INGREDIENTS else 1.0)
+
+
+func get_fairy_task_rate_text(task_id: String) -> String:
+	var adjusted_speed := _get_adjusted_fairy_task_speed(task_id)
+	if adjusted_speed <= 0.0:
+		return "Idle"
+	var seconds := FAIRY_TASK_REQUIRED_PROGRESS / adjusted_speed
+	return "%.1fx speed, about %ds" % [adjusted_speed, int(ceil(seconds))]
+
+
+func get_fairy_task_reward_amount(task_id: String) -> int:
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		return int(round((20 + _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE).size() * 5) * get_fairy_house_reward_multiplier()))
+	if task_id == FAIRY_TASK_SACRED_POND:
+		return max(1, int(round(max(1, _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND).size()) * get_fairy_house_reward_multiplier())))
+	return 0
+
+
+func collect_fairy_task_reward(task_id: String) -> Dictionary:
+	var ready_count := int(fairy_task_ready_counts.get(task_id, 0))
+	if ready_count <= 0:
+		return {"Success": false, "Message": "No fairy task reward ready."}
+
+	var reward_amount := get_fairy_task_reward_amount(task_id)
+	fairy_task_ready_counts[task_id] = ready_count - 1
+	var level_up_names := _grant_fairy_task_xp(task_id)
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		total_mana += reward_amount
+		add_quest_progress(QUEST_GOAL_COLLECT_MANA, reward_amount)
+		resources_changed.emit()
+		fairy_house_changed.emit()
+		save_game()
+		var mana_message := _append_fairy_level_message("Fairies delivered %d Mana." % reward_amount, level_up_names)
+		save_status_changed.emit(mana_message)
+		return {"Success": true, "Message": mana_message, "LevelUpNames": level_up_names, "FloatingText": "+%d Mana" % reward_amount}
+	if task_id == FAIRY_TASK_SACRED_POND:
+		sacred_pond_spirit_energy += reward_amount
+		resources_changed.emit()
+		sacred_pond_changed.emit()
+		fairy_house_changed.emit()
+		save_game()
+		var pond_message := _append_fairy_level_message("Fairies gathered %d Spirit Energy." % reward_amount, level_up_names)
+		save_status_changed.emit(pond_message)
+		return {"Success": true, "Message": pond_message, "LevelUpNames": level_up_names, "FloatingText": "+%d Spirit" % reward_amount}
+	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+		add_potion_ingredient(POTION_INGREDIENT_MANA_CRYSTAL, 1)
+		add_potion_ingredient(POTION_INGREDIENT_DREAMBLOOM, 2)
+		add_potion_ingredient(POTION_INGREDIENT_EMPTY_VIAL, 1)
+		fairy_house_changed.emit()
+		save_game()
+		var ingredient_message := _append_fairy_level_message("Fairies delivered potion ingredients.", level_up_names)
+		save_status_changed.emit(ingredient_message)
+		return {"Success": true, "Message": ingredient_message, "LevelUpNames": level_up_names, "FloatingText": "+Ingredients"}
+	return {"Success": false, "Message": "Unknown fairy task."}
+
+
+func collect_all_fairy_task_rewards() -> Dictionary:
+	var starting_ready_count := get_total_fairy_task_ready_count()
+	if starting_ready_count <= 0:
+		return {"Success": false, "Message": "No fairy task rewards ready.", "ClaimedCount": 0, "LevelUpNames": []}
+
+	var claimed_count := 0
+	var mana_gained := 0
+	var spirit_gained := 0
+	var ingredient_rewards := 0
+	var level_up_names: Array[String] = []
+	for task_id in FAIRY_TASK_IDS:
+		while get_fairy_task_ready_count(task_id) > 0:
+			var before_mana := total_mana
+			var before_spirit := sacred_pond_spirit_energy
+			var result: Dictionary = collect_fairy_task_reward(task_id)
+			if not bool(result.get("Success", false)):
+				break
+			claimed_count += 1
+			mana_gained += max(0, total_mana - before_mana)
+			spirit_gained += max(0, sacred_pond_spirit_energy - before_spirit)
+			if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
+				ingredient_rewards += 1
+			for fairy_name in result.get("LevelUpNames", []):
+				var clean_name := String(fairy_name)
+				if not level_up_names.has(clean_name):
+					level_up_names.append(clean_name)
+
+	var parts: Array[String] = []
+	if mana_gained > 0:
+		parts.append("%d Mana" % mana_gained)
+	if spirit_gained > 0:
+		parts.append("%d Spirit" % spirit_gained)
+	if ingredient_rewards > 0:
+		parts.append("%d ingredient bundle%s" % [ingredient_rewards, "" if ingredient_rewards == 1 else "s"])
+	var reward_text := ", ".join(parts) if not parts.is_empty() else "fairy rewards"
+	var message := _append_fairy_level_message("Collected %d fairy reward%s: %s." % [claimed_count, "" if claimed_count == 1 else "s", reward_text], level_up_names)
+	save_status_changed.emit(message)
+	return {
+		"Success": claimed_count > 0,
+		"Message": message,
+		"ClaimedCount": claimed_count,
+		"LevelUpNames": level_up_names,
+		"FloatingText": "+%d Rewards" % claimed_count
+	}
+
+
+func _grant_fairy_task_xp(task_id: String) -> Array[String]:
+	var level_up_names: Array[String] = []
+	var task_area := _get_fairy_task_area(task_id)
+	for index in range(fairies.size()):
+		if not bool(fairies[index].get("IsUnlocked", false)):
+			continue
+		if String(fairies[index].get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != task_area:
+			continue
+		if int(fairies[index].get("FairyLevel", 1)) >= FAIRY_MAX_LEVEL:
+			fairies[index]["FairyXP"] = 0
+			continue
+		fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) + get_fairy_house_xp_gain()
+		var xp_to_next := get_fairy_xp_to_next_level(fairies[index])
+		if int(fairies[index].get("FairyXP", 0)) >= xp_to_next:
+			fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) - xp_to_next
+			fairies[index]["FairyLevel"] = min(FAIRY_MAX_LEVEL, int(fairies[index].get("FairyLevel", 1)) + 1)
+			fairies[index]["WorkBonus"] = float(fairies[index].get("WorkBonus", 1.0)) + FAIRY_WORK_BONUS_PER_LEVEL
+			level_up_names.append(String(fairies[index].get("FairyName", "Fairy")))
+	recalculate_fairy_bonuses()
+	if not level_up_names.is_empty():
+		resources_changed.emit()
+		flower_grove_changed.emit()
+		sacred_pond_changed.emit()
+	return level_up_names
+
+
+func _append_fairy_level_message(base_message: String, level_up_names: Array[String]) -> String:
+	if level_up_names.is_empty():
+		return base_message
+	return "%s %s leveled up!" % [base_message, ", ".join(level_up_names)]
+
+
+func get_fairy_house_task_speed_multiplier() -> float:
+	if fairy_house_level < 2:
+		return 1.0
+	return 1.0 + (float(fairy_house_level - 1) * 0.10)
+
+
+func get_fairy_house_reward_multiplier() -> float:
+	return 1.25 if fairy_house_level >= 4 else 1.0
+
+
+func get_fairy_house_role_training_bonus() -> float:
+	return 0.25 if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL else 0.0
+
+
+func get_fairy_house_xp_gain() -> int:
+	return 2 if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL else 1
+
+
+func get_fairy_house_upgrade_cost(target_level: int = fairy_house_level + 1) -> Dictionary:
+	if not FAIRY_HOUSE_UPGRADE_COSTS.has(target_level):
+		return {}
+	return (FAIRY_HOUSE_UPGRADE_COSTS[target_level] as Dictionary).duplicate(true)
+
+
+func can_upgrade_fairy_house() -> bool:
+	var cost := get_fairy_house_upgrade_cost()
+	if cost.is_empty():
+		return false
+	return total_mana >= int(cost.get("Mana", 0)) and total_coins >= int(cost.get("Coins", 0)) and sacred_pond_spirit_energy >= int(cost.get("Spirit", 0))
+
+
+func get_fairy_house_upgrade_summary() -> String:
+	if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL:
+		return "Max Level: +40% task speed, +25% rewards, role training, and +2 XP per task."
+	var next_level := fairy_house_level + 1
+	var cost := get_fairy_house_upgrade_cost(next_level)
+	var benefit := ""
+	match next_level:
+		2:
+			benefit = "+10% fairy task speed"
+		3:
+			benefit = "+20% task speed and +1 fairy capacity"
+		4:
+			benefit = "+30% task speed and +25% task rewards"
+		5:
+			benefit = "+40% task speed, +1 fairy capacity, role training, and +2 XP per task"
+		_:
+			benefit = "More fairy support"
+	return "Next Level %d: %s\nCost: %d Mana, %d Coins, %d Spirit" % [
+		next_level,
+		benefit,
+		int(cost.get("Mana", 0)),
+		int(cost.get("Coins", 0)),
+		int(cost.get("Spirit", 0))
+	]
+
+
+func upgrade_fairy_house() -> Dictionary:
+	if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL:
+		save_status_changed.emit("Fairy House is maxed.")
+		return {"Success": false, "Message": "Fairy House is maxed."}
+	var target_level := fairy_house_level + 1
+	var cost := get_fairy_house_upgrade_cost(target_level)
+	if cost.is_empty():
+		save_status_changed.emit("No Fairy House upgrade available.")
+		return {"Success": false, "Message": "No Fairy House upgrade available."}
+	if total_mana < int(cost.get("Mana", 0)):
+		save_status_changed.emit("Not enough Mana.")
+		return {"Success": false, "Message": "Not enough Mana."}
+	if total_coins < int(cost.get("Coins", 0)):
+		save_status_changed.emit("Not enough Coins.")
+		return {"Success": false, "Message": "Not enough Coins."}
+	if sacred_pond_spirit_energy < int(cost.get("Spirit", 0)):
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return {"Success": false, "Message": "Not enough Spirit Energy."}
+
+	total_mana -= int(cost.get("Mana", 0))
+	total_coins -= int(cost.get("Coins", 0))
+	sacred_pond_spirit_energy -= int(cost.get("Spirit", 0))
+	fairy_house_level = target_level
+	if fairy_house_level == 3 or fairy_house_level == 5:
+		fairy_max_residents += 1
+	recalculate_fairy_bonuses()
+	resources_changed.emit()
+	flower_grove_changed.emit()
+	sacred_pond_changed.emit()
+	fairy_house_changed.emit()
+	save_game()
+	var message := "Fairy House upgraded to Level %d!" % fairy_house_level
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
 func recalculate_fairy_bonuses() -> void:
 	flower_grove_fairy_bonus_production = 0.0
 	sacred_pond_fairy_restore_bonus = 0
@@ -952,6 +1743,132 @@ func get_fairy_assigned_area(fairy_name: String) -> String:
 	return FAIRY_AREA_UNASSIGNED
 
 
+func get_fairy_data(fairy_name: String) -> Dictionary:
+	for fairy in fairies:
+		if fairy.get("FairyName", "") == fairy_name:
+			return fairy.duplicate(true)
+	return {}
+
+
+func get_unlocked_fairy_count() -> int:
+	var count := 0
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			count += 1
+	return count
+
+
+func get_recruitable_fairy_cards() -> Array[Dictionary]:
+	var cards: Array[Dictionary] = []
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			continue
+		var fairy_name := String(fairy.get("FairyName", "Fairy"))
+		cards.append({
+			"FairyName": fairy_name,
+			"FairyRole": String(fairy.get("FairyRole", "Helper")),
+			"WorkBonus": float(fairy.get("WorkBonus", 1.0)),
+			"SpecialtyText": get_fairy_specialty_text(fairy),
+			"CostText": get_fairy_recruit_cost_text(fairy_name),
+			"CanRecruit": can_recruit_fairy(fairy_name)
+		})
+	return cards
+
+
+func get_fairy_recruit_cost(fairy_name: String) -> Dictionary:
+	if not FAIRY_RECRUIT_COSTS.has(fairy_name):
+		return {}
+	return (FAIRY_RECRUIT_COSTS[fairy_name] as Dictionary).duplicate(true)
+
+
+func get_fairy_recruit_cost_text(fairy_name: String) -> String:
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		return "Recruit cost unavailable"
+	var parts: Array[String] = []
+	for key in ["Mana", "Coins", "Spirit", POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		var amount := int(cost.get(key, 0))
+		if amount <= 0:
+			continue
+		if key == POTION_INGREDIENT_MANA_CRYSTAL or key == POTION_INGREDIENT_DREAMBLOOM or key == POTION_INGREDIENT_EMPTY_VIAL:
+			parts.append("%d %s" % [amount, get_potion_ingredient_name(key)])
+		else:
+			parts.append("%d %s" % [amount, key])
+	return ", ".join(parts)
+
+
+func can_recruit_fairy(fairy_name: String) -> bool:
+	var fairy := _get_fairy_index(fairy_name)
+	if fairy < 0:
+		return false
+	if bool(fairies[fairy].get("IsUnlocked", false)):
+		return false
+	if get_unlocked_fairy_count() >= fairy_max_residents:
+		return false
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		return false
+	return total_mana >= int(cost.get("Mana", 0)) and total_coins >= int(cost.get("Coins", 0)) and sacred_pond_spirit_energy >= int(cost.get("Spirit", 0)) and get_potion_ingredient_count(POTION_INGREDIENT_MANA_CRYSTAL) >= int(cost.get(POTION_INGREDIENT_MANA_CRYSTAL, 0)) and get_potion_ingredient_count(POTION_INGREDIENT_DREAMBLOOM) >= int(cost.get(POTION_INGREDIENT_DREAMBLOOM, 0)) and get_potion_ingredient_count(POTION_INGREDIENT_EMPTY_VIAL) >= int(cost.get(POTION_INGREDIENT_EMPTY_VIAL, 0))
+
+
+func recruit_fairy(fairy_name: String) -> Dictionary:
+	var fairy_index := _get_fairy_index(fairy_name)
+	if fairy_index < 0:
+		save_status_changed.emit("Fairy not found.")
+		return {"Success": false, "Message": "Fairy not found."}
+	if bool(fairies[fairy_index].get("IsUnlocked", false)):
+		save_status_changed.emit("%s already lives here." % fairy_name)
+		return {"Success": false, "Message": "%s already lives here." % fairy_name}
+	if get_unlocked_fairy_count() >= fairy_max_residents:
+		save_status_changed.emit("Upgrade the Fairy House for more room.")
+		return {"Success": false, "Message": "Upgrade the Fairy House for more room."}
+	var cost := get_fairy_recruit_cost(fairy_name)
+	if cost.is_empty():
+		save_status_changed.emit("Recruit cost unavailable.")
+		return {"Success": false, "Message": "Recruit cost unavailable."}
+	if not can_recruit_fairy(fairy_name):
+		save_status_changed.emit("Not enough resources to recruit %s." % fairy_name)
+		return {"Success": false, "Message": "Not enough resources to recruit %s." % fairy_name}
+
+	total_mana -= int(cost.get("Mana", 0))
+	total_coins -= int(cost.get("Coins", 0))
+	sacred_pond_spirit_energy -= int(cost.get("Spirit", 0))
+	potion_ingredients[POTION_INGREDIENT_MANA_CRYSTAL] = get_potion_ingredient_count(POTION_INGREDIENT_MANA_CRYSTAL) - int(cost.get(POTION_INGREDIENT_MANA_CRYSTAL, 0))
+	potion_ingredients[POTION_INGREDIENT_DREAMBLOOM] = get_potion_ingredient_count(POTION_INGREDIENT_DREAMBLOOM) - int(cost.get(POTION_INGREDIENT_DREAMBLOOM, 0))
+	potion_ingredients[POTION_INGREDIENT_EMPTY_VIAL] = get_potion_ingredient_count(POTION_INGREDIENT_EMPTY_VIAL) - int(cost.get(POTION_INGREDIENT_EMPTY_VIAL, 0))
+	fairies[fairy_index]["IsUnlocked"] = true
+	fairies[fairy_index]["AssignedArea"] = FAIRY_AREA_UNASSIGNED
+	recalculate_fairy_bonuses()
+	resources_changed.emit()
+	fairy_house_changed.emit()
+	save_game()
+	var message := "%s joined the Fairy House!" % fairy_name
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
+
+
+func _get_fairy_index(fairy_name: String) -> int:
+	for index in range(fairies.size()):
+		if String(fairies[index].get("FairyName", "")) == fairy_name:
+			return index
+	return -1
+
+
+func get_fairy_xp_to_next_level(fairy: Dictionary) -> int:
+	return max(3, int(fairy.get("FairyLevel", 1)) * 3)
+
+
+func get_fairy_specialty_text(fairy: Dictionary) -> String:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return "Best at mana gathering"
+	if role == "Pond Keeper":
+		return "Best at tending waters"
+	if role == "Forager":
+		return "Best at ingredient foraging"
+	return "Flexible helper"
+
+
 func get_fairy_bonus_text(fairy: Dictionary) -> String:
 	var assigned_area := String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED))
 	var work_bonus := float(fairy.get("WorkBonus", 0.0))
@@ -970,6 +1887,7 @@ func _reset_fairies_to_defaults() -> void:
 		"FairyRole": "Gatherer",
 		"AssignedArea": FAIRY_AREA_FLOWER_GROVE,
 		"WorkBonus": 2.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
 	fairies.append({
@@ -978,16 +1896,61 @@ func _reset_fairies_to_defaults() -> void:
 		"FairyRole": "Pond Keeper",
 		"AssignedArea": FAIRY_AREA_SACRED_POND,
 		"WorkBonus": 1.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
 	fairies.append({
 		"FairyName": "Nim",
 		"FairyLevel": 1,
-		"FairyRole": "Helper",
+		"FairyRole": "Forager",
 		"AssignedArea": FAIRY_AREA_UNASSIGNED,
 		"WorkBonus": 1.0,
+		"FairyXP": 0,
 		"IsUnlocked": true
 	})
+	_add_default_fairy_if_missing("Sol", "Gatherer", 1.5, false)
+	_add_default_fairy_if_missing("Mira", "Pond Keeper", 1.5, false)
+	_reset_fairy_tasks_to_defaults()
+
+
+func _add_default_fairy_if_missing(fairy_name: String, role: String, work_bonus: float, is_unlocked: bool) -> void:
+	if _get_fairy_index(fairy_name) >= 0:
+		return
+	fairies.append({
+		"FairyName": fairy_name,
+		"FairyLevel": 1,
+		"FairyRole": role,
+		"AssignedArea": FAIRY_AREA_UNASSIGNED,
+		"WorkBonus": work_bonus,
+		"FairyXP": 0,
+		"IsUnlocked": is_unlocked
+	})
+
+
+func _sync_recruitable_fairies() -> void:
+	_add_default_fairy_if_missing("Sol", "Gatherer", 1.5, false)
+	_add_default_fairy_if_missing("Mira", "Pond Keeper", 1.5, false)
+
+
+func _reset_fairy_tasks_to_defaults() -> void:
+	fairy_task_progress.clear()
+	fairy_task_progress[FAIRY_TASK_FLOWER_GROVE] = 0.0
+	fairy_task_progress[FAIRY_TASK_FORAGE_INGREDIENTS] = 0.0
+	fairy_task_progress[FAIRY_TASK_SACRED_POND] = 0.0
+	fairy_task_ready_counts.clear()
+	fairy_task_ready_counts[FAIRY_TASK_FLOWER_GROVE] = 0
+	fairy_task_ready_counts[FAIRY_TASK_FORAGE_INGREDIENTS] = 0
+	fairy_task_ready_counts[FAIRY_TASK_SACRED_POND] = 0
+
+
+func _apply_saved_fairy_tasks(saved_progress, saved_ready_counts) -> void:
+	_reset_fairy_tasks_to_defaults()
+	if saved_progress is Dictionary:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]:
+			fairy_task_progress[task_id] = clampf(float(saved_progress.get(task_id, 0.0)), 0.0, FAIRY_TASK_REQUIRED_PROGRESS - 0.01)
+	if saved_ready_counts is Dictionary:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_FORAGE_INGREDIENTS, FAIRY_TASK_SACRED_POND]:
+			fairy_task_ready_counts[task_id] = max(0, int(saved_ready_counts.get(task_id, 0)))
 
 
 func _reset_quests_to_defaults() -> void:
@@ -1064,120 +2027,6 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_REWARD_COINS,
 		100
 	))
-	# --- Tier 2 quests (added) ---
-	quests.append(_make_quest(
-		"mana_gatherer",
-		"Mana Gatherer",
-		"Collect 250 mana from the Flower Grove.",
-		QUEST_GOAL_COLLECT_MANA,
-		250,
-		QUEST_REWARD_COINS,
-		60
-	))
-	quests.append(_make_quest(
-		"grove_keeper",
-		"Grove Keeper",
-		"Upgrade the Flower Grove 3 times.",
-		QUEST_GOAL_UPGRADE_FLOWER,
-		3,
-		QUEST_REWARD_COINS,
-		100
-	))
-	quests.append(_make_quest(
-		"master_brewer",
-		"Master Brewer",
-		"Craft 5 Mana Potions.",
-		QUEST_GOAL_CRAFT_POTION,
-		5,
-		QUEST_REWARD_COINS,
-		120
-	))
-	
-	quests.append(_make_quest(
-		"seasoned_trader",
-		"Seasoned Trader",
-		"Fulfill 5 Market Stall orders.",
-		QUEST_GOAL_MARKET_TRADE,
-		5,
-		QUEST_REWARD_COINS,
-		150
-	))
-	quests.append(_make_quest(
-		"fairy_circle",
-		"Fairy Circle",
-		"Assign a fairy to the Flower Grove 3 times.",
-		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
-		3,
-		QUEST_REWARD_MANA,
-		80
-	))
-	
-	quests.append(_make_quest(
-		"master_forger",
-		"Master Forger",
-		"Purchase 3 Arcane Forge upgrades.",
-		QUEST_GOAL_FORGE_UPGRADE,
-		3,
-		QUEST_REWARD_COINS,
-		200
-	))
-	# --- Tier 3 quests (added) ---
-	quests.append(_make_quest(
-		"mana_hoarder",
-		"Mana Hoarder",
-		"Collect 750 mana from the Flower Grove.",
-		QUEST_GOAL_COLLECT_MANA,
-		750,
-		QUEST_REWARD_COINS,
-		200
-	))
-	quests.append(_make_quest(
-		"grove_master",
-		"Grove Master",
-		"Upgrade the Flower Grove 9 times.",
-		QUEST_GOAL_UPGRADE_FLOWER,
-		9,
-		QUEST_REWARD_COINS,
-		300
-	))
-	quests.append(_make_quest(
-		"legendary_brewer",
-		"Legendary Brewer",
-		"Craft 15 Mana Potions.",
-		QUEST_GOAL_CRAFT_POTION,
-		15,
-		QUEST_REWARD_COINS,
-		350
-	))
-
-	quests.append(_make_quest(
-		"master_merchant",
-		"Master Merchant",
-		"Fulfill 15 Market Stall orders.",
-		QUEST_GOAL_MARKET_TRADE,
-		15,
-		QUEST_REWARD_COINS,
-		450
-	))
-	quests.append(_make_quest(
-		"fairy_monarch",
-		"Fairy Monarch",
-		"Assign a fairy to the Flower Grove 9 times.",
-		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
-		9,
-		QUEST_REWARD_MANA,
-		240
-	))
-
-	quests.append(_make_quest(
-		"grand_forger",
-		"Grand Forger",
-		"Purchase 9 Arcane Forge upgrades.",
-		QUEST_GOAL_FORGE_UPGRADE,
-		9,
-		QUEST_REWARD_COINS,
-		600
-	))
 
 
 func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int) -> Dictionary:
@@ -1192,6 +2041,60 @@ func _make_quest(quest_id: String, title: String, description: String, goal_type
 		"RewardAmount": reward_amount,
 		"IsCompleted": false,
 		"IsClaimed": false
+	}
+
+
+func _apply_saved_quests(saved_quests) -> void:
+	_reset_quests_to_defaults()
+	if not (saved_quests is Array) or saved_quests.is_empty():
+		return
+
+	var saved_by_id: Dictionary = {}
+	var unknown_saved_quests: Array[Dictionary] = []
+	var default_ids: Dictionary = {}
+	for quest in quests:
+		default_ids[String(quest.get("QuestID", ""))] = true
+
+	for saved_quest in saved_quests:
+		if not (saved_quest is Dictionary):
+			continue
+		var quest_id := String(saved_quest.get("QuestID", ""))
+		if quest_id.is_empty():
+			continue
+		if default_ids.has(quest_id):
+			saved_by_id[quest_id] = saved_quest
+		else:
+			unknown_saved_quests.append(_sanitize_saved_quest(saved_quest))
+
+	for index in range(quests.size()):
+		var quest_id := String(quests[index].get("QuestID", ""))
+		if not saved_by_id.has(quest_id):
+			continue
+		var saved: Dictionary = saved_by_id[quest_id]
+		var required: int = max(1, int(quests[index].get("RequiredProgress", 1)))
+		var progress: int = min(max(0, int(saved.get("CurrentProgress", 0))), required)
+		quests[index]["CurrentProgress"] = progress
+		quests[index]["IsCompleted"] = bool(saved.get("IsCompleted", false)) or progress >= required
+		quests[index]["IsClaimed"] = bool(saved.get("IsClaimed", false))
+
+	for quest in unknown_saved_quests:
+		quests.append(quest)
+
+
+func _sanitize_saved_quest(saved_quest: Dictionary) -> Dictionary:
+	var required: int = max(1, int(saved_quest.get("RequiredProgress", 1)))
+	var progress: int = min(max(0, int(saved_quest.get("CurrentProgress", 0))), required)
+	return {
+		"QuestID": String(saved_quest.get("QuestID", "")),
+		"QuestTitle": String(saved_quest.get("QuestTitle", "Legacy Quest")),
+		"QuestDescription": String(saved_quest.get("QuestDescription", "")),
+		"QuestGoalType": String(saved_quest.get("QuestGoalType", "")),
+		"CurrentProgress": progress,
+		"RequiredProgress": required,
+		"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
+		"RewardAmount": max(0, int(saved_quest.get("RewardAmount", 0))),
+		"IsCompleted": bool(saved_quest.get("IsCompleted", false)) or progress >= required,
+		"IsClaimed": bool(saved_quest.get("IsClaimed", false))
 	}
 
 
@@ -1235,10 +2138,89 @@ func claim_quest_reward(quest_id: String) -> bool:
 			total_coins += reward_amount
 		quests[index]["IsClaimed"] = true
 		resources_changed.emit()
+		inventory_changed.emit()
 		quests_changed.emit()
 		save_game()
 		return true
 	return false
+
+
+func get_inventory_items() -> Array[Dictionary]:
+	var items: Array[Dictionary] = [
+		{
+			"Name": "Mana",
+			"Quantity": total_mana,
+			"Category": "Resources",
+			"Description": "Gathered from the Flower Grove and spent on restoration, crafting, and upgrades."
+		},
+		{
+			"Name": "Coins",
+			"Quantity": total_coins,
+			"Category": "Resources",
+			"Description": "Earned from potions, market trades, and quest rewards."
+		},
+		{
+			"Name": "Spirit Energy",
+			"Quantity": sacred_pond_spirit_energy,
+			"Category": "Pond Relics",
+			"Description": "Generated by Sacred Koi Pond restoration and used for higher-value trades."
+		},
+		{
+			"Name": "Sun Koi Guardian Bonus",
+			"Quantity": get_sun_koi_guardian_spirit_bonus(),
+			"Category": "Pond Relics",
+			"Description": "Extra Spirit Energy earned on each pond restore after the pond reaches 100% purity."
+		}
+	]
+	for recipe in get_potion_recipes():
+		items.append({
+			"Name": String(recipe.get("Name", "Potion")),
+			"Quantity": get_potion_count(String(recipe.get("RecipeID", ""))),
+			"Category": "Crafted Goods",
+			"Description": String(recipe.get("Description", "Crafted in the Potion Shop."))
+		})
+	for ingredient_id in [POTION_INGREDIENT_MANA_CRYSTAL, POTION_INGREDIENT_DREAMBLOOM, POTION_INGREDIENT_EMPTY_VIAL]:
+		items.append({
+			"Name": get_potion_ingredient_name(ingredient_id),
+			"Quantity": get_potion_ingredient_count(ingredient_id),
+			"Category": "Potion Ingredients",
+			"Description": "Gathered by fairies and consumed by Potion Shop recipes."
+		})
+	var active_fairies := 0
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			active_fairies += 1
+	items.append({
+		"Name": "Fairy Residents",
+		"Quantity": active_fairies,
+		"Category": "Companions",
+		"Description": "Unlocked fairy helpers available for village assignments."
+	})
+	items.append({
+		"Name": "Pond Decorations",
+		"Quantity": _get_placed_pond_decoration_count(),
+		"Category": "Decor",
+		"Description": "Placed pond ornaments that increase Beauty and restoration bonuses."
+	})
+	return items
+
+
+func get_inventory_summary() -> Dictionary:
+	return {
+		"ItemCount": get_inventory_items().size(),
+		"CraftedGoods": get_total_potion_count(),
+		"PlacedDecorations": _get_placed_pond_decoration_count(),
+		"UnlockedRewards": unlocked_pond_rewards.size(),
+		"Notes": inventory_notes
+	}
+
+
+func _get_placed_pond_decoration_count() -> int:
+	var count := 0
+	for decoration in pond_decorations:
+		if bool(decoration.get("IsPlaced", false)):
+			count += 1
+	return count
 
 
 func has_claimable_quest_rewards() -> bool:
@@ -1295,16 +2277,22 @@ func get_save_data() -> Dictionary:
 		"fairy_max_residents": fairy_max_residents,
 		"fairy_workers_active": fairy_workers_active,
 		"fairies": fairies,
+		"fairy_task_progress": fairy_task_progress,
+		"fairy_task_ready_counts": fairy_task_ready_counts,
 		"potion_shop_level": potion_shop_level,
 		"mana_potion_count": mana_potion_count,
 		"potion_mana_cost": potion_mana_cost,
 		"potion_base_craft_time": potion_base_craft_time,
 		"potion_current_craft_time": potion_current_craft_time,
 		"potion_crafting_active": potion_crafting_active,
+		"potion_crafting_recipe_id": potion_crafting_recipe_id,
+		"potion_inventory": potion_inventory,
+		"potion_ingredients": potion_ingredients,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
 		"market_reputation": market_reputation,
 		"market_orders_completed": market_orders_completed,
+		"inventory_notes": inventory_notes,
 		"ancient_tree_level": ancient_tree_level,
 		"ancient_tree_restore_cost": ancient_tree_restore_cost,
 		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
@@ -1379,8 +2367,15 @@ func apply_save_data(data: Dictionary) -> void:
 					"BeautyValue": int(saved_decoration.get("BeautyValue", 0)),
 					"IsUnlocked": bool(saved_decoration.get("IsUnlocked", true)),
 					"IsPlaced": bool(saved_decoration.get("IsPlaced", false)),
-					"SlotIndex": int(saved_decoration.get("SlotIndex", -1))
+					"SlotIndex": int(saved_decoration.get("SlotIndex", -1)),
+					"PositionX": float(saved_decoration.get("PositionX", -1.0)),
+					"PositionY": float(saved_decoration.get("PositionY", -1.0))
 				})
+				var imported_index := pond_decorations.size() - 1
+				if bool(pond_decorations[imported_index].get("IsPlaced", false)):
+					var imported_position := get_pond_decoration_normalized_position(pond_decorations[imported_index])
+					pond_decorations[imported_index]["PositionX"] = imported_position.x
+					pond_decorations[imported_index]["PositionY"] = imported_position.y
 	var saved_slots = data.get("pond_decoration_slots", [])
 	if saved_slots is Array and saved_slots.size() > 0:
 		pond_decoration_slots.clear()
@@ -1403,10 +2398,13 @@ func apply_save_data(data: Dictionary) -> void:
 					"FairyRole": String(saved_fairy.get("FairyRole", "Helper")),
 					"AssignedArea": String(saved_fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)),
 					"WorkBonus": float(saved_fairy.get("WorkBonus", 1.0)),
+					"FairyXP": int(saved_fairy.get("FairyXP", 0)),
 					"IsUnlocked": bool(saved_fairy.get("IsUnlocked", true))
 				})
 	else:
 		_reset_fairies_to_defaults()
+	_sync_recruitable_fairies()
+	_apply_saved_fairy_tasks(data.get("fairy_task_progress", {}), data.get("fairy_task_ready_counts", {}))
 	recalculate_fairy_bonuses()
 	update_sacred_pond_level_and_rewards()
 	potion_shop_level = int(data.get("potion_shop_level", 1))
@@ -1415,10 +2413,24 @@ func apply_save_data(data: Dictionary) -> void:
 	potion_base_craft_time = int(data.get("potion_base_craft_time", 5))
 	potion_current_craft_time = float(data.get("potion_current_craft_time", 0.0))
 	potion_crafting_active = bool(data.get("potion_crafting_active", false))
+	potion_crafting_recipe_id = String(data.get("potion_crafting_recipe_id", POTION_RECIPE_MANA))
+	if get_potion_recipe_data(potion_crafting_recipe_id).is_empty():
+		potion_crafting_recipe_id = POTION_RECIPE_MANA
+		potion_crafting_active = false
+		potion_current_craft_time = 0.0
 	potion_sell_value = int(data.get("potion_sell_value", 50))
+	_set_potion_inventory_from_save(data.get("potion_inventory", {}))
+	_set_potion_ingredients_from_save(data.get("potion_ingredients", {}))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
 	market_reputation = int(data.get("market_reputation", 1))
 	market_orders_completed = int(data.get("market_orders_completed", 0))
+	inventory_notes.clear()
+	var saved_inventory_notes = data.get("inventory_notes", [])
+	if saved_inventory_notes is Array:
+		for note in saved_inventory_notes:
+			inventory_notes.append(String(note))
+	if inventory_notes.is_empty():
+		inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = int(data.get("ancient_tree_level", 1))
 	ancient_tree_restore_cost = int(data.get("ancient_tree_restore_cost", 75))
 	ancient_tree_claimed_rewards.clear()
@@ -1426,29 +2438,11 @@ func apply_save_data(data: Dictionary) -> void:
 	if saved_tree_rewards is Array:
 		for reward_level in saved_tree_rewards:
 			ancient_tree_claimed_rewards.append(int(reward_level))
-	forge_level = int(data.get("forge_level", 1))
-	forge_flower_focus_level = int(data.get("forge_flower_focus_level", 0))
-	forge_potion_gilding_level = int(data.get("forge_potion_gilding_level", 0))
-	forge_pond_resonance_level = int(data.get("forge_pond_resonance_level", 0))
-	var saved_quests = data.get("quests", [])
-	if saved_quests is Array and saved_quests.size() > 0:
-		quests.clear()
-		for saved_quest in saved_quests:
-			if saved_quest is Dictionary:
-				quests.append({
-					"QuestID": String(saved_quest.get("QuestID", "")),
-					"QuestTitle": String(saved_quest.get("QuestTitle", "")),
-					"QuestDescription": String(saved_quest.get("QuestDescription", "")),
-					"QuestGoalType": String(saved_quest.get("QuestGoalType", "")),
-					"CurrentProgress": int(saved_quest.get("CurrentProgress", 0)),
-					"RequiredProgress": int(saved_quest.get("RequiredProgress", 1)),
-					"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
-					"RewardAmount": int(saved_quest.get("RewardAmount", 0)),
-					"IsCompleted": bool(saved_quest.get("IsCompleted", false)),
-					"IsClaimed": bool(saved_quest.get("IsClaimed", false))
-				})
-	else:
-		_reset_quests_to_defaults()
+	forge_flower_focus_level = min(max(0, int(data.get("forge_flower_focus_level", 0))), 3)
+	forge_potion_gilding_level = min(max(0, int(data.get("forge_potion_gilding_level", 0))), 3)
+	forge_pond_resonance_level = min(max(0, int(data.get("forge_pond_resonance_level", 0))), 3)
+	forge_level = 1 + forge_flower_focus_level + forge_potion_gilding_level + forge_pond_resonance_level
+	_apply_saved_quests(data.get("quests", []))
 	has_completed_onboarding = bool(data.get("has_completed_onboarding", true))
 	first_merge_complete = bool(data.get("first_merge_complete", has_completed_onboarding))
 	show_tutorial_after_reset = bool(data.get("show_tutorial_after_reset", false))
@@ -1567,10 +2561,20 @@ func reset_to_defaults() -> void:
 	potion_base_craft_time = 5
 	potion_current_craft_time = 0.0
 	potion_crafting_active = false
+	potion_crafting_recipe_id = POTION_RECIPE_MANA
+	potion_inventory.clear()
+	potion_inventory[POTION_RECIPE_MANA] = 0
+	potion_inventory[POTION_RECIPE_SPIRIT_TONIC] = 0
+	potion_ingredients.clear()
+	potion_ingredients[POTION_INGREDIENT_MANA_CRYSTAL] = 0
+	potion_ingredients[POTION_INGREDIENT_DREAMBLOOM] = 0
+	potion_ingredients[POTION_INGREDIENT_EMPTY_VIAL] = 0
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
 	market_reputation = 1
 	market_orders_completed = 0
+	inventory_notes.clear()
+	inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = 1
 	ancient_tree_restore_cost = 75
 	ancient_tree_claimed_rewards.clear()
@@ -1594,6 +2598,7 @@ func reset_to_defaults() -> void:
 	market_stall_changed.emit()
 	ancient_tree_changed.emit()
 	arcane_forge_changed.emit()
+	inventory_changed.emit()
 	quests_changed.emit()
 
 
@@ -1635,6 +2640,14 @@ func _reset_pond_decorations_to_defaults() -> void:
 	pond_decorations.append(_make_pond_decoration("Spirit Stone", 40, 8))
 	pond_decorations.append(_make_pond_decoration("Bloom Lilypad", 30, 6))
 	pond_decorations.append(_make_pond_decoration("Sacred Bridge", 75, 12))
+	pond_decorations.append(_make_pond_decoration("Crystal Lotus", 90, 16))
+	pond_decorations.append(_make_pond_decoration("Stone Koi Statue", 60, 10))
+	pond_decorations.append(_make_pond_decoration("Crystal Pillar", 80, 14))
+	pond_decorations.append(_make_pond_decoration("Moonstone Steps", 45, 7))
+	pond_decorations.append(_make_pond_decoration("Fern Spring", 55, 9))
+	pond_decorations.append(_make_pond_decoration("Flame Basin", 70, 11))
+	pond_decorations.append(_make_pond_decoration("Reed Cluster", 35, 6))
+	pond_decorations.append(_make_pond_decoration("Willow Arch", 100, 18))
 	recalculate_pond_beauty()
 
 
@@ -1659,19 +2672,30 @@ func _make_pond_decoration(decoration_name: String, cost_mana: int, beauty_value
 		"BeautyValue": beauty_value,
 		"IsUnlocked": true,
 		"IsPlaced": false,
-		"SlotIndex": -1
+		"SlotIndex": -1,
+		"PositionX": -1.0,
+		"PositionY": -1.0
 	}
 
 
 func set_music_volume(value: float) -> void:
 	music_volume = clamp(value, 0.0, 1.0)
-	if SoundManager:
-		SoundManager.set_music_volume(music_volume)
+	var sound_manager := _get_sound_manager()
+	if sound_manager:
+		sound_manager.set_music_volume(music_volume)
 	save_game()
 
 
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = clamp(value, 0.0, 1.0)
-	if SoundManager:
-		SoundManager.set_sfx_volume(sfx_volume)
+	var sound_manager := _get_sound_manager()
+	if sound_manager:
+		sound_manager.set_sfx_volume(sfx_volume)
 	save_game()
+
+
+func _get_sound_manager() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("SoundManager")

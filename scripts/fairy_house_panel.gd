@@ -5,6 +5,12 @@ signal closed
 var stats_label: Label
 var feedback_label: Label
 var fairy_cards_container: BoxContainer
+var section_title: Label
+var workers_button: BaseButton
+var tasks_button: BaseButton
+var upgrades_button: BaseButton
+var active_view: String = "workers"
+var task_refresh_elapsed: float = 0.0
 
 const ASSIGN_FLOWER_TEXT := "Assign to Flower Grove"
 const ASSIGN_POND_TEXT := "Assign to Sacred Pond"
@@ -20,10 +26,21 @@ func _ready() -> void:
 		_bind_scene_ui()
 	else:
 		_build_panel()
+	set_process(true)
 	GameState.flower_grove_changed.connect(_refresh)
 	GameState.sacred_pond_changed.connect(_refresh)
 	GameState.fairy_house_changed.connect(_refresh)
 	_refresh()
+
+
+func _process(delta: float) -> void:
+	if active_view != "tasks":
+		task_refresh_elapsed = 0.0
+		return
+	task_refresh_elapsed += delta
+	if task_refresh_elapsed >= 1.0:
+		task_refresh_elapsed = 0.0
+		_refresh()
 
 
 func _bind_scene_ui() -> void:
@@ -33,11 +50,16 @@ func _bind_scene_ui() -> void:
 
 	stats_label = get_node("Root/StatsLabel") as Label
 	feedback_label = get_node("Root/FeedbackLabel") as Label
+	section_title = get_node_or_null("Root/WorkersTitle") as Label
 	fairy_cards_container = get_node("Root/FairyCardsScroll/FairyCardsContainer") as BoxContainer
 
-	var upgrade_button := get_node("Root/ActionRow/UpgradeHouseButton") as BaseButton
+	workers_button = get_node("Root/ActionRow/WorkersButton") as BaseButton
+	tasks_button = get_node("Root/ActionRow/TasksButton") as BaseButton
+	upgrades_button = get_node("Root/ActionRow/UpgradeHouseButton") as BaseButton
 	var back_button := get_node("Root/ActionRow/BackButton") as BaseButton
-	upgrade_button.pressed.connect(_on_upgrade_pressed)
+	workers_button.pressed.connect(_show_workers_view)
+	tasks_button.pressed.connect(_show_tasks_view)
+	upgrades_button.pressed.connect(_show_upgrades_view)
 	back_button.pressed.connect(_on_back_pressed)
 
 
@@ -84,6 +106,7 @@ func _build_panel() -> void:
 	layout.add_child(stats_label)
 
 	var workers_title := Label.new()
+	section_title = workers_title
 	workers_title.text = "Fairy Workers"
 	workers_title.add_theme_font_size_override("font_size", 24)
 	workers_title.add_theme_color_override("font_color", Color("#f3d57a"))
@@ -105,7 +128,12 @@ func _build_panel() -> void:
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 18)
 	layout.add_child(buttons)
-	buttons.add_child(_make_button("Upgrade House", _on_upgrade_pressed))
+	workers_button = _make_button("Workers", _show_workers_view)
+	tasks_button = _make_button("Tasks", _show_tasks_view)
+	upgrades_button = _make_button("Upgrades", _show_upgrades_view)
+	buttons.add_child(workers_button)
+	buttons.add_child(tasks_button)
+	buttons.add_child(upgrades_button)
 	buttons.add_child(_make_button("Back", _on_back_pressed))
 
 
@@ -188,6 +216,13 @@ func _make_card_panel_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_tinted_card_panel_style(border_color: Color, bg_color: Color = Color(0.015, 0.018, 0.028, 0.78)) -> StyleBoxFlat:
+	var style := _make_card_panel_style()
+	style.border_color = border_color
+	style.bg_color = bg_color
+	return style
+
+
 func _refresh() -> void:
 	stats_label.text = (
 		"Residents  %d / %d        Workers Active  %d        Resting  %d        House Level  %d"
@@ -199,17 +234,371 @@ func _refresh() -> void:
 			GameState.fairy_house_level
 		]
 	)
-	_rebuild_fairy_cards()
+	match active_view:
+		"tasks":
+			_rebuild_task_cards()
+		"upgrades":
+			_rebuild_upgrade_cards()
+		_:
+			_rebuild_fairy_cards()
 
 
-func _rebuild_fairy_cards() -> void:
+func _clear_cards() -> void:
 	for child in fairy_cards_container.get_children():
 		child.queue_free()
 
+
+func _set_section_title(text: String) -> void:
+	if section_title:
+		section_title.text = text
+
+
+func _set_active_view(view_name: String) -> void:
+	active_view = view_name
+	if workers_button:
+		workers_button.modulate = Color("#fff2a8") if view_name == "workers" else Color.WHITE
+	if tasks_button:
+		tasks_button.modulate = Color("#fff2a8") if view_name == "tasks" else Color.WHITE
+	if upgrades_button:
+		upgrades_button.modulate = Color("#fff2a8") if view_name == "upgrades" else Color.WHITE
+	_refresh()
+
+
+func _rebuild_fairy_cards() -> void:
+	_set_section_title("Fairy Workers")
+	_clear_cards()
+
+	for fairy in GameState.fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			fairy_cards_container.add_child(_make_fairy_card(fairy))
+		else:
+			fairy_cards_container.add_child(_make_recruit_card(fairy))
+
+
+func _rebuild_task_cards() -> void:
+	_set_section_title("Fairy Tasks")
+	_clear_cards()
+	fairy_cards_container.add_child(_make_task_inbox_card())
+	for task in GameState.get_fairy_task_cards():
+		fairy_cards_container.add_child(_make_task_card(task))
+	fairy_cards_container.add_child(_make_info_card(
+		"Resting",
+		"%s\n\nResting fairies keep their level and can be reassigned anytime." % _get_fairies_for_area(GameState.FAIRY_AREA_UNASSIGNED)
+	))
+
+
+func _rebuild_upgrade_cards() -> void:
+	_set_section_title("House Upgrades")
+	_clear_cards()
+	fairy_cards_container.add_child(_make_info_card(
+		"House Level %d" % GameState.fairy_house_level,
+		"Capacity: %d fairies\nActive workers: %d\nTask Speed: %.0f%%\nRewards: %.0f%%\nXP per Task: %d" % [
+			GameState.fairy_max_residents,
+			GameState.fairy_workers_active,
+			GameState.get_fairy_house_task_speed_multiplier() * 100.0,
+			GameState.get_fairy_house_reward_multiplier() * 100.0,
+			GameState.get_fairy_house_xp_gain()
+		]
+	))
+	fairy_cards_container.add_child(_make_upgrade_card())
+	fairy_cards_container.add_child(_make_info_card(
+		"Training",
+		"Level 5 unlocks role training. Gatherers, Pond Keepers, and Foragers get stronger at their specialty and earn extra XP."
+	))
+
+
+func _make_upgrade_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(Color("#a8ff9b"), Color(0.025, 0.040, 0.032, 0.92)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = "Next Upgrade"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#a8ff9b"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = GameState.get_fairy_house_upgrade_summary()
+	body.custom_minimum_size = Vector2(1, 190)
+	body.add_theme_font_size_override("font_size", 18)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var upgrade := Button.new()
+	upgrade.text = "Upgrade"
+	upgrade.custom_minimum_size = Vector2(1, 52)
+	upgrade.add_theme_font_size_override("font_size", 20)
+	upgrade.disabled = GameState.fairy_house_level >= GameState.FAIRY_HOUSE_MAX_LEVEL
+	upgrade.pressed.connect(func() -> void:
+		SoundManager.play_click()
+		var result: Dictionary = GameState.upgrade_fairy_house()
+		feedback_label.text = String(result.get("Message", ""))
+		_show_floating_text(feedback_label.text, Vector2(260, 780), Color("#a8ff9b") if bool(result.get("Success", false)) else Color("#ff9f8a"))
+		active_view = "upgrades"
+		_refresh()
+	)
+	layout.add_child(upgrade)
+	return card
+
+
+func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = title_text
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#f3d57a"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = body_text
+	body.custom_minimum_size = Vector2(1, 240)
+	body.add_theme_font_size_override("font_size", 19)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+	return card
+
+
+func _make_task_inbox_card() -> PanelContainer:
+	var ready_count := GameState.get_total_fairy_task_ready_count()
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	var border_color := Color("#f3d57a") if ready_count > 0 else Color("#80d6ff")
+	var bg_color := Color(0.050, 0.038, 0.018, 0.94) if ready_count > 0 else Color(0.018, 0.030, 0.046, 0.92)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(border_color, bg_color))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+
+	var status := Label.new()
+	status.text = "REWARD INBOX"
+	status.add_theme_font_size_override("font_size", 15)
+	status.add_theme_color_override("font_color", Color("#f3d57a"))
+	status.add_theme_color_override("font_shadow_color", Color.BLACK)
+	status.add_theme_constant_override("shadow_offset_x", 2)
+	status.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(status)
+
+	var title := Label.new()
+	title.text = "%d Ready" % ready_count
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color("#fff0c2"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = "%s\n\nClaim all gathers every ready mana, ingredient, and pond reward while still granting fairy XP." % GameState.get_fairy_task_inbox_text()
+	body.custom_minimum_size = Vector2(1, 178)
+	body.add_theme_font_size_override("font_size", 17)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var collect_all := Button.new()
+	collect_all.name = "ClaimAllFairyTasksButton"
+	collect_all.text = "Claim All" if ready_count <= 1 else "Claim All x%d" % ready_count
+	collect_all.custom_minimum_size = Vector2(1, 52)
+	collect_all.add_theme_font_size_override("font_size", 20)
+	collect_all.disabled = ready_count <= 0
+	collect_all.pressed.connect(func() -> void:
+		SoundManager.play_collect()
+		var result: Dictionary = GameState.collect_all_fairy_task_rewards()
+		var message := String(result.get("Message", ""))
+		feedback_label.text = message
+		var float_text := String(result.get("FloatingText", message))
+		var level_up_names: Array = result.get("LevelUpNames", [])
+		_show_floating_text(float_text, Vector2(340, 790), Color("#f3d57a"))
+		if not level_up_names.is_empty():
+			_show_floating_text("%s leveled up!" % ", ".join(level_up_names), Vector2(280, 720), Color("#a8ff9b"))
+		active_view = "tasks"
+		_refresh()
+	)
+	layout.add_child(collect_all)
+	return card
+
+
+func _make_task_card(task: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	var is_ready := bool(task.get("IsReady", false))
+	var is_active := bool(task.get("IsActive", false))
+	var border_color := Color("#a8ff9b") if is_ready else Color("#80d6ff") if is_active else Color("#7f7290")
+	var bg_color := Color(0.028, 0.042, 0.030, 0.93) if is_ready else Color(0.018, 0.030, 0.046, 0.92) if is_active else Color(0.020, 0.018, 0.028, 0.92)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(border_color, bg_color))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	margin.add_child(layout)
+
+	var status := Label.new()
+	status.text = String(task.get("StatusText", "Idle")).to_upper()
+	status.add_theme_font_size_override("font_size", 15)
+	status.add_theme_color_override("font_color", Color("#a8ff9b") if is_ready else Color("#80d6ff") if is_active else Color("#cbbf9a"))
+	status.add_theme_color_override("font_shadow_color", Color.BLACK)
+	status.add_theme_constant_override("shadow_offset_x", 2)
+	status.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(status)
+
+	var title := Label.new()
+	title.text = String(task.get("Title", "Fairy Task"))
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#f3d57a"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var details := Label.new()
+	details.text = "%s\nWorkers: %s\nReward: %s\n%s" % [
+		String(task.get("Area", "")),
+		String(task.get("WorkerText", "No fairies assigned")),
+		String(task.get("RewardText", "")),
+		String(task.get("TaskRateText", "Idle"))
+	]
+	details.custom_minimum_size = Vector2(1, 98)
+	details.add_theme_font_size_override("font_size", 15)
+	details.add_theme_color_override("font_color", Color("#fff0c2"))
+	details.add_theme_color_override("font_shadow_color", Color.BLACK)
+	details.add_theme_constant_override("shadow_offset_x", 2)
+	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(details)
+
+	var progress := ProgressBar.new()
+	progress.min_value = 0
+	progress.max_value = 100
+	progress.value = int(task.get("ProgressPercent", 0))
+	progress.show_percentage = true
+	progress.custom_minimum_size = Vector2(1, 32)
+	layout.add_child(progress)
+
+	var progress_text := Label.new()
+	progress_text.text = "%s   %s" % [
+		String(task.get("ProgressText", "0 / 60 progress")),
+		String(task.get("TimeRemainingText", "Assign a fairy to begin"))
+	]
+	progress_text.add_theme_font_size_override("font_size", 14)
+	progress_text.add_theme_color_override("font_color", Color("#d7ecff") if is_active else Color("#cbbf9a"))
+	progress_text.add_theme_color_override("font_shadow_color", Color.BLACK)
+	progress_text.add_theme_constant_override("shadow_offset_x", 2)
+	progress_text.add_theme_constant_override("shadow_offset_y", 2)
+	progress_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(progress_text)
+
+	var ready_count := int(task.get("ReadyCount", 0))
+	var ready := Label.new()
+	ready.text = "Ready Rewards: %d" % ready_count
+	ready.add_theme_font_size_override("font_size", 18)
+	ready.add_theme_color_override("font_color", Color("#aeea84") if ready_count > 0 else Color("#cbbf9a"))
+	ready.add_theme_color_override("font_shadow_color", Color.BLACK)
+	ready.add_theme_constant_override("shadow_offset_x", 2)
+	ready.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(ready)
+
+	var collect := Button.new()
+	collect.text = "Collect Reward"
+	if ready_count > 1:
+		collect.text = "Collect Reward x%d" % ready_count
+	collect.custom_minimum_size = Vector2(1, 52)
+	collect.add_theme_font_size_override("font_size", 20)
+	collect.disabled = ready_count <= 0
+	var task_id := String(task.get("TaskID", ""))
+	collect.pressed.connect(func() -> void:
+		SoundManager.play_collect()
+		var result: Dictionary = GameState.collect_fairy_task_reward(task_id)
+		var message := String(result.get("Message", ""))
+		feedback_label.text = message
+		var float_text := String(result.get("FloatingText", message))
+		var level_up_names: Array = result.get("LevelUpNames", [])
+		_show_floating_text(float_text, Vector2(340, 790), Color("#f3d57a"))
+		if not level_up_names.is_empty():
+			_show_floating_text("%s leveled up!" % ", ".join(level_up_names), Vector2(280, 720), Color("#a8ff9b"))
+		active_view = "tasks"
+		_refresh()
+	)
+	layout.add_child(collect)
+	return card
+
+
+func _get_fairies_for_area(area: String) -> String:
+	var names: Array[String] = []
 	for fairy in GameState.fairies:
 		if not bool(fairy.get("IsUnlocked", false)):
 			continue
-		fairy_cards_container.add_child(_make_fairy_card(fairy))
+		if String(fairy.get("AssignedArea", GameState.FAIRY_AREA_UNASSIGNED)) == area:
+			names.append(String(fairy.get("FairyName", "Fairy")))
+	if names.is_empty():
+		return "No fairies assigned."
+	return ", ".join(names)
 
 
 func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
@@ -217,7 +606,8 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	card.custom_minimum_size = Vector2(286, 338)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
-	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+	var role_color := _get_fairy_role_color(fairy)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(role_color, _get_fairy_role_bg_color(fairy)))
 
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
@@ -257,13 +647,18 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	content_row.add_child(portrait)
 
 	var details := Label.new()
+	var fairy_level := int(fairy.get("FairyLevel", 1))
+	var fairy_xp := int(fairy.get("FairyXP", 0))
+	var xp_text := "MAX" if fairy_level >= GameState.FAIRY_MAX_LEVEL else "%d/%d" % [fairy_xp, GameState.get_fairy_xp_to_next_level(fairy)]
 	details.name = "Details"
 	details.text = (
-		"%s\n%s\nLevel %d\n\nWorking:\n%s\n\n%s"
+		"%s\n%s\nLevel %d\nXP %s\n\n%s\n\nWorking:\n%s\n%s"
 		% [
 			fairy_name,
 			String(fairy.get("FairyRole", "Helper")),
-			int(fairy.get("FairyLevel", 1)),
+			fairy_level,
+			xp_text,
+			GameState.get_fairy_specialty_text(fairy),
 			assigned_area,
 			GameState.get_fairy_bonus_text(fairy)
 		]
@@ -287,6 +682,67 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	buttons.add_child(_make_assignment_button("Pond", ASSIGN_POND_TEXT, fairy_name, GameState.FAIRY_AREA_SACRED_POND, assigned_area))
 	buttons.add_child(_make_assignment_button("Rest", UNASSIGN_TEXT, fairy_name, GameState.FAIRY_AREA_UNASSIGNED, assigned_area))
 
+	return card
+
+
+func _make_recruit_card(fairy: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(Color("#7f7290"), Color(0.020, 0.018, 0.028, 0.94)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	margin.add_child(layout)
+
+	var fairy_name := String(fairy.get("FairyName", "Fairy"))
+	var title := Label.new()
+	title.text = "%s\nRecruit" % fairy_name
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#d8c8ff"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = "%s\nLevel 1\n\n%s\n\nCost:\n%s" % [
+		String(fairy.get("FairyRole", "Helper")),
+		GameState.get_fairy_specialty_text(fairy),
+		GameState.get_fairy_recruit_cost_text(fairy_name)
+	]
+	body.custom_minimum_size = Vector2(1, 205)
+	body.add_theme_font_size_override("font_size", 16)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var recruit := Button.new()
+	recruit.text = "Recruit"
+	recruit.custom_minimum_size = Vector2(1, 48)
+	recruit.add_theme_font_size_override("font_size", 18)
+	recruit.disabled = not GameState.can_recruit_fairy(fairy_name)
+	recruit.pressed.connect(func() -> void:
+		SoundManager.play_click()
+		var result: Dictionary = GameState.recruit_fairy(fairy_name)
+		feedback_label.text = String(result.get("Message", ""))
+		_show_floating_text(feedback_label.text, Vector2(260, 780), Color("#a8ff9b") if bool(result.get("Success", false)) else Color("#ff9f8a"))
+		active_view = "workers"
+		_refresh()
+	)
+	layout.add_child(recruit)
 	return card
 
 
@@ -319,7 +775,10 @@ func _make_assignment_button(text: String, tooltip: String, fairy_name: String, 
 	button.add_theme_font_size_override("font_size", 14)
 	button.disabled = area == assigned_area
 	button.pressed.connect(func() -> void:
+		SoundManager.play_click()
 		feedback_label.text = GameState.assign_fairy_to_area(fairy_name, area)
+		_show_floating_text(feedback_label.text, Vector2(290, 790), Color("#a8ff9b"))
+		active_view = "workers"
 		_refresh()
 	)
 	return button
@@ -329,9 +788,62 @@ func _get_fairy_portrait(fairy_name: String) -> String:
 	return String(FAIRY_PORTRAITS.get(fairy_name, "res://assets/sprites/characters/fairy_placeholder.png"))
 
 
-func _on_upgrade_pressed() -> void:
+func _show_workers_view() -> void:
 	SoundManager.play_click()
-	feedback_label.text = "House upgrades will be added later."
+	feedback_label.text = ""
+	_set_active_view("workers")
+
+
+func _show_tasks_view() -> void:
+	SoundManager.play_click()
+	feedback_label.text = "Task summary updated."
+	_set_active_view("tasks")
+
+
+func _show_upgrades_view() -> void:
+	SoundManager.play_click()
+	feedback_label.text = "House upgrade plan shown."
+	_set_active_view("upgrades")
+
+
+func _get_fairy_role_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color("#f3d57a")
+	if role == "Pond Keeper":
+		return Color("#80d6ff")
+	if role == "Forager":
+		return Color("#c784ff")
+	return Color("#b98c43")
+
+
+func _get_fairy_role_bg_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color(0.070, 0.050, 0.020, 0.90)
+	if role == "Pond Keeper":
+		return Color(0.020, 0.045, 0.070, 0.90)
+	if role == "Forager":
+		return Color(0.055, 0.030, 0.075, 0.90)
+	return Color(0.015, 0.018, 0.028, 0.90)
+
+
+func _show_floating_text(text: String, start_position: Vector2, color: Color) -> void:
+	if text == "":
+		return
+	var label := Label.new()
+	label.text = text
+	label.position = start_position
+	label.add_theme_font_size_override("font_size", 32)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 3)
+	label.add_theme_constant_override("shadow_offset_y", 3)
+	add_child(label)
+	var tween := create_tween()
+	tween.tween_property(label, "position", start_position + Vector2(0, -86), 0.78)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.78)
+	tween.tween_callback(label.queue_free)
 
 
 func _on_back_pressed() -> void:

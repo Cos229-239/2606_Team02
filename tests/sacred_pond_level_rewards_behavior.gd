@@ -14,6 +14,8 @@ func _init() -> void:
 		fail("Expected base restore amount 5")
 	if state.get_sacred_pond_total_restore_amount() != 6:
 		fail("Expected Pip to make default total restore 6")
+	if state.get_sun_koi_guardian_spirit_bonus() != 0:
+		fail("Sun Koi Guardian spirit bonus should start inactive")
 	if state.get_active_pond_bonus_text() != "None":
 		fail("Expected no active pond bonus at level 1")
 	if state.get_next_pond_reward_text() != "Blooming Waters at 25%":
@@ -63,8 +65,34 @@ func _init() -> void:
 	state.update_sacred_pond_level_and_rewards()
 	if state.sacred_pond_level != 5:
 		fail("100 purity should set pond level 5")
+	if not state.is_pond_reward_unlocked("Sun Koi Guardian"):
+		fail("100 purity should unlock Sun Koi Guardian")
+	if state.get_active_pond_bonus_text() != "Sun Koi Guardian +1 Spirit Energy per Restore":
+		fail("Sun Koi Guardian should expose real active bonus text")
+	if state.get_sun_koi_guardian_spirit_bonus() != 1:
+		fail("Sun Koi Guardian should add one bonus Spirit Energy per restore")
 	if state.get_next_pond_reward_text() != "All pond rewards unlocked":
 		fail("Expected all rewards unlocked text at level 5")
+	state.total_mana = state.sacred_pond_restore_cost
+	state.sacred_pond_water_purity = 99
+	var spirit_before: int = state.sacred_pond_spirit_energy
+	if not state.restore_sacred_pond():
+		fail("Restore should still work after Sun Koi Guardian unlock")
+	if state.sacred_pond_spirit_energy != spirit_before + 11:
+		fail("Sun Koi Guardian should add 11 total Spirit Energy after unlock")
+	if state.sacred_pond_water_purity != 100:
+		fail("Restore should cap water purity at 100")
+	var maxed_mana: int = state.sacred_pond_restore_cost
+	var maxed_spirit: int = state.sacred_pond_spirit_energy
+	state.total_mana = maxed_mana
+	if state.restore_sacred_pond():
+		fail("Restore should not run when the Sacred Pond is fully restored")
+	if state.total_mana != maxed_mana:
+		fail("Full pond restore attempt should not spend Mana")
+	if state.sacred_pond_spirit_energy != maxed_spirit:
+		fail("Full pond restore attempt should not add Spirit Energy")
+	if state.can_restore_sacred_pond():
+		fail("Full pond should not report restorable")
 
 	var data: Dictionary = state.get_save_data()
 	if not data.has("active_pond_bonus"):
@@ -77,6 +105,8 @@ func _init() -> void:
 		fail("Loaded pond level should persist")
 	if not loaded_state.is_pond_reward_unlocked("Sun Koi Guardian"):
 		fail("Loaded rewards should persist")
+	if loaded_state.get_sun_koi_guardian_spirit_bonus() != 1:
+		fail("Loaded Sun Koi Guardian bonus should persist")
 	if loaded_state.fairy_max_residents != 4:
 		fail("Loaded Fairy Blessing capacity should remain applied")
 

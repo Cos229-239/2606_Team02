@@ -14,8 +14,10 @@ Flower Grove produces Mana. The player collects Mana, upgrades the Flower Grove,
 - Flower Grove upgrades and plot unlocks.
 - Fairy House worker assignment.
 - Sacred Pond restoration and level rewards.
+- Sun Koi Guardian bonus Spirit Energy at full pond restoration.
 - Grove Restoration visual progression.
-- Potion Shop crafting and selling.
+- Potion Shop crafting and selling with Mana Potion and Spirit Tonic recipes.
+- Inventory screen for resources, crafted goods, companions, pond relics, and decor.
 - Quest system with claimable rewards.
 - Save/load.
 - Main menu with Play, Continue, Reset Save, and Quit.
@@ -26,19 +28,19 @@ Flower Grove produces Mana. The player collects Mana, upgrades the Flower Grove,
 - Unlock a Flower Grove plot.
 - Assign fairies to Flower Grove or Sacred Pond.
 - Restore the Sacred Pond.
-- Craft and sell one Mana Potion recipe.
+- Craft and sell Mana Potion and Spirit Tonic recipes.
 - Complete and claim starter quests.
+- Review gathered goods in Inventory.
 - Save and continue progress.
 
 ## What Is Placeholder
 - Art is lightweight placeholder art.
-- Potion Shop has one recipe.
+- Potion recipe list is still small.
 - Fairy roles are simple bonuses, not advanced AI.
-- Pond rewards are prototype bonuses and placeholders.
+- Pond rewards are prototype bonuses.
 - Audio is not final.
 
 ## Known Limitations
-- No inventory screen yet.
 - No daily quests or events.
 - No fish breeding.
 - No monetization.

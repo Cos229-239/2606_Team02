@@ -7,9 +7,14 @@ var feedback_label: Label
 var craft_button: Button
 var progress_bar: ProgressBar
 var shop_preview: CanvasItem
+var recipe_title_label: Label
 var recipe_description_label: Label
+var requirements_label: Label
 var potion_details_label: Label
 var last_potion_count: int = 0
+var selected_recipe_id: String = "mana_potion"
+var recipe_buttons: Dictionary = {}
+var upgrade_confirmation_pending: bool = false
 
 
 func _ready() -> void:
@@ -17,7 +22,7 @@ func _ready() -> void:
 		_bind_scene_ui()
 	else:
 		_build_panel()
-	last_potion_count = GameState.mana_potion_count
+	last_potion_count = GameState.get_total_potion_count()
 	GameState.resources_changed.connect(_refresh)
 	GameState.potion_shop_changed.connect(_refresh)
 	_refresh()
@@ -32,8 +37,15 @@ func _bind_scene_ui() -> void:
 	feedback_label = get_node("Root/FeedbackLabel") as Label
 	progress_bar = get_node("Root/CraftProgressBar") as ProgressBar
 	shop_preview = get_node_or_null("Root/Cauldron") as CanvasItem
+	recipe_title_label = get_node_or_null("Root/RecipePanel/RecipeTitle") as Label
 	recipe_description_label = get_node_or_null("Root/RecipePanel/RecipeDescription") as Label
+	requirements_label = get_node_or_null("Root/RecipePanel/RequirementsLabel") as Label
 	potion_details_label = get_node_or_null("Root/RecipePanel/PotionDetailsLabel") as Label
+	if recipe_description_label:
+		recipe_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		recipe_description_label.clip_text = true
+		recipe_description_label.size = Vector2(530, 86)
+	_build_recipe_selector(get_node("Root/RecipePanel") as Control)
 
 	var buy_button := get_node("Root/ActionRow/BuyButton") as Button
 	craft_button = get_node("Root/ActionRow/CraftPotionButton") as Button
@@ -135,6 +147,7 @@ func _build_panel() -> void:
 	buttons.add_child(_make_button("Sell Potion", _on_sell_pressed))
 	buttons.add_child(_make_button("Upgrade Shop", _on_upgrade_pressed))
 	buttons.add_child(_make_button("Back", _on_back_pressed))
+	_build_recipe_selector(self)
 
 
 func _make_shop_preview() -> Control:
@@ -240,61 +253,136 @@ func _make_button(text: String, callback: Callable) -> Button:
 	return button
 
 
+func _build_recipe_selector(parent: Control) -> void:
+	var selector := HBoxContainer.new()
+	selector.name = "RecipeSelector"
+	selector.position = Vector2(374, 16) if parent.name == "RecipePanel" else Vector2(92, 1040)
+	selector.size = Vector2(520, 58)
+	selector.add_theme_constant_override("separation", 10)
+	parent.add_child(selector)
+
+	for recipe in GameState.get_potion_recipes():
+		var recipe_id := String(recipe.get("RecipeID", ""))
+		var button := Button.new()
+		button.text = String(recipe.get("Name", "Potion"))
+		button.custom_minimum_size = Vector2(245, 58)
+		button.add_theme_font_size_override("font_size", 20)
+		button.pressed.connect(func(): _select_recipe(recipe_id))
+		selector.add_child(button)
+		recipe_buttons[recipe_id] = button
+
+
+func _select_recipe(recipe_id: String) -> void:
+	selected_recipe_id = recipe_id
+	upgrade_confirmation_pending = false
+	SoundManager.play_click()
+	_refresh()
+
+
 func _refresh() -> void:
-	if GameState.mana_potion_count > last_potion_count:
-		feedback_label.text = "Mana Potion crafted!"
-		_show_floating_text("Mana Potion crafted!", Vector2(300, 840), Color("#a8ff9b"))
+	var total_potions := GameState.get_total_potion_count()
+	if total_potions > last_potion_count:
+		var crafted_name := String(GameState.get_potion_recipe_data(GameState.potion_crafting_recipe_id).get("Name", "Potion"))
+		feedback_label.text = "%s crafted!" % crafted_name
+		_show_floating_text("%s crafted!" % crafted_name, Vector2(300, 840), Color("#a8ff9b"))
 		_pulse_shop_preview()
-	last_potion_count = GameState.mana_potion_count
+	last_potion_count = total_potions
+
+	var recipe := GameState.get_potion_recipe_data(selected_recipe_id)
+	var recipe_name := String(recipe.get("Name", "Potion"))
+	var cost_mana := int(recipe.get("CostMana", 0))
+	var cost_spirit := int(recipe.get("CostSpirit", 0))
+	var owned := GameState.get_potion_count(selected_recipe_id)
 
 	stats_label.text = (
-		"Level %d        Potions Owned: %d / 20        Craft Speed: %ds"
+		"Level %d        Selected: %s        Owned: %d        Total Potions: %d"
 		% [
 			GameState.potion_shop_level,
-			GameState.mana_potion_count,
-			GameState.get_potion_craft_time()
+			recipe_name,
+			owned,
+			total_potions
 		]
 	)
+	if recipe_title_label:
+		recipe_title_label.text = recipe_name
 	if recipe_description_label:
-		recipe_description_label.text = "Restores 50 Mana.  Mana Cost: %d" % GameState.get_potion_mana_cost()
+		recipe_description_label.text = String(recipe.get("Description", ""))
+	if requirements_label:
+		var ingredient_text := GameState.get_potion_ingredient_requirement_text(selected_recipe_id)
+		if ingredient_text == "":
+			ingredient_text = "None"
+		requirements_label.text = "Requirements\n\nMana %d / %d\n\nSpirit Energy %d / %d\n\n%s" % [
+			GameState.total_mana,
+			cost_mana,
+			GameState.sacred_pond_spirit_energy,
+			cost_spirit,
+			ingredient_text
+		]
 	if potion_details_label:
-		potion_details_label.text = "Craft Time\n%ds\n\nSell Value\n%d" % [
-			GameState.get_potion_craft_time(),
-			GameState.get_potion_sell_value()
+		potion_details_label.text = "Craft Time\n%ds\n\nSell Value\n%d\n\nOwned\n%d" % [
+			GameState.get_potion_craft_time(selected_recipe_id),
+			GameState.get_potion_sell_value(selected_recipe_id),
+			owned
 		]
 	if craft_button:
-		craft_button.disabled = GameState.potion_crafting_active
+		craft_button.disabled = GameState.potion_crafting_active or not GameState.can_craft_potion(selected_recipe_id)
+	for recipe_id in recipe_buttons.keys():
+		var button := recipe_buttons[recipe_id] as Button
+		button.disabled = GameState.potion_crafting_active
+		button.modulate = Color("#fff2a8") if recipe_id == selected_recipe_id else Color.WHITE
 	if progress_bar:
 		progress_bar.value = GameState.get_potion_craft_progress() * 100.0
 		progress_bar.visible = GameState.potion_crafting_active
 		if GameState.potion_crafting_active:
-			progress_bar.tooltip_text = "Crafting Mana Potion..."
+			var active_name := String(GameState.get_potion_recipe_data(GameState.potion_crafting_recipe_id).get("Name", "Potion"))
+			progress_bar.tooltip_text = "Crafting %s..." % active_name
 
 
 func _on_craft_pressed() -> void:
 	SoundManager.play_click()
-	if GameState.start_mana_potion_craft():
-		feedback_label.text = "Crafting Mana Potion..."
+	upgrade_confirmation_pending = false
+	var recipe_name := String(GameState.get_potion_recipe_data(selected_recipe_id).get("Name", "Potion"))
+	if GameState.start_potion_craft(selected_recipe_id):
+		feedback_label.text = "Crafting %s..." % recipe_name
 	else:
-		feedback_label.text = "Not enough Mana."
+		feedback_label.text = "Cannot craft %s." % recipe_name
 
 
 func _on_buy_pressed() -> void:
 	SoundManager.play_click()
-	feedback_label.text = "Ingredients shop coming soon."
+	upgrade_confirmation_pending = false
+	var result: Dictionary = GameState.buy_potion_ingredient_bundle()
+	feedback_label.text = String(result.get("Message", ""))
+	_refresh()
 
 
 func _on_sell_pressed() -> void:
 	SoundManager.play_click()
-	if GameState.sell_mana_potion():
-		feedback_label.text = "Potion sold for 50 Coins!"
-		_show_floating_text("Potion sold for 50 Coins!", Vector2(260, 840), Color("#f3d57a"))
+	upgrade_confirmation_pending = false
+	var recipe := GameState.get_potion_recipe_data(selected_recipe_id)
+	var recipe_name := String(recipe.get("Name", "Potion"))
+	var sell_value := GameState.get_potion_sell_value(selected_recipe_id)
+	if GameState.sell_potion(selected_recipe_id):
+		feedback_label.text = "%s sold for %d Coins!" % [recipe_name, sell_value]
+		_show_floating_text("%s sold for %d Coins!" % [recipe_name, sell_value], Vector2(260, 840), Color("#f3d57a"))
 	else:
-		feedback_label.text = "No potions to sell."
+		feedback_label.text = "No %s to sell." % recipe_name
 
 
 func _on_upgrade_pressed() -> void:
 	SoundManager.play_click()
+	if GameState.total_coins < GameState.potion_shop_upgrade_cost:
+		upgrade_confirmation_pending = false
+		feedback_label.text = "Not enough Coins."
+		return
+	if not upgrade_confirmation_pending:
+		upgrade_confirmation_pending = true
+		feedback_label.text = "Upgrade to Level %d for %d Coins? Tap Upgrade again to confirm." % [
+			GameState.potion_shop_level + 1,
+			GameState.potion_shop_upgrade_cost
+		]
+		return
+	upgrade_confirmation_pending = false
 	if GameState.upgrade_potion_shop():
 		feedback_label.text = "Potion Shop upgraded!"
 		_pulse_shop_preview()
@@ -304,6 +392,7 @@ func _on_upgrade_pressed() -> void:
 
 func _on_back_pressed() -> void:
 	SoundManager.play_click()
+	upgrade_confirmation_pending = false
 	GameState.save_game()
 	closed.emit()
 

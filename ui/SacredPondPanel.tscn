@@ -4,7 +4,6 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/panels/sacred_pond_zoom.png" id="2_mej0p"]
 [ext_resource type="Texture2D" path="res://assets/sprites/ui/panel_restore.png" id="3_63xxp"]
 [ext_resource type="Texture2D" path="res://assets/sprites/ui/panel_decorate.png" id="4_4w5ak"]
-[ext_resource type="Texture2D" path="res://assets/sprites/ui/panel_upgrades.png" id="5_ujor4"]
 [ext_resource type="Texture2D" path="res://assets/sprites/ui/panel_back.png" id="6_lpk68"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hht2u"]
@@ -83,8 +82,8 @@ theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-text = "Water Purity: 15%    Spirit Energy: 0    Pond Beauty: 0
-Restore Cost: 25 Mana    Decoration Bonus: +0%    Restore Amount: +5%
+text = "Water Purity: 15%    Status: Restoring    Spirit Energy: 0
+Pond Beauty: 0    Restore Cost: 25 Mana    Total Restore Amount: +5%
 Active Bonus: None
 Next Reward: Blooming Waters at 25%"
 horizontal_alignment = 1
@@ -125,7 +124,7 @@ theme_override_constants/separation = 10
 alignment = 1
 
 [node name="RestoreButton" type="TextureButton" parent="Root/ActionRow" unique_id=966571846]
-custom_minimum_size = Vector2(238, 130)
+custom_minimum_size = Vector2(300, 130)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("3_63xxp")
@@ -135,7 +134,7 @@ ignore_texture_size = true
 stretch_mode = 5
 
 [node name="DecorateButton" type="TextureButton" parent="Root/ActionRow" unique_id=1313270261]
-custom_minimum_size = Vector2(238, 130)
+custom_minimum_size = Vector2(300, 130)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("4_4w5ak")
@@ -144,18 +143,8 @@ texture_hover = ExtResource("4_4w5ak")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="UpgradesButton" type="TextureButton" parent="Root/ActionRow" unique_id=336063903]
-custom_minimum_size = Vector2(238, 130)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-texture_normal = ExtResource("5_ujor4")
-texture_pressed = ExtResource("5_ujor4")
-texture_hover = ExtResource("5_ujor4")
-ignore_texture_size = true
-stretch_mode = 5
-
 [node name="BackButton" type="TextureButton" parent="Root/ActionRow" unique_id=1844670372]
-custom_minimum_size = Vector2(238, 130)
+custom_minimum_size = Vector2(300, 130)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("6_lpk68")

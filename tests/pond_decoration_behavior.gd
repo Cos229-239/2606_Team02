@@ -8,8 +8,8 @@ func _init() -> void:
 		fail("Pond beauty should start at 0")
 	if state.get_pond_decoration_restore_bonus() != 0:
 		fail("Decoration bonus should start at 0")
-	if state.pond_decorations.size() != 4:
-		fail("Expected four starting pond decorations")
+	if state.pond_decorations.size() != 12:
+		fail("Expected twelve starting pond decorations")
 	if state.pond_decoration_slots.size() != 6:
 		fail("Expected six preset decoration slots")
 
@@ -24,10 +24,26 @@ func _init() -> void:
 		fail("5 beauty should not add restore bonus yet")
 	if not state.is_pond_slot_occupied(0):
 		fail("Slot 0 should be occupied")
+	var lantern_position: Vector2 = state.get_pond_decoration_position(state.pond_decorations[0])
+	if lantern_position != state.get_default_pond_decoration_position(0):
+		fail("Legacy slot placement should convert to default free position")
 
 	state.total_mana = 40
 	if not state.place_pond_decoration("Spirit Stone", 1):
 		fail("Spirit Stone should place with enough mana")
+	var free_position := Vector2(620, 780)
+	if not state.move_pond_decoration("Spirit Stone", free_position):
+		fail("Placed decoration should move to a free pond position")
+	if state.get_pond_decoration_position(state.pond_decorations[1]) != free_position:
+		fail("Moved decoration should keep exact free position")
+	var normalized_position: Vector2 = state.get_pond_decoration_normalized_position(state.pond_decorations[1])
+	if normalized_position.x < 0.0 or normalized_position.x > 1.0 or normalized_position.y < 0.0 or normalized_position.y > 1.0:
+		fail("Moved decoration should save as a normalized pond position")
+	var village_rect := Rect2(90, 484, 342, 276)
+	var village_position: Vector2 = state.get_pond_decoration_screen_position(state.pond_decorations[1], village_rect)
+	var expected_village_position := village_rect.position + village_rect.size * normalized_position
+	if village_position != expected_village_position:
+		fail("Village should map the same normalized pond position into its pond rectangle")
 	if state.pond_beauty != 13:
 		fail("Two decorations should total 13 beauty")
 	if state.get_pond_decoration_restore_bonus() != 1:
@@ -61,6 +77,24 @@ func _init() -> void:
 		fail("Loaded pond beauty should persist")
 	if loaded_state.get_pond_decoration_restore_bonus() != state.get_pond_decoration_restore_bonus():
 		fail("Loaded decoration bonus should persist")
+	if loaded_state.get_pond_decoration_position(loaded_state.pond_decorations[1]) != free_position:
+		fail("Loaded decoration free position should persist")
+
+	var legacy_state = load("res://scripts/game_state.gd").new()
+	legacy_state.apply_save_data({
+		"pond_decorations": [
+			{
+				"DecorationName": "Moon Lantern",
+				"CostMana": 25,
+				"BeautyValue": 5,
+				"IsUnlocked": true,
+				"IsPlaced": true,
+				"SlotIndex": 2
+			}
+		]
+	})
+	if legacy_state.get_pond_decoration_position(legacy_state.pond_decorations[0]) != legacy_state.get_default_pond_decoration_position(2):
+		fail("Old slot-only saves should migrate to a free position")
 
 	print("Pond decoration behavior check passed")
 	quit(0)
