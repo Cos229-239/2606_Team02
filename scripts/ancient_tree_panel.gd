@@ -8,6 +8,12 @@ var progress_bar: ProgressBar
 var next_reward_label: Label
 var rewards_container: VBoxContainer
 var restore_button: Button
+var restoration_value_label: Label
+var tree_level_value_label: Label
+var restore_cost_value_label: Label
+var mana_value_label: Label
+var hero_tree: Sprite2D
+var hero_glow: PanelContainer
 
 
 func _ready() -> void:
@@ -20,63 +26,78 @@ func _ready() -> void:
 
 func _build_panel() -> void:
 	_add_background()
-	_add_title("Ancient Tree")
+	_add_title("Ancient Tree", "Restore the grove heart")
 
-	var stats_margin := _make_full_margin(130, 130, 178, 1612)
+	var stats_margin := _make_full_margin(74, 74, 178, 1590)
 	add_child(stats_margin)
-	var stats_panel := PanelContainer.new()
-	stats_panel.add_theme_stylebox_override("panel", _make_panel_style(0.78))
-	stats_margin.add_child(stats_panel)
-	stats_label = _make_label("", 24, Color("#fff2c6"), HORIZONTAL_ALIGNMENT_CENTER)
-	stats_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	stats_panel.add_child(stats_label)
+	var stats_row := HBoxContainer.new()
+	stats_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	stats_row.add_theme_constant_override("separation", 12)
+	stats_margin.add_child(stats_row)
+	var restoration_chip := _make_stat_chip("Restoration", Color("#aeea84"))
+	restoration_value_label = restoration_chip.find_child("Value", true, false) as Label
+	stats_row.add_child(restoration_chip)
+	var level_chip := _make_stat_chip("Tree Level", Color("#fff2a8"))
+	tree_level_value_label = level_chip.find_child("Value", true, false) as Label
+	stats_row.add_child(level_chip)
+	var cost_chip := _make_stat_chip("Restore Cost", Color("#75d8ff"))
+	restore_cost_value_label = cost_chip.find_child("Value", true, false) as Label
+	stats_row.add_child(cost_chip)
+	var mana_chip := _make_stat_chip("Mana", Color("#75d8ff"))
+	mana_value_label = mana_chip.find_child("Value", true, false) as Label
+	stats_row.add_child(mana_chip)
 
-	var center_margin := _make_full_margin(88, 88, 318, 440)
+	var center_margin := _make_full_margin(70, 70, 300, 424)
 	add_child(center_margin)
 	var center := PanelContainer.new()
-	center.add_theme_stylebox_override("panel", _make_panel_style(0.70))
+	center.add_theme_stylebox_override("panel", _make_panel_style(0.76))
 	center_margin.add_child(center)
-	var pad := _make_margin(24, 24, 24, 24)
+	var pad := _make_margin(22, 22, 22, 22)
 	center.add_child(pad)
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 18)
+	layout.add_theme_constant_override("separation", 14)
 	pad.add_child(layout)
 
 	var hero := Control.new()
-	hero.custom_minimum_size = Vector2(824, 420)
+	hero.custom_minimum_size = Vector2(896, 548)
 	layout.add_child(hero)
-	_add_color_panel(hero, "TreeHalo", Vector2(228, 16), Vector2(368, 312), Color("#315f42", 0.22), Color("#87e6a2"))
-	var vine := _add_color_panel(hero, "RewardVine", Vector2(64, 352), Vector2(696, 26), Color("#203f23", 0.72), Color("#76b65d"))
-	vine.rotation = 0.01
-	_add_sprite(hero, "res://assets/sprites/buildings/ancient_tree_landmark.png", Vector2(260, 0), Vector2(300, 360))
-	_add_sprite(hero, "res://assets/sprites/effects/glow_orb.png", Vector2(382, 246), Vector2(60, 60))
-	_add_sprite(hero, "res://assets/sprites/environment/purple_bloom.png", Vector2(628, 300), Vector2(74, 74))
+	_add_color_panel(hero, "TreeCanopyShade", Vector2(86, 44), Vector2(724, 350), Color("#07130d", 0.46), Color("#2f6840", 0.58))
+	hero_glow = _add_color_panel(hero, "TreeHalo", Vector2(214, 24), Vector2(468, 354), Color("#315f42", 0.24), Color("#87e6a2"))
+	var root_sigil := _add_color_panel(hero, "RootSigil", Vector2(288, 342), Vector2(320, 112), Color("#1e3321", 0.82), Color("#d0a34f"))
+	root_sigil.rotation = -0.01
+	var vine := _add_color_panel(hero, "RewardVine", Vector2(86, 438), Vector2(724, 22), Color("#203f23", 0.78), Color("#76b65d"))
+	vine.rotation = 0.005
+	_add_sprite(hero, "res://assets/sprites/environment/purple_bloom.png", Vector2(138, 330), Vector2(86, 86))
+	_add_sprite(hero, "res://assets/sprites/environment/bush_flowers.png", Vector2(662, 334), Vector2(104, 86))
+	_add_sprite(hero, "res://assets/sprites/effects/glow_orb.png", Vector2(414, 260), Vector2(70, 70))
+	hero_tree = _add_sprite(hero, "res://assets/sprites/buildings/ancient_tree_landmark.png", Vector2(236, -10), Vector2(424, 418))
 
 	progress_bar = ProgressBar.new()
-	progress_bar.position = Vector2(128, 365)
-	progress_bar.size = Vector2(568, 28)
+	progress_bar.position = Vector2(154, 476)
+	progress_bar.size = Vector2(588, 30)
 	progress_bar.min_value = 0
 	progress_bar.max_value = 100
 	progress_bar.show_percentage = false
 	hero.add_child(progress_bar)
 
-	next_reward_label = _make_label("Restore the grove heart to unlock tier rewards.", 23, Color("#f3d57a"), HORIZONTAL_ALIGNMENT_CENTER)
+	next_reward_label = _make_label("Restore the grove heart to unlock tier rewards.", 24, Color("#f3d57a"), HORIZONTAL_ALIGNMENT_CENTER)
 	next_reward_label.name = "NextRewardLabel"
-	next_reward_label.position = Vector2(0, 395)
-	next_reward_label.size = Vector2(824, 36)
+	next_reward_label.position = Vector2(0, 510)
+	next_reward_label.size = Vector2(896, 38)
 	hero.add_child(next_reward_label)
 
 	rewards_container = VBoxContainer.new()
-	rewards_container.add_theme_constant_override("separation", 10)
+	rewards_container.add_theme_constant_override("separation", 8)
 	layout.add_child(rewards_container)
 
-	feedback_label = _make_label("", 26, Color("#f3d57a"), HORIZONTAL_ALIGNMENT_CENTER)
-	feedback_label.custom_minimum_size = Vector2(824, 48)
+	feedback_label = _make_label("", 24, Color("#f3d57a"), HORIZONTAL_ALIGNMENT_CENTER)
+	feedback_label.custom_minimum_size = Vector2(896, 40)
 	layout.add_child(feedback_label)
 
 	var bottom := _make_bottom_bar()
 	add_child(bottom)
 	restore_button = _make_button("Restore")
+	restore_button.name = "RestoreButton"
 	restore_button.pressed.connect(_on_restore_pressed)
 	bottom.get_node("Row").add_child(restore_button)
 	var back_button := _make_button("Back")
@@ -85,14 +106,25 @@ func _build_panel() -> void:
 
 
 func _refresh() -> void:
-	stats_label.text = "Grove Restoration %d%%        Tree Level %d        Restore Cost %d Mana        Mana %d" % [
-		GameState.grove_restoration,
-		GameState.ancient_tree_level,
-		GameState.ancient_tree_restore_cost,
-		GameState.total_mana
-	]
+	if stats_label:
+		stats_label.text = "Grove Restoration %d%%        Tree Level %d        Restore Cost %d Mana        Mana %d" % [
+			GameState.grove_restoration,
+			GameState.ancient_tree_level,
+			GameState.ancient_tree_restore_cost,
+			GameState.total_mana
+		]
+	restoration_value_label.text = "%d%%" % GameState.grove_restoration
+	tree_level_value_label.text = str(GameState.ancient_tree_level)
+	restore_cost_value_label.text = "%d" % GameState.ancient_tree_restore_cost
+	mana_value_label.text = "%d" % GameState.total_mana
 	progress_bar.value = GameState.grove_restoration
 	restore_button.disabled = GameState.grove_restoration >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
+	restore_button.text = "Fully Restored" if GameState.grove_restoration >= 100 else "Restore"
+	var restoration_alpha: float = 0.22 + clampf(float(GameState.grove_restoration) / 100.0, 0.0, 1.0) * 0.26
+	if hero_glow:
+		hero_glow.modulate = Color(1.0, 1.0, 1.0, minf(1.0, 0.62 + restoration_alpha))
+	if hero_tree:
+		hero_tree.modulate = Color(minf(1.0, 0.72 + restoration_alpha), minf(1.0, 0.82 + restoration_alpha), minf(1.0, 0.70 + restoration_alpha), 1.0)
 	if next_reward_label:
 		next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
 	for child in rewards_container.get_children():
@@ -115,8 +147,10 @@ func _make_reward_card(level: int) -> PanelContainer:
 	var text_stack := VBoxContainer.new()
 	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text_stack)
-	text_stack.add_child(_make_label("Level %d: %s" % [level, String(reward.get("Title", "Reward"))], 22, Color("#fff2c6")))
+	var title_color := Color("#fff2c6") if GameState.ancient_tree_level >= level else Color("#c7b98e")
+	text_stack.add_child(_make_label("Level %d: %s" % [level, String(reward.get("Title", "Reward"))], 22, title_color))
 	text_stack.add_child(_make_label("Reward: %d Mana, %d Coins" % [int(reward.get("RewardMana", 0)), int(reward.get("RewardCoins", 0))], 18, Color("#f3d57a")))
+	text_stack.add_child(_make_label(_get_reward_status_text(level), 16, _get_reward_status_color(level)))
 	var button := _make_button("Claim")
 	button.custom_minimum_size = Vector2(150, 64)
 	button.disabled = GameState.ancient_tree_level < level or GameState.ancient_tree_claimed_rewards.has(level)
@@ -138,6 +172,29 @@ func _make_reward_sigil(level: int) -> Control:
 	label.size = Vector2(46, 30)
 	sigil.add_child(label)
 	return sigil
+
+
+func _get_reward_status_text(level: int) -> String:
+	if GameState.ancient_tree_claimed_rewards.has(level):
+		return "Reward claimed"
+	if GameState.ancient_tree_level >= level:
+		return "Ready to claim"
+	var target := 25
+	if level == 3:
+		target = 50
+	elif level == 4:
+		target = 75
+	elif level == 5:
+		target = 100
+	return "Unlocks at %d%% restoration" % target
+
+
+func _get_reward_status_color(level: int) -> Color:
+	if GameState.ancient_tree_claimed_rewards.has(level):
+		return Color("#9ecf8f")
+	if GameState.ancient_tree_level >= level:
+		return Color("#f5d66f")
+	return Color("#a99f86")
 
 
 func _on_restore_pressed() -> void:
@@ -180,15 +237,22 @@ func _add_background() -> void:
 	add_child(shade)
 
 
-func _add_title(text: String) -> void:
+func _add_title(text: String, subtitle: String = "") -> void:
 	var title_panel := PanelContainer.new()
-	title_panel.position = Vector2(200, 42)
-	title_panel.size = Vector2(680, 118)
+	title_panel.position = Vector2(170, 38)
+	title_panel.size = Vector2(740, 126)
 	title_panel.add_theme_stylebox_override("panel", _make_panel_style(0.82))
 	add_child(title_panel)
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", -2)
+	title_panel.add_child(stack)
 	var title := _make_label(text, 46, Color("#f5d66f"), HORIZONTAL_ALIGNMENT_CENTER)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title_panel.add_child(title)
+	stack.add_child(title)
+	if subtitle != "":
+		var subtitle_label := _make_label(subtitle, 22, Color("#bfe8c4"), HORIZONTAL_ALIGNMENT_CENTER)
+		stack.add_child(subtitle_label)
 
 
 func _make_bottom_bar() -> PanelContainer:
@@ -221,6 +285,24 @@ func _make_margin(left: int, right: int, top: int, bottom: int) -> MarginContain
 	margin.add_theme_constant_override("margin_top", top)
 	margin.add_theme_constant_override("margin_bottom", bottom)
 	return margin
+
+
+func _make_stat_chip(title: String, value_color: Color) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(226, 88)
+	chip.add_theme_stylebox_override("panel", _make_panel_style(0.80, Color("#8d6a33")))
+	var margin := _make_margin(12, 12, 8, 8)
+	chip.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(stack)
+	var title_label := _make_label(title, 16, Color("#cbbf9a"), HORIZONTAL_ALIGNMENT_CENTER)
+	stack.add_child(title_label)
+	var value := _make_label("0", 28, value_color, HORIZONTAL_ALIGNMENT_CENTER)
+	value.name = "Value"
+	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stack.add_child(value)
+	return chip
 
 
 func _make_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
