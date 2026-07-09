@@ -16,6 +16,31 @@ func _init() -> void:
 		fail("Expected total restore amount to start at 6")
 	if state.fairy_workers_active != 2:
 		fail("Expected Luna and Pip to count as active workers")
+	if state.get_fairy_task_cards().size() != 2:
+		fail("Expected Fairy House to expose two active task cards")
+
+	state.update_fairy_tasks(30.0)
+	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 1:
+		fail("Luna should complete one Flower Grove fairy task after 30 seconds")
+	if state.get_fairy_task_ready_count(state.FAIRY_TASK_SACRED_POND) != 0:
+		fail("Pip should need more time before a Sacred Pond fairy task is ready")
+
+	var mana_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_FLOWER_GROVE)
+	if not bool(mana_reward.get("Success", false)):
+		fail("Flower Grove fairy task reward should be collectable")
+	if state.total_mana != 25:
+		fail("Flower Grove fairy task should award 25 Mana with one assigned fairy")
+	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 0:
+		fail("Collecting Flower Grove fairy task should consume one ready reward")
+
+	state.update_fairy_tasks(30.0)
+	if state.get_fairy_task_ready_count(state.FAIRY_TASK_SACRED_POND) != 1:
+		fail("Pip should complete one Sacred Pond fairy task after 60 total seconds")
+	var pond_reward: Dictionary = state.collect_fairy_task_reward(state.FAIRY_TASK_SACRED_POND)
+	if not bool(pond_reward.get("Success", false)):
+		fail("Sacred Pond fairy task reward should be collectable")
+	if state.sacred_pond_spirit_energy != 1:
+		fail("Sacred Pond fairy task should award Spirit Energy")
 
 	var nim_message: String = state.assign_fairy_to_area("Nim", "Flower Grove")
 	if nim_message != "Nim assigned to Flower Grove":
@@ -53,6 +78,8 @@ func _init() -> void:
 	var data: Dictionary = state.get_save_data()
 	if not data.has("fairies"):
 		fail("Save data should include fairies")
+	if not data.has("fairy_task_progress") or not data.has("fairy_task_ready_counts"):
+		fail("Save data should include fairy task state")
 	var loaded_state = load("res://scripts/game_state.gd").new()
 	loaded_state.apply_save_data(data)
 	if loaded_state.get_fairy_assigned_area("Luna") != "Sacred Koi Pond":

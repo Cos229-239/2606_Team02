@@ -258,20 +258,8 @@ func _rebuild_fairy_cards() -> void:
 func _rebuild_task_cards() -> void:
 	_set_section_title("Fairy Tasks")
 	_clear_cards()
-	fairy_cards_container.add_child(_make_info_card(
-		"Flower Grove",
-		"%s\n\nCurrent Bonus: +%.0f Mana/sec" % [
-			_get_fairies_for_area(GameState.FAIRY_AREA_FLOWER_GROVE),
-			GameState.get_flower_fairy_bonus_production()
-		]
-	))
-	fairy_cards_container.add_child(_make_info_card(
-		"Sacred Pond",
-		"%s\n\nCurrent Bonus: +%d Restore" % [
-			_get_fairies_for_area(GameState.FAIRY_AREA_SACRED_POND),
-			GameState.get_sacred_pond_fairy_restore_bonus()
-		]
-	))
+	for task in GameState.get_fairy_task_cards():
+		fairy_cards_container.add_child(_make_task_card(task))
 	fairy_cards_container.add_child(_make_info_card(
 		"Resting",
 		"%s\n\nResting fairies keep their level and can be reassigned anytime." % _get_fairies_for_area(GameState.FAIRY_AREA_UNASSIGNED)
@@ -336,6 +324,87 @@ func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
 	body.add_theme_constant_override("shadow_offset_y", 2)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(body)
+	return card
+
+
+func _make_task_card(task: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 10)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = String(task.get("Title", "Fairy Task"))
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#f3d57a"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var workers: Array = task.get("Workers", [])
+	var worker_text := "No fairies assigned."
+	if not workers.is_empty():
+		worker_text = ", ".join(workers)
+	var details := Label.new()
+	details.text = "%s\nWorkers: %s\nReward: %s" % [
+		String(task.get("Area", "")),
+		worker_text,
+		String(task.get("RewardText", ""))
+	]
+	details.custom_minimum_size = Vector2(1, 94)
+	details.add_theme_font_size_override("font_size", 18)
+	details.add_theme_color_override("font_color", Color("#fff0c2"))
+	details.add_theme_color_override("font_shadow_color", Color.BLACK)
+	details.add_theme_constant_override("shadow_offset_x", 2)
+	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(details)
+
+	var progress := ProgressBar.new()
+	progress.min_value = 0
+	progress.max_value = 100
+	progress.value = int(task.get("ProgressPercent", 0))
+	progress.show_percentage = true
+	progress.custom_minimum_size = Vector2(1, 26)
+	layout.add_child(progress)
+
+	var ready_count := int(task.get("ReadyCount", 0))
+	var ready := Label.new()
+	ready.text = "Ready: %d" % ready_count
+	ready.add_theme_font_size_override("font_size", 18)
+	ready.add_theme_color_override("font_color", Color("#aeea84") if ready_count > 0 else Color("#cbbf9a"))
+	ready.add_theme_color_override("font_shadow_color", Color.BLACK)
+	ready.add_theme_constant_override("shadow_offset_x", 2)
+	ready.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(ready)
+
+	var collect := Button.new()
+	collect.text = "Collect"
+	collect.custom_minimum_size = Vector2(1, 52)
+	collect.add_theme_font_size_override("font_size", 20)
+	collect.disabled = ready_count <= 0
+	var task_id := String(task.get("TaskID", ""))
+	collect.pressed.connect(func() -> void:
+		var result: Dictionary = GameState.collect_fairy_task_reward(task_id)
+		feedback_label.text = String(result.get("Message", ""))
+		active_view = "tasks"
+		_refresh()
+	)
+	layout.add_child(collect)
 	return card
 
 

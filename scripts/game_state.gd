@@ -44,6 +44,9 @@ const FLOWER_TIER_FLOWER := 2
 const FLOWER_TIER_BLOOM := 3
 const FLOWER_TIER_RARE_BLOSSOM := 4
 const POND_DECORATION_EDITOR_RECT := Rect2(140, 320, 800, 830)
+const FAIRY_TASK_FLOWER_GROVE := "flower_grove"
+const FAIRY_TASK_SACRED_POND := "sacred_pond"
+const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -79,6 +82,8 @@ var fairy_max_residents: int = 3
 var fairy_workers_active: int = 2
 var fairy_current_assignment: String = "Flower Grove"
 var fairies: Array[Dictionary] = []
+var fairy_task_progress: Dictionary = {}
+var fairy_task_ready_counts: Dictionary = {}
 var potion_shop_level: int = 1
 var mana_potion_count: int = 0
 var potion_mana_cost: int = 25
@@ -119,6 +124,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	generate_flower_mana(delta)
+	update_fairy_tasks(delta)
 	update_potion_crafting(delta)
 
 
@@ -1136,6 +1142,121 @@ func assign_fairy_to_area(fairy_name: String, area: String) -> String:
 	return "%s is not available." % fairy_name
 
 
+func update_fairy_tasks(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	var changed := false
+	var flower_speed := _get_fairy_task_speed(FAIRY_AREA_FLOWER_GROVE)
+	if flower_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * delta) or changed
+	var pond_speed := _get_fairy_task_speed(FAIRY_AREA_SACRED_POND)
+	if pond_speed > 0.0:
+		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * delta) or changed
+	if changed:
+		fairy_house_changed.emit()
+
+
+func _advance_fairy_task(task_id: String, amount: float) -> bool:
+	var progress := float(fairy_task_progress.get(task_id, 0.0)) + amount
+	var ready_count := int(fairy_task_ready_counts.get(task_id, 0))
+	var changed := false
+	while progress >= FAIRY_TASK_REQUIRED_PROGRESS:
+		progress -= FAIRY_TASK_REQUIRED_PROGRESS
+		ready_count += 1
+		changed = true
+	fairy_task_progress[task_id] = progress
+	fairy_task_ready_counts[task_id] = ready_count
+	return changed
+
+
+func _get_fairy_task_speed(area: String) -> float:
+	var speed := 0.0
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) != area:
+			continue
+		speed += max(0.5, float(fairy.get("WorkBonus", 1.0)))
+	return speed
+
+
+func get_fairy_task_progress_percent(task_id: String) -> int:
+	return int(floor((float(fairy_task_progress.get(task_id, 0.0)) / FAIRY_TASK_REQUIRED_PROGRESS) * 100.0))
+
+
+func get_fairy_task_ready_count(task_id: String) -> int:
+	return int(fairy_task_ready_counts.get(task_id, 0))
+
+
+func get_fairy_task_cards() -> Array[Dictionary]:
+	return [
+		{
+			"TaskID": FAIRY_TASK_FLOWER_GROVE,
+			"Title": "Gather Mana",
+			"Area": FAIRY_AREA_FLOWER_GROVE,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_FLOWER_GROVE),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_FLOWER_GROVE),
+			"RewardText": "+%d Mana" % get_fairy_task_reward_amount(FAIRY_TASK_FLOWER_GROVE)
+		},
+		{
+			"TaskID": FAIRY_TASK_SACRED_POND,
+			"Title": "Tend Waters",
+			"Area": FAIRY_AREA_SACRED_POND,
+			"Workers": _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND),
+			"ProgressPercent": get_fairy_task_progress_percent(FAIRY_TASK_SACRED_POND),
+			"ReadyCount": get_fairy_task_ready_count(FAIRY_TASK_SACRED_POND),
+			"RewardText": "+%d Spirit Energy" % get_fairy_task_reward_amount(FAIRY_TASK_SACRED_POND)
+		}
+	]
+
+
+func _get_fairies_for_assignment(area: String) -> Array[String]:
+	var names: Array[String] = []
+	for fairy in fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", FAIRY_AREA_UNASSIGNED)) == area:
+			names.append(String(fairy.get("FairyName", "Fairy")))
+	return names
+
+
+func get_fairy_task_reward_amount(task_id: String) -> int:
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		return 20 + _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE).size() * 5
+	if task_id == FAIRY_TASK_SACRED_POND:
+		return max(1, _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND).size())
+	return 0
+
+
+func collect_fairy_task_reward(task_id: String) -> Dictionary:
+	var ready_count := int(fairy_task_ready_counts.get(task_id, 0))
+	if ready_count <= 0:
+		return {"Success": false, "Message": "No fairy task reward ready."}
+
+	var reward_amount := get_fairy_task_reward_amount(task_id)
+	fairy_task_ready_counts[task_id] = ready_count - 1
+	if task_id == FAIRY_TASK_FLOWER_GROVE:
+		total_mana += reward_amount
+		add_quest_progress(QUEST_GOAL_COLLECT_MANA, reward_amount)
+		resources_changed.emit()
+		fairy_house_changed.emit()
+		save_game()
+		var mana_message := "Fairies delivered %d Mana." % reward_amount
+		save_status_changed.emit(mana_message)
+		return {"Success": true, "Message": mana_message}
+	if task_id == FAIRY_TASK_SACRED_POND:
+		sacred_pond_spirit_energy += reward_amount
+		resources_changed.emit()
+		sacred_pond_changed.emit()
+		fairy_house_changed.emit()
+		save_game()
+		var pond_message := "Fairies gathered %d Spirit Energy." % reward_amount
+		save_status_changed.emit(pond_message)
+		return {"Success": true, "Message": pond_message}
+	return {"Success": false, "Message": "Unknown fairy task."}
+
+
 func recalculate_fairy_bonuses() -> void:
 	flower_grove_fairy_bonus_production = 0.0
 	sacred_pond_fairy_restore_bonus = 0
@@ -1204,6 +1325,26 @@ func _reset_fairies_to_defaults() -> void:
 		"WorkBonus": 1.0,
 		"IsUnlocked": true
 	})
+	_reset_fairy_tasks_to_defaults()
+
+
+func _reset_fairy_tasks_to_defaults() -> void:
+	fairy_task_progress.clear()
+	fairy_task_progress[FAIRY_TASK_FLOWER_GROVE] = 0.0
+	fairy_task_progress[FAIRY_TASK_SACRED_POND] = 0.0
+	fairy_task_ready_counts.clear()
+	fairy_task_ready_counts[FAIRY_TASK_FLOWER_GROVE] = 0
+	fairy_task_ready_counts[FAIRY_TASK_SACRED_POND] = 0
+
+
+func _apply_saved_fairy_tasks(saved_progress, saved_ready_counts) -> void:
+	_reset_fairy_tasks_to_defaults()
+	if saved_progress is Dictionary:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_SACRED_POND]:
+			fairy_task_progress[task_id] = clampf(float(saved_progress.get(task_id, 0.0)), 0.0, FAIRY_TASK_REQUIRED_PROGRESS - 0.01)
+	if saved_ready_counts is Dictionary:
+		for task_id in [FAIRY_TASK_FLOWER_GROVE, FAIRY_TASK_SACRED_POND]:
+			fairy_task_ready_counts[task_id] = max(0, int(saved_ready_counts.get(task_id, 0)))
 
 
 func _reset_quests_to_defaults() -> void:
@@ -1523,6 +1664,8 @@ func get_save_data() -> Dictionary:
 		"fairy_max_residents": fairy_max_residents,
 		"fairy_workers_active": fairy_workers_active,
 		"fairies": fairies,
+		"fairy_task_progress": fairy_task_progress,
+		"fairy_task_ready_counts": fairy_task_ready_counts,
 		"potion_shop_level": potion_shop_level,
 		"mana_potion_count": mana_potion_count,
 		"potion_mana_cost": potion_mana_cost,
@@ -1645,6 +1788,7 @@ func apply_save_data(data: Dictionary) -> void:
 				})
 	else:
 		_reset_fairies_to_defaults()
+	_apply_saved_fairy_tasks(data.get("fairy_task_progress", {}), data.get("fairy_task_ready_counts", {}))
 	recalculate_fairy_bonuses()
 	update_sacred_pond_level_and_rewards()
 	potion_shop_level = int(data.get("potion_shop_level", 1))
