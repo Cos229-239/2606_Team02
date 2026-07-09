@@ -278,19 +278,74 @@ func _rebuild_upgrade_cards() -> void:
 	_clear_cards()
 	fairy_cards_container.add_child(_make_info_card(
 		"House Level %d" % GameState.fairy_house_level,
-		"Capacity: %d fairies\nActive workers: %d\n\nMore house capacity unlocks through restoration rewards." % [
+		"Capacity: %d fairies\nActive workers: %d\nTask Speed: %.0f%%\nRewards: %.0f%%\nXP per Task: %d" % [
 			GameState.fairy_max_residents,
-			GameState.fairy_workers_active
+			GameState.fairy_workers_active,
+			GameState.get_fairy_house_task_speed_multiplier() * 100.0,
+			GameState.get_fairy_house_reward_multiplier() * 100.0,
+			GameState.get_fairy_house_xp_gain()
 		]
 	))
+	fairy_cards_container.add_child(_make_upgrade_card())
 	fairy_cards_container.add_child(_make_info_card(
-		"Next Improvements",
-		"Future upgrades should add fairy slots, task speed bonuses, and role-specific training."
+		"Training",
+		"Level 5 unlocks role training. Gatherers, Pond Keepers, and Foragers get stronger at their specialty and earn extra XP."
 	))
-	fairy_cards_container.add_child(_make_info_card(
-		"Current Best Action",
-		"Use Workers to assign fairies to Flower Grove or Sacred Pond based on the resource you need most."
-	))
+
+
+func _make_upgrade_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_tinted_card_panel_style(Color("#a8ff9b"), Color(0.025, 0.040, 0.032, 0.92)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = "Next Upgrade"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#a8ff9b"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = GameState.get_fairy_house_upgrade_summary()
+	body.custom_minimum_size = Vector2(1, 190)
+	body.add_theme_font_size_override("font_size", 18)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+
+	var upgrade := Button.new()
+	upgrade.text = "Upgrade"
+	upgrade.custom_minimum_size = Vector2(1, 52)
+	upgrade.add_theme_font_size_override("font_size", 20)
+	upgrade.disabled = GameState.fairy_house_level >= GameState.FAIRY_HOUSE_MAX_LEVEL
+	upgrade.pressed.connect(func() -> void:
+		SoundManager.play_click()
+		var result: Dictionary = GameState.upgrade_fairy_house()
+		feedback_label.text = String(result.get("Message", ""))
+		_show_floating_text(feedback_label.text, Vector2(260, 780), Color("#a8ff9b") if bool(result.get("Success", false)) else Color("#ff9f8a"))
+		active_view = "upgrades"
+		_refresh()
+	)
+	layout.add_child(upgrade)
+	return card
 
 
 func _make_info_card(title_text: String, body_text: String) -> PanelContainer:

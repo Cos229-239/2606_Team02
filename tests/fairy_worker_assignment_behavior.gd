@@ -22,6 +22,10 @@ func _init() -> void:
 	for task in task_cards:
 		if String(task.get("TaskRateText", "")) == "":
 			fail("Fairy task cards should expose visible task rate text")
+	if state.get_fairy_house_task_speed_multiplier() != 1.0:
+		fail("Fairy House level 1 should not alter task speed")
+	if state.get_fairy_house_reward_multiplier() != 1.0:
+		fail("Fairy House level 1 should not alter task rewards")
 
 	state.update_fairy_tasks(30.0)
 	if state.get_fairy_task_ready_count(state.FAIRY_TASK_FLOWER_GROVE) != 1:
@@ -107,6 +111,32 @@ func _init() -> void:
 	if loaded_state.get_sacred_pond_fairy_restore_bonus() != 3:
 		fail("Loaded Sacred Pond bonus should be recalculated")
 
+	loaded_state.total_mana = 1000
+	loaded_state.total_coins = 1000
+	loaded_state.sacred_pond_spirit_energy = 100
+	var upgrade_2: Dictionary = loaded_state.upgrade_fairy_house()
+	if not bool(upgrade_2.get("Success", false)) or loaded_state.fairy_house_level != 2:
+		fail("Fairy House should upgrade to level 2")
+	if loaded_state.get_fairy_house_task_speed_multiplier() <= 1.0:
+		fail("Fairy House level 2 should speed up fairy tasks")
+	var capacity_before: int = loaded_state.fairy_max_residents
+	var upgrade_3: Dictionary = loaded_state.upgrade_fairy_house()
+	if not bool(upgrade_3.get("Success", false)) or loaded_state.fairy_house_level != 3:
+		fail("Fairy House should upgrade to level 3")
+	if loaded_state.fairy_max_residents != capacity_before + 1:
+		fail("Fairy House level 3 should add fairy capacity")
+	var reward_before_level_4: int = loaded_state.get_fairy_task_reward_amount(loaded_state.FAIRY_TASK_FLOWER_GROVE)
+	loaded_state.upgrade_fairy_house()
+	if loaded_state.fairy_house_level != 4:
+		fail("Fairy House should upgrade to level 4")
+	if loaded_state.get_fairy_task_reward_amount(loaded_state.FAIRY_TASK_FLOWER_GROVE) <= reward_before_level_4:
+		fail("Fairy House level 4 should improve task rewards")
+	loaded_state.upgrade_fairy_house()
+	if loaded_state.fairy_house_level != loaded_state.FAIRY_HOUSE_MAX_LEVEL:
+		fail("Fairy House should upgrade to max level")
+	if loaded_state.get_fairy_house_xp_gain() != 2:
+		fail("Max Fairy House should grant extra task XP")
+
 	var level_message: String = loaded_state.assign_fairy_to_area("Nim", "Flower Grove")
 	if level_message != "Nim assigned to Flower Grove":
 		fail("Expected Nim to be assignable before leveling")
@@ -120,8 +150,8 @@ func _init() -> void:
 	var leveled_nim: Dictionary = loaded_state.get_fairy_data("Nim")
 	if int(leveled_nim.get("FairyLevel", 1)) != 2:
 		fail("Nim should reach level 2 after repeated forage work")
-	if int(leveled_nim.get("FairyXP", 0)) != 0:
-		fail("Nim XP should roll over after leveling")
+	if int(leveled_nim.get("FairyXP", 0)) != 3:
+		fail("Nim XP should carry over after max-house training")
 	if float(leveled_nim.get("WorkBonus", 1.0)) < 1.5:
 		fail("Nim should gain work bonus after leveling")
 	var leveled_data: Dictionary = loaded_state.get_save_data()
@@ -132,6 +162,8 @@ func _init() -> void:
 		fail("Fairy level should survive save/load")
 	if float(reloaded_nim.get("WorkBonus", 1.0)) < 1.5:
 		fail("Fairy work bonus should survive save/load")
+	if reloaded_state.fairy_house_level != loaded_state.FAIRY_HOUSE_MAX_LEVEL:
+		fail("Fairy House level should survive save/load")
 
 	print("Fairy worker assignment behavior check passed")
 	quit(0)

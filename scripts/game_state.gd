@@ -53,6 +53,13 @@ const FAIRY_TASK_SACRED_POND := "sacred_pond"
 const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
 const FAIRY_MAX_LEVEL := 5
 const FAIRY_WORK_BONUS_PER_LEVEL := 0.5
+const FAIRY_HOUSE_MAX_LEVEL := 5
+const FAIRY_HOUSE_UPGRADE_COSTS := {
+	2: {"Mana": 80, "Coins": 25, "Spirit": 0},
+	3: {"Mana": 140, "Coins": 50, "Spirit": 2},
+	4: {"Mana": 220, "Coins": 90, "Spirit": 5},
+	5: {"Mana": 320, "Coins": 150, "Spirit": 10}
+}
 
 var total_mana: int = 0
 var total_coins: int = 0
@@ -1261,15 +1268,16 @@ func update_fairy_tasks(delta: float) -> void:
 	if delta <= 0.0:
 		return
 	var changed := false
+	var house_speed_multiplier := get_fairy_house_task_speed_multiplier()
 	var flower_speed := _get_fairy_task_speed(FAIRY_TASK_FLOWER_GROVE)
 	if flower_speed > 0.0:
-		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * delta) or changed
+		changed = _advance_fairy_task(FAIRY_TASK_FLOWER_GROVE, flower_speed * house_speed_multiplier * delta) or changed
 	var forage_speed := _get_fairy_task_speed(FAIRY_TASK_FORAGE_INGREDIENTS)
 	if forage_speed > 0.0:
-		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, forage_speed * delta * 0.75) or changed
+		changed = _advance_fairy_task(FAIRY_TASK_FORAGE_INGREDIENTS, forage_speed * house_speed_multiplier * delta * 0.75) or changed
 	var pond_speed := _get_fairy_task_speed(FAIRY_TASK_SACRED_POND)
 	if pond_speed > 0.0:
-		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * delta) or changed
+		changed = _advance_fairy_task(FAIRY_TASK_SACRED_POND, pond_speed * house_speed_multiplier * delta) or changed
 	if changed:
 		fairy_house_changed.emit()
 
@@ -1311,23 +1319,24 @@ func _get_fairy_task_contribution(fairy: Dictionary, task_id: String) -> float:
 
 func _get_fairy_role_task_multiplier(fairy: Dictionary, task_id: String) -> float:
 	var role := String(fairy.get("FairyRole", "Helper"))
+	var training_bonus := get_fairy_house_role_training_bonus()
 	if task_id == FAIRY_TASK_FLOWER_GROVE:
 		if role == "Gatherer":
-			return 1.0
+			return 1.0 + training_bonus
 		if role == "Forager":
 			return 0.9
 		if role == "Pond Keeper":
 			return 0.85
 	if task_id == FAIRY_TASK_FORAGE_INGREDIENTS:
 		if role == "Forager":
-			return 1.6
+			return 1.6 + training_bonus
 		if role == "Gatherer":
 			return 0.75
 		if role == "Pond Keeper":
 			return 0.65
 	if task_id == FAIRY_TASK_SACRED_POND:
 		if role == "Pond Keeper":
-			return 1.0
+			return 1.0 + training_bonus
 		if role == "Gatherer":
 			return 0.9
 		if role == "Forager":
@@ -1389,7 +1398,7 @@ func _get_fairies_for_assignment(area: String) -> Array[String]:
 
 
 func get_fairy_task_rate_text(task_id: String) -> String:
-	var speed := _get_fairy_task_speed(task_id)
+	var speed := _get_fairy_task_speed(task_id) * get_fairy_house_task_speed_multiplier()
 	if speed <= 0.0:
 		return "Idle"
 	var adjusted_speed := speed * (0.75 if task_id == FAIRY_TASK_FORAGE_INGREDIENTS else 1.0)
@@ -1399,9 +1408,9 @@ func get_fairy_task_rate_text(task_id: String) -> String:
 
 func get_fairy_task_reward_amount(task_id: String) -> int:
 	if task_id == FAIRY_TASK_FLOWER_GROVE:
-		return 20 + _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE).size() * 5
+		return int(round((20 + _get_fairies_for_assignment(FAIRY_AREA_FLOWER_GROVE).size() * 5) * get_fairy_house_reward_multiplier()))
 	if task_id == FAIRY_TASK_SACRED_POND:
-		return max(1, _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND).size())
+		return max(1, int(round(max(1, _get_fairies_for_assignment(FAIRY_AREA_SACRED_POND).size()) * get_fairy_house_reward_multiplier())))
 	return 0
 
 
@@ -1454,7 +1463,7 @@ func _grant_fairy_task_xp(task_id: String) -> Array[String]:
 		if int(fairies[index].get("FairyLevel", 1)) >= FAIRY_MAX_LEVEL:
 			fairies[index]["FairyXP"] = 0
 			continue
-		fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) + 1
+		fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) + get_fairy_house_xp_gain()
 		var xp_to_next := get_fairy_xp_to_next_level(fairies[index])
 		if int(fairies[index].get("FairyXP", 0)) >= xp_to_next:
 			fairies[index]["FairyXP"] = int(fairies[index].get("FairyXP", 0)) - xp_to_next
@@ -1473,6 +1482,99 @@ func _append_fairy_level_message(base_message: String, level_up_names: Array[Str
 	if level_up_names.is_empty():
 		return base_message
 	return "%s %s leveled up!" % [base_message, ", ".join(level_up_names)]
+
+
+func get_fairy_house_task_speed_multiplier() -> float:
+	if fairy_house_level < 2:
+		return 1.0
+	return 1.0 + (float(fairy_house_level - 1) * 0.10)
+
+
+func get_fairy_house_reward_multiplier() -> float:
+	return 1.25 if fairy_house_level >= 4 else 1.0
+
+
+func get_fairy_house_role_training_bonus() -> float:
+	return 0.25 if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL else 0.0
+
+
+func get_fairy_house_xp_gain() -> int:
+	return 2 if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL else 1
+
+
+func get_fairy_house_upgrade_cost(target_level: int = fairy_house_level + 1) -> Dictionary:
+	if not FAIRY_HOUSE_UPGRADE_COSTS.has(target_level):
+		return {}
+	return (FAIRY_HOUSE_UPGRADE_COSTS[target_level] as Dictionary).duplicate(true)
+
+
+func can_upgrade_fairy_house() -> bool:
+	var cost := get_fairy_house_upgrade_cost()
+	if cost.is_empty():
+		return false
+	return total_mana >= int(cost.get("Mana", 0)) and total_coins >= int(cost.get("Coins", 0)) and sacred_pond_spirit_energy >= int(cost.get("Spirit", 0))
+
+
+func get_fairy_house_upgrade_summary() -> String:
+	if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL:
+		return "Max Level: +40% task speed, +25% rewards, role training, and +2 XP per task."
+	var next_level := fairy_house_level + 1
+	var cost := get_fairy_house_upgrade_cost(next_level)
+	var benefit := ""
+	match next_level:
+		2:
+			benefit = "+10% fairy task speed"
+		3:
+			benefit = "+20% task speed and +1 fairy capacity"
+		4:
+			benefit = "+30% task speed and +25% task rewards"
+		5:
+			benefit = "+40% task speed, role training, and +2 XP per task"
+		_:
+			benefit = "More fairy support"
+	return "Next Level %d: %s\nCost: %d Mana, %d Coins, %d Spirit" % [
+		next_level,
+		benefit,
+		int(cost.get("Mana", 0)),
+		int(cost.get("Coins", 0)),
+		int(cost.get("Spirit", 0))
+	]
+
+
+func upgrade_fairy_house() -> Dictionary:
+	if fairy_house_level >= FAIRY_HOUSE_MAX_LEVEL:
+		save_status_changed.emit("Fairy House is maxed.")
+		return {"Success": false, "Message": "Fairy House is maxed."}
+	var target_level := fairy_house_level + 1
+	var cost := get_fairy_house_upgrade_cost(target_level)
+	if cost.is_empty():
+		save_status_changed.emit("No Fairy House upgrade available.")
+		return {"Success": false, "Message": "No Fairy House upgrade available."}
+	if total_mana < int(cost.get("Mana", 0)):
+		save_status_changed.emit("Not enough Mana.")
+		return {"Success": false, "Message": "Not enough Mana."}
+	if total_coins < int(cost.get("Coins", 0)):
+		save_status_changed.emit("Not enough Coins.")
+		return {"Success": false, "Message": "Not enough Coins."}
+	if sacred_pond_spirit_energy < int(cost.get("Spirit", 0)):
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return {"Success": false, "Message": "Not enough Spirit Energy."}
+
+	total_mana -= int(cost.get("Mana", 0))
+	total_coins -= int(cost.get("Coins", 0))
+	sacred_pond_spirit_energy -= int(cost.get("Spirit", 0))
+	fairy_house_level = target_level
+	if fairy_house_level == 3:
+		fairy_max_residents += 1
+	recalculate_fairy_bonuses()
+	resources_changed.emit()
+	flower_grove_changed.emit()
+	sacred_pond_changed.emit()
+	fairy_house_changed.emit()
+	save_game()
+	var message := "Fairy House upgraded to Level %d!" % fairy_house_level
+	save_status_changed.emit(message)
+	return {"Success": true, "Message": message}
 
 
 func recalculate_fairy_bonuses() -> void:
