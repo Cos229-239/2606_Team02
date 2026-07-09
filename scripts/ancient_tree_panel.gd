@@ -2,6 +2,8 @@ extends Control
 
 signal closed
 
+const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_zoom.jpg"
+
 var stats_label: Label
 var feedback_label: Label
 var progress_bar: ProgressBar
@@ -168,15 +170,14 @@ func _on_back_pressed() -> void:
 
 func _add_background() -> void:
 	var backing := TextureRect.new()
-	backing.texture = load("res://assets/sprites/backgrounds/restored_village_background.png")
+	backing.texture = load(ANCIENT_TREE_PANEL_ART)
 	backing.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backing.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	backing.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	backing.modulate = Color(0.58, 0.74, 0.62, 1.0)
 	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backing)
 	var shade := ColorRect.new()
-	shade.color = Color(0.005, 0.014, 0.010, 0.52)
+	shade.color = Color(0.005, 0.014, 0.010, 0.22)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
