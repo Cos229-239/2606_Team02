@@ -20,6 +20,7 @@ func _run() -> void:
 	game_state.mana_potion_count = 1
 
 	for scene_path in [
+		"res://ui/PotionShopPanel.tscn",
 		"res://ui/MarketStallPanel.tscn",
 		"res://ui/AncientTreePanel.tscn",
 		"res://ui/ArcaneForgePanel.tscn"

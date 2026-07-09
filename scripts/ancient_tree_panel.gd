@@ -46,10 +46,8 @@ func _build_panel() -> void:
 	hero.custom_minimum_size = Vector2(824, 420)
 	layout.add_child(hero)
 	_add_color_panel(hero, "TreeHalo", Vector2(228, 16), Vector2(368, 312), Color("#315f42", 0.22), Color("#87e6a2"))
-	_add_color_panel(hero, "RootSigil", Vector2(304, 282), Vector2(216, 48), Color("#0d3329", 0.72), Color("#f3d57a"))
 	var vine := _add_color_panel(hero, "RewardVine", Vector2(64, 352), Vector2(696, 26), Color("#203f23", 0.72), Color("#76b65d"))
 	vine.rotation = 0.01
-	_add_sprite(hero, "res://assets/sprites/environment/grass_flowers.png", Vector2(94, 300), Vector2(118, 74))
 	_add_sprite(hero, "res://assets/sprites/buildings/ancient_tree_landmark.png", Vector2(260, 0), Vector2(300, 360))
 	_add_sprite(hero, "res://assets/sprites/effects/glow_orb.png", Vector2(382, 246), Vector2(60, 60))
 	_add_sprite(hero, "res://assets/sprites/environment/purple_bloom.png", Vector2(628, 300), Vector2(74, 74))

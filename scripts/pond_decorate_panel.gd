@@ -48,13 +48,14 @@ func _bind_scene_ui() -> void:
 	stats_values.clear()
 	decoration_buttons.clear()
 	slot_buttons.clear()
+	_prepare_bound_scene_layout()
 
 	pond_layer = get_node("Root/PondLayer") as Control
 	pond_layer.gui_input.connect(_on_pond_layer_gui_input)
 	feedback_label = get_node("Root/FeedbackLabel") as Label
-	stats_values["pond_beauty"] = get_node("Root/Stats/PondBeautyCard/Value") as Label
-	stats_values["mana"] = get_node("Root/Stats/ManaCard/Value") as Label
-	stats_values["decoration_bonus"] = get_node("Root/Stats/DecorationBonusCard/Value") as Label
+	stats_values["pond_beauty"] = get_node("Root/Stats/PondBeautyCard").find_child("Value", true, false) as Label
+	stats_values["mana"] = get_node("Root/Stats/ManaCard").find_child("Value", true, false) as Label
+	stats_values["decoration_bonus"] = get_node("Root/Stats/DecorationBonusCard").find_child("Value", true, false) as Label
 
 	for slot_index in range(GameState.pond_decoration_slots.size()):
 		var slot_button := get_node("Root/PondLayer/Slot%d" % slot_index) as TextureButton
@@ -69,6 +70,68 @@ func _bind_scene_ui() -> void:
 	(get_node("Root/ActionRow/PlaceButton") as TextureButton).pressed.connect(_on_place_pressed)
 	(get_node("Root/ActionRow/RemoveButton") as TextureButton).pressed.connect(_on_remove_pressed)
 	(get_node("Root/ActionRow/BackButton") as TextureButton).pressed.connect(_on_back_pressed)
+
+
+func _prepare_bound_scene_layout() -> void:
+	var stat_cards := [
+		{"Path": "Root/Stats/PondBeautyCard", "Title": "Pond Beauty"},
+		{"Path": "Root/Stats/ManaCard", "Title": "Mana"},
+		{"Path": "Root/Stats/DecorationBonusCard", "Title": "Decor Bonus"}
+	]
+	for card_data in stat_cards:
+		var card := get_node_or_null(String(card_data.get("Path"))) as Control
+		if card == null:
+			continue
+		card.custom_minimum_size = Vector2(300, 116)
+		card.size = Vector2(300, 116)
+		var title := card.get_node_or_null("Title") as Label
+		if title:
+			title.text = String(card_data.get("Title"))
+			title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			title.autowrap_mode = TextServer.AUTOWRAP_OFF
+		var value := card.get_node_or_null("Value") as Label
+		if value:
+			value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value.add_theme_font_size_override("font_size", 32)
+		if title and value and title.get_parent() == card and value.get_parent() == card:
+			card.remove_child(title)
+			card.remove_child(value)
+			var margin := MarginContainer.new()
+			margin.name = "StatLayoutMargin"
+			margin.add_theme_constant_override("margin_left", 12)
+			margin.add_theme_constant_override("margin_right", 12)
+			margin.add_theme_constant_override("margin_top", 14)
+			margin.add_theme_constant_override("margin_bottom", 12)
+			card.add_child(margin)
+			var layout := VBoxContainer.new()
+			layout.name = "StatLayout"
+			layout.alignment = BoxContainer.ALIGNMENT_CENTER
+			layout.add_theme_constant_override("separation", 6)
+			margin.add_child(layout)
+			title.custom_minimum_size = Vector2(1, 30)
+			value.custom_minimum_size = Vector2(1, 44)
+			layout.add_child(title)
+			layout.add_child(value)
+
+	var tray := get_node_or_null("Root/DecorationTray") as Control
+	if tray:
+		tray.position = Vector2(36, 1202)
+		tray.size = Vector2(1008, 444)
+		tray.scale = Vector2.ONE
+		var background := tray.get_node_or_null("TrayBackground") as Control
+		if background:
+			background.position = Vector2.ZERO
+			background.size = Vector2(1008, 444)
+		var title := tray.get_node_or_null("TrayTitle") as Label
+		if title:
+			title.position = Vector2(0, 18)
+			title.size = Vector2(1008, 52)
+		var legacy_row := tray.get_node_or_null("DecorationRow") as HBoxContainer
+		if legacy_row:
+			legacy_row.position = Vector2(24, 82)
+			legacy_row.size = Vector2(960, 318)
 
 
 func _build_ui() -> void:
@@ -99,9 +162,9 @@ func _build_ui() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
 
-	_build_stat_card(root, "Pond Beauty", "pond_beauty", Vector2(72, 186), Vector2(280, 104))
-	_build_stat_card(root, "Mana", "mana", Vector2(400, 186), Vector2(280, 104))
-	_build_stat_card(root, "Decoration Bonus", "decoration_bonus", Vector2(728, 186), Vector2(280, 104))
+	_build_stat_card(root, "Pond Beauty", "pond_beauty", Vector2(56, 186), Vector2(300, 116))
+	_build_stat_card(root, "Mana", "mana", Vector2(390, 186), Vector2(300, 116))
+	_build_stat_card(root, "Decor Bonus", "decoration_bonus", Vector2(724, 186), Vector2(300, 116))
 
 	pond_layer = Control.new()
 	pond_layer.position = Vector2.ZERO
@@ -133,8 +196,8 @@ func _build_stat_card(parent: Control, title_text: String, key: String, pos: Vec
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
 	card.add_child(margin)
 
 	var box := VBoxContainer.new()
@@ -144,9 +207,10 @@ func _build_stat_card(parent: Control, title_text: String, key: String, pos: Vec
 
 	var title := _make_label(title_text, 20, GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(title)
 
-	var value := _make_label("", 30, TEXT_LIGHT)
+	var value := _make_label("", 32, TEXT_LIGHT)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(value)
 	stats_values[key] = value
@@ -172,8 +236,8 @@ func _build_slots() -> void:
 
 func _build_decoration_tray(parent: Control) -> void:
 	var tray := PanelContainer.new()
-	tray.position = Vector2(36, 1222)
-	tray.size = Vector2(1008, 424)
+	tray.position = Vector2(36, 1202)
+	tray.size = Vector2(1008, 444)
 	tray.mouse_filter = Control.MOUSE_FILTER_STOP
 	tray.add_theme_stylebox_override("panel", _make_panel_style(PANEL_DARK, Color("#b88b36"), 2, 18))
 	parent.add_child(tray)
@@ -195,7 +259,7 @@ func _build_decoration_tray(parent: Control) -> void:
 
 	var scroller := ScrollContainer.new()
 	scroller.name = "DecorationScroller"
-	scroller.custom_minimum_size = Vector2(956, 304)
+	scroller.custom_minimum_size = Vector2(956, 318)
 	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroller)
@@ -218,7 +282,7 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 	for index in range(GameState.pond_decorations.size()):
 		var decoration := GameState.pond_decorations[index]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(206, 278)
+		button.custom_minimum_size = Vector2(196, 292)
 		button.text = "%s\n%d Mana\n+%d Beauty" % [
 			_decoration_display_name(String(decoration.get("DecorationName", ""))),
 			int(decoration.get("CostMana", 0)),

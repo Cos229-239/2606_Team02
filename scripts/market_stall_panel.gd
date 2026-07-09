@@ -180,23 +180,46 @@ func _add_banner(text: String) -> void:
 
 func _make_order_card(order: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.060, 0.036, 0.022, 0.88), Color("#8d6a33"), 2, 10))
+	var order_id := String(order.get("OrderID", ""))
+	var can_trade := _can_fulfill_order(order)
+	card.name = "MarketOrderCard_%s" % order_id
+	card.add_theme_stylebox_override("panel", _make_order_card_style(can_trade))
 	var margin := _make_margin(16, 16, 12, 12)
 	card.add_child(margin)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	margin.add_child(row)
-	_add_order_icon(row, String(order.get("OrderID", "")))
+	_add_order_icon(row, order_id)
 	var text_stack := VBoxContainer.new()
 	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text_stack)
-	text_stack.add_child(_make_label(String(order.get("Title", "Order")), 20, Color("#fff2c6")))
-	text_stack.add_child(_make_label(String(order.get("Description", "")), 15, Color("#e8dfca")))
-	text_stack.add_child(_make_label("Cost: %s    Reward: %d Coins" % [_format_order_cost(order), int(order.get("RewardCoins", 0))], 15, Color("#f3d57a")))
-	var button := _make_button("Trade")
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	text_stack.add_child(header)
+	var title := _make_label(String(order.get("Title", "Order")), 20, Color("#fff2c6"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	header.add_child(_make_status_pill("Ready" if can_trade else "Missing", can_trade, order_id))
+
+	var desc := _make_label(String(order.get("Description", "")), 15, Color("#e8dfca"))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_stack.add_child(desc)
+	text_stack.add_child(_make_label("Needs: %s" % _format_order_cost(order), 15, Color("#f3d57a")))
+	text_stack.add_child(_make_label("Pays: %d Coins + %d Reputation" % [
+		int(order.get("RewardCoins", 0)),
+		int(order.get("ReputationReward", 0))
+	], 15, Color("#f3d57a")))
+
+	var status_label := _make_label(_format_order_status(order), 15, Color("#99e8ac") if can_trade else Color("#ffb6a0"))
+	status_label.name = "MarketOrderStatus_%s" % order_id
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_stack.add_child(status_label)
+
+	var button := _make_button("Trade" if can_trade else "Need More")
+	button.name = "TradeButton_%s" % order_id
 	button.custom_minimum_size = Vector2(118, 54)
-	button.disabled = not _can_fulfill_order(order)
-	var order_id := String(order.get("OrderID", ""))
+	button.disabled = not can_trade
 	button.pressed.connect(func() -> void: _on_order_pressed(order_id))
 	row.add_child(button)
 	return card
@@ -227,8 +250,50 @@ func _format_order_cost(order: Dictionary) -> String:
 	return " + ".join(parts) if parts.size() > 0 else "Free"
 
 
+func _format_order_status(order: Dictionary) -> String:
+	var missing: Array[String] = []
+	var missing_mana: int = max(0, int(order.get("CostMana", 0)) - GameState.total_mana)
+	var missing_potions: int = max(0, int(order.get("CostPotions", 0)) - GameState.mana_potion_count)
+	var missing_spirit: int = max(0, int(order.get("CostSpirit", 0)) - GameState.sacred_pond_spirit_energy)
+	if missing_mana > 0:
+		missing.append("%d Mana" % missing_mana)
+	if missing_potions > 0:
+		missing.append("%d Mana Potion" % missing_potions)
+	if missing_spirit > 0:
+		missing.append("%d Spirit" % missing_spirit)
+	if missing.is_empty():
+		return "Ready to trade."
+	return "Need %s." % " + ".join(missing)
+
+
 func _can_fulfill_order(order: Dictionary) -> bool:
 	return GameState.total_mana >= int(order.get("CostMana", 0)) and GameState.mana_potion_count >= int(order.get("CostPotions", 0)) and GameState.sacred_pond_spirit_energy >= int(order.get("CostSpirit", 0))
+
+
+func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
+	var pill := _make_label(text, 14, Color("#102018") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
+	pill.name = "MarketOrderPill_%s" % order_id
+	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pill.custom_minimum_size = Vector2(96, 34)
+	pill.add_theme_stylebox_override(
+		"normal",
+		_make_panel_style(
+			Color("#8ef0a6", 0.94) if ready else Color("#4a2730", 0.94),
+			Color("#f5d66f") if ready else Color("#ff9c7d"),
+			2,
+			8
+		)
+	)
+	return pill
+
+
+func _make_order_card_style(ready: bool) -> StyleBoxFlat:
+	return _make_panel_style(
+		Color(0.052, 0.060, 0.035, 0.92) if ready else Color(0.060, 0.036, 0.022, 0.88),
+		Color("#8ef0a6") if ready else Color("#8d6a33"),
+		3 if ready else 2,
+		10
+	)
 
 
 func _on_order_pressed(order_id: String) -> void:

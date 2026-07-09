@@ -5,6 +5,11 @@ signal closed
 var stats_label: Label
 var feedback_label: Label
 var fairy_cards_container: BoxContainer
+var section_title: Label
+var workers_button: BaseButton
+var tasks_button: BaseButton
+var upgrades_button: BaseButton
+var active_view: String = "workers"
 
 const ASSIGN_FLOWER_TEXT := "Assign to Flower Grove"
 const ASSIGN_POND_TEXT := "Assign to Sacred Pond"
@@ -33,11 +38,16 @@ func _bind_scene_ui() -> void:
 
 	stats_label = get_node("Root/StatsLabel") as Label
 	feedback_label = get_node("Root/FeedbackLabel") as Label
+	section_title = get_node_or_null("Root/WorkersTitle") as Label
 	fairy_cards_container = get_node("Root/FairyCardsScroll/FairyCardsContainer") as BoxContainer
 
-	var upgrade_button := get_node("Root/ActionRow/UpgradeHouseButton") as BaseButton
+	workers_button = get_node("Root/ActionRow/WorkersButton") as BaseButton
+	tasks_button = get_node("Root/ActionRow/TasksButton") as BaseButton
+	upgrades_button = get_node("Root/ActionRow/UpgradeHouseButton") as BaseButton
 	var back_button := get_node("Root/ActionRow/BackButton") as BaseButton
-	upgrade_button.pressed.connect(_on_upgrade_pressed)
+	workers_button.pressed.connect(_show_workers_view)
+	tasks_button.pressed.connect(_show_tasks_view)
+	upgrades_button.pressed.connect(_show_upgrades_view)
 	back_button.pressed.connect(_on_back_pressed)
 
 
@@ -84,6 +94,7 @@ func _build_panel() -> void:
 	layout.add_child(stats_label)
 
 	var workers_title := Label.new()
+	section_title = workers_title
 	workers_title.text = "Fairy Workers"
 	workers_title.add_theme_font_size_override("font_size", 24)
 	workers_title.add_theme_color_override("font_color", Color("#f3d57a"))
@@ -105,7 +116,12 @@ func _build_panel() -> void:
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 18)
 	layout.add_child(buttons)
-	buttons.add_child(_make_button("Upgrade House", _on_upgrade_pressed))
+	workers_button = _make_button("Workers", _show_workers_view)
+	tasks_button = _make_button("Tasks", _show_tasks_view)
+	upgrades_button = _make_button("Upgrades", _show_upgrades_view)
+	buttons.add_child(workers_button)
+	buttons.add_child(tasks_button)
+	buttons.add_child(upgrades_button)
 	buttons.add_child(_make_button("Back", _on_back_pressed))
 
 
@@ -199,17 +215,140 @@ func _refresh() -> void:
 			GameState.fairy_house_level
 		]
 	)
-	_rebuild_fairy_cards()
+	match active_view:
+		"tasks":
+			_rebuild_task_cards()
+		"upgrades":
+			_rebuild_upgrade_cards()
+		_:
+			_rebuild_fairy_cards()
+
+
+func _clear_cards() -> void:
+	for child in fairy_cards_container.get_children():
+		child.queue_free()
+
+
+func _set_section_title(text: String) -> void:
+	if section_title:
+		section_title.text = text
+
+
+func _set_active_view(view_name: String) -> void:
+	active_view = view_name
+	if workers_button:
+		workers_button.modulate = Color("#fff2a8") if view_name == "workers" else Color.WHITE
+	if tasks_button:
+		tasks_button.modulate = Color("#fff2a8") if view_name == "tasks" else Color.WHITE
+	if upgrades_button:
+		upgrades_button.modulate = Color("#fff2a8") if view_name == "upgrades" else Color.WHITE
+	_refresh()
 
 
 func _rebuild_fairy_cards() -> void:
-	for child in fairy_cards_container.get_children():
-		child.queue_free()
+	_set_section_title("Fairy Workers")
+	_clear_cards()
 
 	for fairy in GameState.fairies:
 		if not bool(fairy.get("IsUnlocked", false)):
 			continue
 		fairy_cards_container.add_child(_make_fairy_card(fairy))
+
+
+func _rebuild_task_cards() -> void:
+	_set_section_title("Fairy Tasks")
+	_clear_cards()
+	fairy_cards_container.add_child(_make_info_card(
+		"Flower Grove",
+		"%s\n\nCurrent Bonus: +%.0f Mana/sec" % [
+			_get_fairies_for_area(GameState.FAIRY_AREA_FLOWER_GROVE),
+			GameState.get_flower_fairy_bonus_production()
+		]
+	))
+	fairy_cards_container.add_child(_make_info_card(
+		"Sacred Pond",
+		"%s\n\nCurrent Bonus: +%d Restore" % [
+			_get_fairies_for_area(GameState.FAIRY_AREA_SACRED_POND),
+			GameState.get_sacred_pond_fairy_restore_bonus()
+		]
+	))
+	fairy_cards_container.add_child(_make_info_card(
+		"Resting",
+		"%s\n\nResting fairies keep their level and can be reassigned anytime." % _get_fairies_for_area(GameState.FAIRY_AREA_UNASSIGNED)
+	))
+
+
+func _rebuild_upgrade_cards() -> void:
+	_set_section_title("House Upgrades")
+	_clear_cards()
+	fairy_cards_container.add_child(_make_info_card(
+		"House Level %d" % GameState.fairy_house_level,
+		"Capacity: %d fairies\nActive workers: %d\n\nMore house capacity unlocks through restoration rewards." % [
+			GameState.fairy_max_residents,
+			GameState.fairy_workers_active
+		]
+	))
+	fairy_cards_container.add_child(_make_info_card(
+		"Next Improvements",
+		"Future upgrades should add fairy slots, task speed bonuses, and role-specific training."
+	))
+	fairy_cards_container.add_child(_make_info_card(
+		"Current Best Action",
+		"Use Workers to assign fairies to Flower Grove or Sacred Pond based on the resource you need most."
+	))
+
+
+func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(286, 338)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.self_modulate = Color(0.025, 0.022, 0.032, 0.98)
+	card.add_theme_stylebox_override("panel", _make_card_panel_style())
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	card.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = title_text
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#f3d57a"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = body_text
+	body.custom_minimum_size = Vector2(1, 240)
+	body.add_theme_font_size_override("font_size", 19)
+	body.add_theme_color_override("font_color", Color("#fff0c2"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(body)
+	return card
+
+
+func _get_fairies_for_area(area: String) -> String:
+	var names: Array[String] = []
+	for fairy in GameState.fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		if String(fairy.get("AssignedArea", GameState.FAIRY_AREA_UNASSIGNED)) == area:
+			names.append(String(fairy.get("FairyName", "Fairy")))
+	if names.is_empty():
+		return "No fairies assigned."
+	return ", ".join(names)
 
 
 func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
@@ -320,6 +459,7 @@ func _make_assignment_button(text: String, tooltip: String, fairy_name: String, 
 	button.disabled = area == assigned_area
 	button.pressed.connect(func() -> void:
 		feedback_label.text = GameState.assign_fairy_to_area(fairy_name, area)
+		active_view = "workers"
 		_refresh()
 	)
 	return button
@@ -329,9 +469,22 @@ func _get_fairy_portrait(fairy_name: String) -> String:
 	return String(FAIRY_PORTRAITS.get(fairy_name, "res://assets/sprites/characters/fairy_placeholder.png"))
 
 
-func _on_upgrade_pressed() -> void:
+func _show_workers_view() -> void:
 	SoundManager.play_click()
-	feedback_label.text = "House upgrades will be added later."
+	feedback_label.text = ""
+	_set_active_view("workers")
+
+
+func _show_tasks_view() -> void:
+	SoundManager.play_click()
+	feedback_label.text = "Task summary updated."
+	_set_active_view("tasks")
+
+
+func _show_upgrades_view() -> void:
+	SoundManager.play_click()
+	feedback_label.text = "House upgrade plan shown."
+	_set_active_view("upgrades")
 
 
 func _on_back_pressed() -> void:

@@ -6,7 +6,12 @@ var feedback_label: Label
 var credits_label: Label
 var music_slider: HSlider
 var sfx_slider: HSlider
+var music_value_label: Label
+var sfx_value_label: Label
+var music_mute_button: Button
+var sfx_mute_button: Button
 var tutorial_toggle: CheckButton
+var reset_overlay: ColorRect
 var confirm_panel: PanelContainer
 
 func _ready() -> void:
@@ -33,10 +38,10 @@ func _build_ui() -> void:
 	layout.add_child(title)
 
 	music_slider = _add_slider_row(layout, "Music Volume")
-	music_slider.value_changed.connect(func(value: float): GameState.set_music_volume(value))
+	music_slider.value_changed.connect(_on_music_volume_changed)
 
 	sfx_slider = _add_slider_row(layout, "SFX Volume")
-	sfx_slider.value_changed.connect(func(value: float): GameState.set_sfx_volume(value))
+	sfx_slider.value_changed.connect(_on_sfx_volume_changed)
 
 	tutorial_toggle = CheckButton.new()
 	tutorial_toggle.text = "Tutorial On"
@@ -100,12 +105,34 @@ func _add_slider_row(parent: VBoxContainer, text: String) -> HSlider:
 	row.add_child(label)
 
 	var slider := HSlider.new()
+	slider.name = "%sSlider" % text.replace(" ", "")
 	slider.min_value = 0.0
 	slider.max_value = 1.0
 	slider.step = 0.05
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	slider.custom_minimum_size = Vector2(500, 48)
+	slider.custom_minimum_size = Vector2(360, 48)
 	row.add_child(slider)
+
+	var value_label := _make_label("75%", 24, Color("#e8dfca"))
+	value_label.name = "%sValueLabel" % text.replace(" ", "")
+	value_label.custom_minimum_size = Vector2(78, 48)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(value_label)
+
+	var mute_button := _make_button("Mute")
+	mute_button.name = "%sMuteButton" % text.replace(" ", "")
+	mute_button.custom_minimum_size = Vector2(140, 58)
+	mute_button.add_theme_font_size_override("font_size", 22)
+	row.add_child(mute_button)
+
+	if text == "Music Volume":
+		music_value_label = value_label
+		music_mute_button = mute_button
+		mute_button.pressed.connect(_toggle_music_mute)
+	else:
+		sfx_value_label = value_label
+		sfx_mute_button = mute_button
+		mute_button.pressed.connect(_toggle_sfx_mute)
 	return slider
 
 
@@ -122,6 +149,46 @@ func _refresh_controls() -> void:
 		sfx_slider.set_value_no_signal(GameState.sfx_volume)
 	if tutorial_toggle:
 		tutorial_toggle.set_pressed_no_signal(not GameState.has_seen_tutorial)
+	_refresh_volume_readouts()
+
+
+func _refresh_volume_readouts() -> void:
+	if music_value_label:
+		music_value_label.text = "%d%%" % roundi(GameState.music_volume * 100.0)
+	if sfx_value_label:
+		sfx_value_label.text = "%d%%" % roundi(GameState.sfx_volume * 100.0)
+	if music_mute_button:
+		music_mute_button.text = "Unmute" if GameState.music_volume <= 0.0 else "Mute"
+	if sfx_mute_button:
+		sfx_mute_button.text = "Unmute" if GameState.sfx_volume <= 0.0 else "Mute"
+
+
+func _on_music_volume_changed(value: float) -> void:
+	GameState.set_music_volume(value)
+	_refresh_volume_readouts()
+
+
+func _on_sfx_volume_changed(value: float) -> void:
+	GameState.set_sfx_volume(value)
+	_refresh_volume_readouts()
+
+
+func _toggle_music_mute() -> void:
+	SoundManager.play_switch()
+	var next_volume := 0.75 if GameState.music_volume <= 0.0 else 0.0
+	GameState.set_music_volume(next_volume)
+	music_slider.set_value_no_signal(GameState.music_volume)
+	_refresh_volume_readouts()
+	feedback_label.text = "Music unmuted." if next_volume > 0.0 else "Music muted."
+
+
+func _toggle_sfx_mute() -> void:
+	SoundManager.play_switch()
+	var next_volume := 0.75 if GameState.sfx_volume <= 0.0 else 0.0
+	GameState.set_sfx_volume(next_volume)
+	sfx_slider.set_value_no_signal(GameState.sfx_volume)
+	_refresh_volume_readouts()
+	feedback_label.text = "SFX unmuted." if next_volume > 0.0 else "SFX muted."
 
 
 func _on_tutorial_toggled(enabled: bool) -> void:
@@ -146,15 +213,15 @@ func _on_load_pressed() -> void:
 
 func _show_reset_confirmation() -> void:
 	SoundManager.play_click()
-	confirm_panel.visible = true
-	feedback_label.text = "Confirm reset save?"
+	reset_overlay.visible = true
+	feedback_label.text = "Reset needs confirmation."
 
 
 func _confirm_reset_save() -> void:
 	SoundManager.play_click()
 	GameState.reset_save()
 	_refresh_controls()
-	confirm_panel.visible = false
+	reset_overlay.visible = false
 	feedback_label.text = "Save reset."
 
 
@@ -177,12 +244,23 @@ func _show_credits() -> void:
 
 
 func _build_reset_confirmation() -> void:
+	reset_overlay = ColorRect.new()
+	reset_overlay.name = "ResetConfirmationOverlay"
+	reset_overlay.visible = false
+	reset_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	reset_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reset_overlay.color = Color(0.0, 0.0, 0.0, 0.58)
+	add_child(reset_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reset_overlay.add_child(center)
+
 	confirm_panel = PanelContainer.new()
-	confirm_panel.visible = false
-	confirm_panel.position = Vector2(150, 760)
-	confirm_panel.size = Vector2(780, 290)
+	confirm_panel.name = "ResetConfirmationPanel"
+	confirm_panel.custom_minimum_size = Vector2(820, 360)
 	confirm_panel.add_theme_stylebox_override("panel", _make_style(Color(0.025, 0.02, 0.03, 0.98), Color("#f0cf76"), 3, 12))
-	add_child(confirm_panel)
+	center.add_child(confirm_panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 30)
@@ -198,8 +276,10 @@ func _build_reset_confirmation() -> void:
 	var warning := _make_label("Reset Save?", 34, Color("#f5d66f"))
 	warning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layout.add_child(warning)
-	var body := _make_label("This clears local progress and starts fresh.", 24, Color("#fff2d6"))
+	var body := _make_label("This clears local progress and restarts the tutorial. This cannot be undone.", 24, Color("#fff2d6"))
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(720, 86)
 	layout.add_child(body)
 
 	var row := HBoxContainer.new()
@@ -207,12 +287,14 @@ func _build_reset_confirmation() -> void:
 	row.add_theme_constant_override("separation", 20)
 	layout.add_child(row)
 
-	var confirm := _make_button("Confirm")
+	var confirm := _make_button("Reset Save")
+	confirm.name = "ConfirmResetButton"
 	confirm.pressed.connect(_confirm_reset_save)
 	row.add_child(confirm)
 
 	var cancel := _make_button("Cancel")
-	cancel.pressed.connect(func(): SoundManager.play_click(); confirm_panel.visible = false)
+	cancel.name = "CancelResetButton"
+	cancel.pressed.connect(func(): SoundManager.play_click(); reset_overlay.visible = false; feedback_label.text = "Reset cancelled.")
 	row.add_child(cancel)
 
 

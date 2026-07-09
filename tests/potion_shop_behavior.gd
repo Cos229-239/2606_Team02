@@ -14,6 +14,10 @@ func _init() -> void:
 		fail("Expected starting craft time 5 seconds")
 	if state.get_potion_sell_value() != 50:
 		fail("Expected sell value 50 coins")
+	if state.get_potion_recipes().size() < 2:
+		fail("Potion Shop should expose more than one recipe")
+	if state.get_potion_recipe_data("spirit_tonic").is_empty():
+		fail("Spirit Tonic recipe should exist")
 
 	if state.start_mana_potion_craft():
 		fail("Craft should fail without enough mana")
@@ -45,6 +49,25 @@ func _init() -> void:
 	if state.sell_mana_potion():
 		fail("Sell should fail with no potions")
 
+	state.total_mana = 20
+	state.sacred_pond_spirit_energy = 4
+	if state.start_potion_craft("spirit_tonic"):
+		fail("Spirit Tonic should require enough Spirit Energy")
+	state.sacred_pond_spirit_energy = 5
+	if not state.start_potion_craft("spirit_tonic"):
+		fail("Spirit Tonic craft should start with Mana and Spirit Energy")
+	if state.total_mana != 0:
+		fail("Spirit Tonic should spend 20 mana")
+	if state.sacred_pond_spirit_energy != 0:
+		fail("Spirit Tonic should spend 5 spirit energy")
+	state.update_potion_crafting(float(state.get_potion_craft_time("spirit_tonic")) + 0.1)
+	if state.get_potion_count("spirit_tonic") != 1:
+		fail("Spirit Tonic craft should add one tonic")
+	if not state.sell_potion("spirit_tonic"):
+		fail("Spirit Tonic should sell when owned")
+	if state.total_coins != 145:
+		fail("Spirit Tonic should sell for 95 coins after prior Mana Potion sale")
+
 	state.total_coins = 100
 	if not state.upgrade_potion_shop():
 		fail("Upgrade should succeed with 100 coins")
@@ -60,6 +83,8 @@ func _init() -> void:
 		fail("Save data should include potion shop level")
 	if not data.has("mana_potion_count"):
 		fail("Save data should include mana potion count")
+	if not data.has("potion_inventory"):
+		fail("Save data should include recipe potion inventory")
 	if not data.has("potion_crafting_active"):
 		fail("Save data should include crafting active state")
 
@@ -69,6 +94,16 @@ func _init() -> void:
 		fail("Loaded shop level should persist")
 	if loaded_state.get_potion_craft_time() != 4:
 		fail("Loaded craft time should persist")
+	if loaded_state.get_potion_count("mana_potion") != loaded_state.mana_potion_count:
+		fail("Loaded mana potion legacy count should mirror recipe inventory")
+
+	var legacy_state = load("res://scripts/game_state.gd").new()
+	legacy_state.apply_save_data({
+		"mana_potion_count": 3,
+		"potion_shop_level": 1
+	})
+	if legacy_state.get_potion_count("mana_potion") != 3:
+		fail("Old saves should migrate mana_potion_count into recipe inventory")
 
 	print("Potion Shop behavior check passed")
 	quit(0)

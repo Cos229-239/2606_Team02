@@ -31,16 +31,26 @@ Build: Playtest 01
 - [ ] Grove Restoration updates.
 - [ ] Restore cost increases after restoring.
 - [ ] Pond rewards unlock at the correct thresholds.
+- [ ] Sun Koi Guardian unlocks at 100% Water Purity and adds +1 Spirit Energy per restore.
 - [ ] Not enough Mana feedback appears when needed.
 
 ## Potion Shop
 - [ ] Craft Potion works when the player has enough Mana.
+- [ ] Spirit Tonic craft requires Mana and Spirit Energy.
 - [ ] Craft button disables during crafting.
 - [ ] Mana Potion count increases after the craft timer completes.
+- [ ] Spirit Tonic count increases after the craft timer completes.
 - [ ] Sell Potion works.
 - [ ] Coins increase after selling.
 - [ ] Upgrade Shop works when the player has enough Coins.
 - [ ] No potions to sell feedback appears when needed.
+
+## Inventory
+- [ ] Inventory opens from the Main Village HUD.
+- [ ] Mana and Coins match the HUD.
+- [ ] Mana Potion count updates after crafting, selling, and Market trades.
+- [ ] Spirit Energy appears after Sacred Pond progress.
+- [ ] Pond decoration count updates after placing decorations.
 
 ## Quests
 - [ ] Quest progress updates.

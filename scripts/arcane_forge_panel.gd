@@ -187,25 +187,46 @@ func _add_description(text: String) -> void:
 
 func _make_upgrade_card(upgrade: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.018, 0.020, 0.030, 0.88), Color("#8d6a33"), 2, 10))
+	var upgrade_id := String(upgrade.get("UpgradeID", ""))
+	var level := int(upgrade.get("Level", 0))
+	var max_level := int(upgrade.get("MaxLevel", 3))
+	var is_maxed := level >= max_level
+	var can_forge := _can_purchase_upgrade(upgrade)
+	card.name = "ForgeUpgradeCard_%s" % upgrade_id
+	card.add_theme_stylebox_override("panel", _make_upgrade_card_style(can_forge, is_maxed))
 	var margin := _make_margin(16, 16, 12, 12)
 	card.add_child(margin)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	margin.add_child(row)
-	_add_upgrade_icon(row, String(upgrade.get("UpgradeID", "")))
+	_add_upgrade_icon(row, upgrade_id)
 	var text_stack := VBoxContainer.new()
 	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text_stack)
-	text_stack.add_child(_make_label("%s  Level %d / %d" % [String(upgrade.get("Title", "Upgrade")), int(upgrade.get("Level", 0)), int(upgrade.get("MaxLevel", 3))], 19, Color("#fff2c6")))
-	text_stack.add_child(_make_label(String(upgrade.get("Description", "")), 15, Color("#e8dfca")))
-	text_stack.add_child(_make_label("Cost: %s" % _format_upgrade_cost(upgrade), 15, Color("#f3d57a")))
-	var button := _make_button("Forge")
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	text_stack.add_child(header)
+	var title := _make_label("%s  Level %d / %d" % [String(upgrade.get("Title", "Upgrade")), level, max_level], 19, Color("#fff2c6"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	header.add_child(_make_status_pill(_get_upgrade_state_text(can_forge, is_maxed), can_forge, is_maxed, upgrade_id))
+
+	var effect := _make_label("Effect: %s" % String(upgrade.get("Description", "")), 15, Color("#e8dfca"))
+	effect.name = "ForgeUpgradeEffect_%s" % upgrade_id
+	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_stack.add_child(effect)
+	text_stack.add_child(_make_label("Needs: %s" % _format_upgrade_cost(upgrade), 15, Color("#f3d57a")))
+
+	var status_label := _make_label(_format_upgrade_status(upgrade), 15, _get_status_color(can_forge, is_maxed))
+	status_label.name = "ForgeUpgradeStatus_%s" % upgrade_id
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_stack.add_child(status_label)
+
+	var button := _make_button(_get_upgrade_button_text(can_forge, is_maxed))
+	button.name = "ForgeButton_%s" % upgrade_id
 	button.custom_minimum_size = Vector2(118, 54)
-	button.disabled = not _can_purchase_upgrade(upgrade)
-	if int(upgrade.get("Level", 0)) >= int(upgrade.get("MaxLevel", 3)):
-		button.text = "Maxed"
-	var upgrade_id := String(upgrade.get("UpgradeID", ""))
+	button.disabled = not can_forge
 	button.pressed.connect(func() -> void: _on_upgrade_pressed(upgrade_id))
 	row.add_child(button)
 	return card
@@ -236,10 +257,88 @@ func _format_upgrade_cost(upgrade: Dictionary) -> String:
 	return " + ".join(parts)
 
 
+func _format_upgrade_status(upgrade: Dictionary) -> String:
+	var level := int(upgrade.get("Level", 0))
+	var max_level := int(upgrade.get("MaxLevel", 3))
+	if level >= max_level:
+		return "Max level reached."
+	var missing: Array[String] = []
+	var missing_mana: int = max(0, int(upgrade.get("CostMana", 0)) - GameState.total_mana)
+	var missing_coins: int = max(0, int(upgrade.get("CostCoins", 0)) - GameState.total_coins)
+	var missing_spirit: int = max(0, int(upgrade.get("CostSpirit", 0)) - GameState.sacred_pond_spirit_energy)
+	if missing_mana > 0:
+		missing.append("%d Mana" % missing_mana)
+	if missing_coins > 0:
+		missing.append("%d Coins" % missing_coins)
+	if missing_spirit > 0:
+		missing.append("%d Spirit" % missing_spirit)
+	if missing.is_empty():
+		return "Ready to forge."
+	return "Need %s." % " + ".join(missing)
+
+
 func _can_purchase_upgrade(upgrade: Dictionary) -> bool:
 	if int(upgrade.get("Level", 0)) >= int(upgrade.get("MaxLevel", 3)):
 		return false
 	return GameState.total_mana >= int(upgrade.get("CostMana", 0)) and GameState.total_coins >= int(upgrade.get("CostCoins", 0)) and GameState.sacred_pond_spirit_energy >= int(upgrade.get("CostSpirit", 0))
+
+
+func _get_upgrade_state_text(can_forge: bool, is_maxed: bool) -> String:
+	if is_maxed:
+		return "Maxed"
+	return "Ready" if can_forge else "Missing"
+
+
+func _get_upgrade_button_text(can_forge: bool, is_maxed: bool) -> String:
+	if is_maxed:
+		return "Maxed"
+	return "Forge" if can_forge else "Need More"
+
+
+func _get_status_color(can_forge: bool, is_maxed: bool) -> Color:
+	if is_maxed:
+		return Color("#d9f1ff")
+	return Color("#82d9ff") if can_forge else Color("#ffb6a0")
+
+
+func _make_status_pill(text: String, ready: bool, maxed: bool, upgrade_id: String) -> Label:
+	var pill := _make_label(text, 14, Color("#102018") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
+	pill.name = "ForgeUpgradePill_%s" % upgrade_id
+	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pill.custom_minimum_size = Vector2(96, 34)
+	pill.add_theme_stylebox_override(
+		"normal",
+		_make_panel_style(
+			_get_pill_background(ready, maxed),
+			_get_pill_border(ready, maxed),
+			2,
+			8
+		)
+	)
+	return pill
+
+
+func _get_pill_background(ready: bool, maxed: bool) -> Color:
+	if maxed:
+		return Color("#243447", 0.94)
+	return Color("#82d9ff", 0.94) if ready else Color("#4a2730", 0.94)
+
+
+func _get_pill_border(ready: bool, maxed: bool) -> Color:
+	if maxed:
+		return Color("#d9f1ff")
+	return Color("#f5d66f") if ready else Color("#ff9c7d")
+
+
+func _make_upgrade_card_style(ready: bool, maxed: bool) -> StyleBoxFlat:
+	if maxed:
+		return _make_panel_style(Color(0.026, 0.030, 0.038, 0.90), Color("#7ea6c7"), 2, 10)
+	return _make_panel_style(
+		Color(0.026, 0.046, 0.058, 0.92) if ready else Color(0.018, 0.020, 0.030, 0.88),
+		Color("#82d9ff") if ready else Color("#8d6a33"),
+		3 if ready else 2,
+		10
+	)
 
 
 func _on_upgrade_pressed(upgrade_id: String) -> void:

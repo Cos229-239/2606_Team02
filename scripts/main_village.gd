@@ -7,6 +7,7 @@ const PotionShopPanelScene := preload("res://ui/PotionShopPanel.tscn")
 const QuestPanelScene := preload("res://ui/QuestPanel.tscn")
 const ExplorePanelScene := preload("res://ui/ExplorePanel.tscn")
 const BuildingsPanelScene := preload("res://ui/BuildingsPanel.tscn")
+const InventoryPanelScene := preload("res://ui/InventoryPanel.tscn")
 const SettingsPanelScene := preload("res://ui/SettingsPanel.tscn")
 const PondDecoratePanelScene := preload("res://ui/PondDecoratePanel.tscn")
 const AncientTreePanelScene := preload("res://ui/AncientTreePanel.tscn")
@@ -191,6 +192,7 @@ func _build_hud() -> void:
 	hud.add_child(_make_resource_panel("Mana", "M", Color("#59bfff"), mana_label))
 	hud.add_child(_make_resource_panel("Coins", "C", Color("#f6c14a"), coins_label))
 	hud.add_child(_make_restoration_panel())
+	hud.add_child(_make_inventory_button())
 
 	feedback_label = Label.new()
 	feedback_label.position = Vector2(310, 104)
@@ -274,6 +276,14 @@ func _make_restoration_panel() -> PanelContainer:
 	restoration_bar.show_percentage = false
 	stack.add_child(restoration_bar)
 	return panel
+
+
+func _make_inventory_button() -> Button:
+	var button := _make_small_button("Inventory", _open_inventory)
+	button.name = "InventoryButton"
+	button.custom_minimum_size = Vector2(150, 66)
+	button.add_theme_font_size_override("font_size", 18)
+	return button
 
 
 func _make_ui_text(text: String, font_size: int, color: Color) -> Label:
@@ -543,8 +553,10 @@ func _refresh_restoration_visuals() -> void:
 			_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/environment/moon_lantern.png", pos, Vector2(24, 44), Color(1.0, 1.0, 1.0, 0.82))
 
 	if restoration >= 100:
-		_add_layer_ellipse(restoration_visual_layer, Vector2(540, 465), Vector2(120, 54), Color("#ffd762"), 0.18)
+		_add_layer_ellipse(restoration_visual_layer, Vector2(260, 640), Vector2(136, 52), Color("#ffd762"), 0.22)
+		_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/characters/koi_gold.png", Vector2(214, 604), Vector2(96, 64), Color(1.0, 0.92, 0.62, 0.96))
 		_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/environment/spirit_stone.png", Vector2(510, 408), Vector2(58, 68), Color(1.0, 0.92, 0.62, 0.86))
+		_add_restoration_label("Sun Koi Guardian", Vector2(184, 668))
 
 
 func _add_restoration_label(text: String, position: Vector2) -> void:
@@ -1300,6 +1312,11 @@ func _open_arcane_forge() -> void:
 func _open_market_stall() -> void:
 	SoundManager.play_click()
 	_show_panel(MarketStallPanelScene.instantiate())
+
+
+func _open_inventory() -> void:
+	SoundManager.play_click()
+	_show_panel(InventoryPanelScene.instantiate())
 
 
 func open_nav_panel(panel_name: String) -> void:

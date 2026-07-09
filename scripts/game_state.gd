@@ -8,6 +8,7 @@ signal potion_shop_changed
 signal market_stall_changed
 signal ancient_tree_changed
 signal arcane_forge_changed
+signal inventory_changed
 signal quests_changed
 signal save_status_changed(message: String)
 signal save_reset
@@ -31,6 +32,9 @@ const QUEST_GOAL_RESTORE_TREE := "restore_tree"
 const QUEST_GOAL_FORGE_UPGRADE := "forge_upgrade"
 const QUEST_REWARD_MANA := "Mana"
 const QUEST_REWARD_COINS := "Coins"
+const SUN_KOI_GUARDIAN_SPIRIT_BONUS := 1
+const POTION_RECIPE_MANA := "mana_potion"
+const POTION_RECIPE_SPIRIT_TONIC := "spirit_tonic"
 const FLOWER_GRID_COLUMNS := 3
 const FLOWER_GRID_ROWS := 4
 const FLOWER_GRID_SLOT_COUNT := 12
@@ -81,10 +85,13 @@ var potion_mana_cost: int = 25
 var potion_base_craft_time: int = 5
 var potion_current_craft_time: float = 0.0
 var potion_crafting_active: bool = false
+var potion_crafting_recipe_id: String = POTION_RECIPE_MANA
+var potion_inventory: Dictionary = {}
 var potion_sell_value: int = 50
 var potion_shop_upgrade_cost: int = 100
 var market_reputation: int = 1
 var market_orders_completed: int = 0
+var inventory_notes: Array[String] = []
 var ancient_tree_level: int = 1
 var ancient_tree_restore_cost: int = 75
 var ancient_tree_claimed_rewards: Array[int] = []
@@ -356,7 +363,7 @@ func restore_sacred_pond() -> bool:
 
 	total_mana -= sacred_pond_restore_cost
 	sacred_pond_water_purity = min(sacred_pond_water_purity + get_sacred_pond_total_restore_amount(), 100)
-	sacred_pond_spirit_energy += 10
+	sacred_pond_spirit_energy += 10 + get_sun_koi_guardian_spirit_bonus()
 	sacred_pond_restore_cost = int(ceil(float(sacred_pond_restore_cost) * 1.25))
 	grove_restoration = sacred_pond_water_purity
 	update_sacred_pond_level_and_rewards()
@@ -384,6 +391,12 @@ func get_sacred_pond_total_restore_amount() -> int:
 
 func get_pond_decoration_restore_bonus() -> int:
 	return int(floor(float(pond_beauty) / 10.0))
+
+
+func get_sun_koi_guardian_spirit_bonus() -> int:
+	if is_pond_reward_unlocked(POND_BONUS_SUN_KOI_GUARDIAN):
+		return SUN_KOI_GUARDIAN_SPIRIT_BONUS
+	return 0
 
 
 func get_pond_decoration_slot_name(slot_index: int) -> String:
@@ -560,39 +573,110 @@ func recalculate_pond_beauty() -> void:
 
 
 func get_potion_mana_cost() -> int:
-	return potion_mana_cost
+	return int(get_potion_recipe_data(POTION_RECIPE_MANA).get("CostMana", potion_mana_cost))
 
 
-func get_potion_craft_time() -> int:
-	return max(2, potion_base_craft_time - (potion_shop_level - 1))
+func get_potion_craft_time(recipe_id: String = POTION_RECIPE_MANA) -> int:
+	var recipe := get_potion_recipe_data(recipe_id)
+	var base_time := int(recipe.get("BaseCraftTime", potion_base_craft_time))
+	return max(2, base_time - (potion_shop_level - 1))
 
 
-func get_potion_sell_value() -> int:
-	return potion_sell_value
+func get_potion_sell_value(recipe_id: String = POTION_RECIPE_MANA) -> int:
+	var recipe := get_potion_recipe_data(recipe_id)
+	return int(recipe.get("SellValue", potion_sell_value))
 
 
 func get_potion_craft_progress() -> float:
 	if not potion_crafting_active:
 		return 0.0
-	var craft_time := float(get_potion_craft_time())
+	var craft_time := float(get_potion_craft_time(potion_crafting_recipe_id))
 	return clamp((craft_time - potion_current_craft_time) / craft_time, 0.0, 1.0)
 
 
-func start_mana_potion_craft() -> bool:
+func get_potion_recipe_data(recipe_id: String) -> Dictionary:
+	match recipe_id:
+		POTION_RECIPE_MANA:
+			return {
+				"RecipeID": POTION_RECIPE_MANA,
+				"Name": "Mana Potion",
+				"CostMana": potion_mana_cost,
+				"CostSpirit": 0,
+				"BaseCraftTime": potion_base_craft_time,
+				"SellValue": potion_sell_value,
+				"Description": "A reliable village staple brewed from gathered Mana."
+			}
+		POTION_RECIPE_SPIRIT_TONIC:
+			return {
+				"RecipeID": POTION_RECIPE_SPIRIT_TONIC,
+				"Name": "Spirit Tonic",
+				"CostMana": 20,
+				"CostSpirit": 5,
+				"BaseCraftTime": potion_base_craft_time + 2,
+				"SellValue": potion_sell_value + 45,
+				"Description": "A bright pond-infused tonic that sells for a premium."
+			}
+	return {}
+
+
+func get_potion_recipes() -> Array[Dictionary]:
+	return [
+		get_potion_recipe_data(POTION_RECIPE_MANA),
+		get_potion_recipe_data(POTION_RECIPE_SPIRIT_TONIC)
+	]
+
+
+func get_potion_count(recipe_id: String) -> int:
+	_sync_potion_inventory_from_legacy()
+	return int(potion_inventory.get(recipe_id, 0))
+
+
+func get_total_potion_count() -> int:
+	_sync_potion_inventory_from_legacy()
+	var count := 0
+	for recipe_id in potion_inventory.keys():
+		count += int(potion_inventory.get(recipe_id, 0))
+	return count
+
+
+func can_craft_potion(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty() or potion_crafting_active:
+		return false
+	return total_mana >= int(recipe.get("CostMana", 0)) and sacred_pond_spirit_energy >= int(recipe.get("CostSpirit", 0))
+
+
+func start_potion_craft(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		save_status_changed.emit("Unknown recipe.")
+		return false
 	if potion_crafting_active:
 		save_status_changed.emit("Potion already crafting.")
 		return false
-	if total_mana < potion_mana_cost:
+	var cost_mana := int(recipe.get("CostMana", 0))
+	var cost_spirit := int(recipe.get("CostSpirit", 0))
+	if total_mana < cost_mana:
 		save_status_changed.emit("Not enough Mana.")
 		return false
+	if sacred_pond_spirit_energy < cost_spirit:
+		save_status_changed.emit("Not enough Spirit Energy.")
+		return false
 
-	total_mana -= potion_mana_cost
-	potion_current_craft_time = float(get_potion_craft_time())
+	total_mana -= cost_mana
+	sacred_pond_spirit_energy -= cost_spirit
+	potion_current_craft_time = float(get_potion_craft_time(recipe_id))
+	potion_crafting_recipe_id = recipe_id
 	potion_crafting_active = true
 	resources_changed.emit()
 	potion_shop_changed.emit()
+	inventory_changed.emit()
 	save_game()
 	return true
+
+
+func start_mana_potion_craft() -> bool:
+	return start_potion_craft(POTION_RECIPE_MANA)
 
 
 func update_potion_crafting(delta: float) -> void:
@@ -602,8 +686,9 @@ func update_potion_crafting(delta: float) -> void:
 	potion_current_craft_time = max(0.0, potion_current_craft_time - delta)
 	if potion_current_craft_time <= 0.0:
 		potion_crafting_active = false
-		mana_potion_count += 1
+		_add_potion_to_inventory(potion_crafting_recipe_id, 1)
 		add_quest_progress(QUEST_GOAL_CRAFT_POTION, 1)
+		inventory_changed.emit()
 		potion_shop_changed.emit()
 		save_game()
 	else:
@@ -611,16 +696,58 @@ func update_potion_crafting(delta: float) -> void:
 
 
 func sell_mana_potion() -> bool:
-	if mana_potion_count <= 0:
-		save_status_changed.emit("No potions to sell.")
+	return sell_potion(POTION_RECIPE_MANA)
+
+
+func sell_potion(recipe_id: String) -> bool:
+	var recipe := get_potion_recipe_data(recipe_id)
+	if recipe.is_empty():
+		save_status_changed.emit("Unknown recipe.")
+		return false
+	_sync_potion_inventory_from_legacy()
+	if get_potion_count(recipe_id) <= 0:
+		save_status_changed.emit("No %s to sell." % String(recipe.get("Name", "potions")))
 		return false
 
-	mana_potion_count -= 1
-	total_coins += potion_sell_value
+	potion_inventory[recipe_id] = get_potion_count(recipe_id) - 1
+	_sync_legacy_mana_potion_count()
+	total_coins += get_potion_sell_value(recipe_id)
 	resources_changed.emit()
+	inventory_changed.emit()
 	potion_shop_changed.emit()
 	save_game()
 	return true
+
+
+func _add_potion_to_inventory(recipe_id: String, amount: int) -> void:
+	if amount <= 0:
+		return
+	_sync_potion_inventory_from_legacy()
+	potion_inventory[recipe_id] = get_potion_count(recipe_id) + amount
+	_sync_legacy_mana_potion_count()
+
+
+func _sync_potion_inventory_from_legacy() -> void:
+	if not potion_inventory.has(POTION_RECIPE_MANA):
+		potion_inventory[POTION_RECIPE_MANA] = mana_potion_count
+	elif mana_potion_count > int(potion_inventory.get(POTION_RECIPE_MANA, 0)):
+		potion_inventory[POTION_RECIPE_MANA] = mana_potion_count
+
+
+func _sync_legacy_mana_potion_count() -> void:
+	mana_potion_count = int(potion_inventory.get(POTION_RECIPE_MANA, 0))
+
+
+func _set_potion_inventory_from_save(saved_inventory) -> void:
+	potion_inventory.clear()
+	if saved_inventory is Dictionary:
+		for recipe_id in saved_inventory.keys():
+			var clean_recipe_id := String(recipe_id)
+			if get_potion_recipe_data(clean_recipe_id).is_empty():
+				continue
+			potion_inventory[clean_recipe_id] = max(0, int(saved_inventory.get(recipe_id, 0)))
+	_sync_potion_inventory_from_legacy()
+	_sync_legacy_mana_potion_count()
 
 
 func upgrade_potion_shop() -> bool:
@@ -710,6 +837,7 @@ func fulfill_market_order(order_id: String) -> Dictionary:
 	add_quest_progress(QUEST_GOAL_MARKET_TRADE, 1)
 
 	resources_changed.emit()
+	inventory_changed.emit()
 	market_stall_changed.emit()
 	potion_shop_changed.emit()
 	sacred_pond_changed.emit()
@@ -958,7 +1086,7 @@ func get_active_pond_bonus_text() -> String:
 	if active_pond_bonus == POND_BONUS_FAIRY_BLESSING:
 		return "Fairy Blessing +1 Fairy House Capacity"
 	if active_pond_bonus == POND_BONUS_SUN_KOI_GUARDIAN:
-		return "Sun Koi Guardian Spirit Guardian Placeholder"
+		return "Sun Koi Guardian +1 Spirit Energy per Restore"
 	return "None"
 
 
@@ -1162,6 +1290,60 @@ func _make_quest(quest_id: String, title: String, description: String, goal_type
 	}
 
 
+func _apply_saved_quests(saved_quests) -> void:
+	_reset_quests_to_defaults()
+	if not (saved_quests is Array) or saved_quests.is_empty():
+		return
+
+	var saved_by_id: Dictionary = {}
+	var unknown_saved_quests: Array[Dictionary] = []
+	var default_ids: Dictionary = {}
+	for quest in quests:
+		default_ids[String(quest.get("QuestID", ""))] = true
+
+	for saved_quest in saved_quests:
+		if not (saved_quest is Dictionary):
+			continue
+		var quest_id := String(saved_quest.get("QuestID", ""))
+		if quest_id.is_empty():
+			continue
+		if default_ids.has(quest_id):
+			saved_by_id[quest_id] = saved_quest
+		else:
+			unknown_saved_quests.append(_sanitize_saved_quest(saved_quest))
+
+	for index in range(quests.size()):
+		var quest_id := String(quests[index].get("QuestID", ""))
+		if not saved_by_id.has(quest_id):
+			continue
+		var saved: Dictionary = saved_by_id[quest_id]
+		var required: int = max(1, int(quests[index].get("RequiredProgress", 1)))
+		var progress: int = min(max(0, int(saved.get("CurrentProgress", 0))), required)
+		quests[index]["CurrentProgress"] = progress
+		quests[index]["IsCompleted"] = bool(saved.get("IsCompleted", false)) or progress >= required
+		quests[index]["IsClaimed"] = bool(saved.get("IsClaimed", false))
+
+	for quest in unknown_saved_quests:
+		quests.append(quest)
+
+
+func _sanitize_saved_quest(saved_quest: Dictionary) -> Dictionary:
+	var required: int = max(1, int(saved_quest.get("RequiredProgress", 1)))
+	var progress: int = min(max(0, int(saved_quest.get("CurrentProgress", 0))), required)
+	return {
+		"QuestID": String(saved_quest.get("QuestID", "")),
+		"QuestTitle": String(saved_quest.get("QuestTitle", "Legacy Quest")),
+		"QuestDescription": String(saved_quest.get("QuestDescription", "")),
+		"QuestGoalType": String(saved_quest.get("QuestGoalType", "")),
+		"CurrentProgress": progress,
+		"RequiredProgress": required,
+		"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
+		"RewardAmount": max(0, int(saved_quest.get("RewardAmount", 0))),
+		"IsCompleted": bool(saved_quest.get("IsCompleted", false)) or progress >= required,
+		"IsClaimed": bool(saved_quest.get("IsClaimed", false))
+	}
+
+
 func add_quest_progress(goal_type: String, amount: int) -> void:
 	if amount <= 0:
 		return
@@ -1202,10 +1384,82 @@ func claim_quest_reward(quest_id: String) -> bool:
 			total_coins += reward_amount
 		quests[index]["IsClaimed"] = true
 		resources_changed.emit()
+		inventory_changed.emit()
 		quests_changed.emit()
 		save_game()
 		return true
 	return false
+
+
+func get_inventory_items() -> Array[Dictionary]:
+	var items: Array[Dictionary] = [
+		{
+			"Name": "Mana",
+			"Quantity": total_mana,
+			"Category": "Resources",
+			"Description": "Gathered from the Flower Grove and spent on restoration, crafting, and upgrades."
+		},
+		{
+			"Name": "Coins",
+			"Quantity": total_coins,
+			"Category": "Resources",
+			"Description": "Earned from potions, market trades, and quest rewards."
+		},
+		{
+			"Name": "Spirit Energy",
+			"Quantity": sacred_pond_spirit_energy,
+			"Category": "Pond Relics",
+			"Description": "Generated by Sacred Koi Pond restoration and used for higher-value trades."
+		},
+		{
+			"Name": "Sun Koi Guardian Bonus",
+			"Quantity": get_sun_koi_guardian_spirit_bonus(),
+			"Category": "Pond Relics",
+			"Description": "Extra Spirit Energy earned on each pond restore after the pond reaches 100% purity."
+		}
+	]
+	for recipe in get_potion_recipes():
+		items.append({
+			"Name": String(recipe.get("Name", "Potion")),
+			"Quantity": get_potion_count(String(recipe.get("RecipeID", ""))),
+			"Category": "Crafted Goods",
+			"Description": String(recipe.get("Description", "Crafted in the Potion Shop."))
+		})
+	var active_fairies := 0
+	for fairy in fairies:
+		if bool(fairy.get("IsUnlocked", false)):
+			active_fairies += 1
+	items.append({
+		"Name": "Fairy Residents",
+		"Quantity": active_fairies,
+		"Category": "Companions",
+		"Description": "Unlocked fairy helpers available for village assignments."
+	})
+	items.append({
+		"Name": "Pond Decorations",
+		"Quantity": _get_placed_pond_decoration_count(),
+		"Category": "Decor",
+		"Description": "Placed pond ornaments that increase Beauty and restoration bonuses."
+	})
+	return items
+
+
+func get_inventory_summary() -> Dictionary:
+	return {
+		"ItemCount": get_inventory_items().size(),
+		"CraftedGoods": get_total_potion_count(),
+		"PlacedDecorations": _get_placed_pond_decoration_count(),
+		"UnlockedRewards": unlocked_pond_rewards.size(),
+		"Notes": inventory_notes
+	}
+
+
+func _get_placed_pond_decoration_count() -> int:
+	var count := 0
+	for decoration in pond_decorations:
+		if bool(decoration.get("IsPlaced", false)):
+			count += 1
+	return count
 
 
 func has_claimable_quest_rewards() -> bool:
@@ -1268,10 +1522,13 @@ func get_save_data() -> Dictionary:
 		"potion_base_craft_time": potion_base_craft_time,
 		"potion_current_craft_time": potion_current_craft_time,
 		"potion_crafting_active": potion_crafting_active,
+		"potion_crafting_recipe_id": potion_crafting_recipe_id,
+		"potion_inventory": potion_inventory,
 		"potion_sell_value": potion_sell_value,
 		"potion_shop_upgrade_cost": potion_shop_upgrade_cost,
 		"market_reputation": market_reputation,
 		"market_orders_completed": market_orders_completed,
+		"inventory_notes": inventory_notes,
 		"ancient_tree_level": ancient_tree_level,
 		"ancient_tree_restore_cost": ancient_tree_restore_cost,
 		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
@@ -1389,10 +1646,23 @@ func apply_save_data(data: Dictionary) -> void:
 	potion_base_craft_time = int(data.get("potion_base_craft_time", 5))
 	potion_current_craft_time = float(data.get("potion_current_craft_time", 0.0))
 	potion_crafting_active = bool(data.get("potion_crafting_active", false))
+	potion_crafting_recipe_id = String(data.get("potion_crafting_recipe_id", POTION_RECIPE_MANA))
+	if get_potion_recipe_data(potion_crafting_recipe_id).is_empty():
+		potion_crafting_recipe_id = POTION_RECIPE_MANA
+		potion_crafting_active = false
+		potion_current_craft_time = 0.0
 	potion_sell_value = int(data.get("potion_sell_value", 50))
+	_set_potion_inventory_from_save(data.get("potion_inventory", {}))
 	potion_shop_upgrade_cost = int(data.get("potion_shop_upgrade_cost", 100))
 	market_reputation = int(data.get("market_reputation", 1))
 	market_orders_completed = int(data.get("market_orders_completed", 0))
+	inventory_notes.clear()
+	var saved_inventory_notes = data.get("inventory_notes", [])
+	if saved_inventory_notes is Array:
+		for note in saved_inventory_notes:
+			inventory_notes.append(String(note))
+	if inventory_notes.is_empty():
+		inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = int(data.get("ancient_tree_level", 1))
 	ancient_tree_restore_cost = int(data.get("ancient_tree_restore_cost", 75))
 	ancient_tree_claimed_rewards.clear()
@@ -1400,29 +1670,11 @@ func apply_save_data(data: Dictionary) -> void:
 	if saved_tree_rewards is Array:
 		for reward_level in saved_tree_rewards:
 			ancient_tree_claimed_rewards.append(int(reward_level))
-	forge_level = int(data.get("forge_level", 1))
-	forge_flower_focus_level = int(data.get("forge_flower_focus_level", 0))
-	forge_potion_gilding_level = int(data.get("forge_potion_gilding_level", 0))
-	forge_pond_resonance_level = int(data.get("forge_pond_resonance_level", 0))
-	var saved_quests = data.get("quests", [])
-	if saved_quests is Array and saved_quests.size() > 0:
-		quests.clear()
-		for saved_quest in saved_quests:
-			if saved_quest is Dictionary:
-				quests.append({
-					"QuestID": String(saved_quest.get("QuestID", "")),
-					"QuestTitle": String(saved_quest.get("QuestTitle", "")),
-					"QuestDescription": String(saved_quest.get("QuestDescription", "")),
-					"QuestGoalType": String(saved_quest.get("QuestGoalType", "")),
-					"CurrentProgress": int(saved_quest.get("CurrentProgress", 0)),
-					"RequiredProgress": int(saved_quest.get("RequiredProgress", 1)),
-					"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
-					"RewardAmount": int(saved_quest.get("RewardAmount", 0)),
-					"IsCompleted": bool(saved_quest.get("IsCompleted", false)),
-					"IsClaimed": bool(saved_quest.get("IsClaimed", false))
-				})
-	else:
-		_reset_quests_to_defaults()
+	forge_flower_focus_level = min(max(0, int(data.get("forge_flower_focus_level", 0))), 3)
+	forge_potion_gilding_level = min(max(0, int(data.get("forge_potion_gilding_level", 0))), 3)
+	forge_pond_resonance_level = min(max(0, int(data.get("forge_pond_resonance_level", 0))), 3)
+	forge_level = 1 + forge_flower_focus_level + forge_potion_gilding_level + forge_pond_resonance_level
+	_apply_saved_quests(data.get("quests", []))
 	has_completed_onboarding = bool(data.get("has_completed_onboarding", true))
 	first_merge_complete = bool(data.get("first_merge_complete", has_completed_onboarding))
 	show_tutorial_after_reset = bool(data.get("show_tutorial_after_reset", false))
@@ -1541,10 +1793,16 @@ func reset_to_defaults() -> void:
 	potion_base_craft_time = 5
 	potion_current_craft_time = 0.0
 	potion_crafting_active = false
+	potion_crafting_recipe_id = POTION_RECIPE_MANA
+	potion_inventory.clear()
+	potion_inventory[POTION_RECIPE_MANA] = 0
+	potion_inventory[POTION_RECIPE_SPIRIT_TONIC] = 0
 	potion_sell_value = 50
 	potion_shop_upgrade_cost = 100
 	market_reputation = 1
 	market_orders_completed = 0
+	inventory_notes.clear()
+	inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = 1
 	ancient_tree_restore_cost = 75
 	ancient_tree_claimed_rewards.clear()
@@ -1568,6 +1826,7 @@ func reset_to_defaults() -> void:
 	market_stall_changed.emit()
 	ancient_tree_changed.emit()
 	arcane_forge_changed.emit()
+	inventory_changed.emit()
 	quests_changed.emit()
 
 
