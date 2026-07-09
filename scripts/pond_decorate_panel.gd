@@ -21,7 +21,7 @@ const DECORATION_TRAY_SIZE := Vector2(1040, 446)
 const DECORATION_ROW_POSITION := Vector2(20, 56)
 const DECORATION_ROW_SIZE := Vector2(1000, 356)
 const DECORATION_CARD_SIZE := Vector2(118, 342)
-const DECORATION_CARD_ICON_WIDTH := 104
+const DECORATION_CARD_ART_SIZE := Vector2(104, 142)
 const GOLD := Color("#f5d779")
 const TEXT_LIGHT := Color("#fff4cf")
 const PANEL_DARK := Color(0.015, 0.022, 0.05, 0.84)
@@ -74,9 +74,7 @@ func _bind_scene_ui() -> void:
 	var row := _get_or_create_decoration_scroll_row()
 	_populate_decoration_buttons(row)
 
-	(get_node("Root/ActionRow/PlaceButton") as TextureButton).pressed.connect(_on_place_pressed)
-	(get_node("Root/ActionRow/RemoveButton") as TextureButton).pressed.connect(_on_remove_pressed)
-	(get_node("Root/ActionRow/BackButton") as TextureButton).pressed.connect(_on_back_pressed)
+	_prepare_action_row()
 
 
 func _prepare_bound_scene_layout() -> void:
@@ -213,6 +211,7 @@ func _build_ui() -> void:
 
 	_build_decoration_tray(root)
 	_build_bottom_buttons(root)
+	_prepare_action_row()
 
 
 func _build_stat_card(parent: Control, title_text: String, key: String, pos: Vector2, panel_size: Vector2) -> void:
@@ -311,27 +310,10 @@ func _populate_decoration_buttons(row: HBoxContainer) -> void:
 		child.queue_free()
 	for index in range(GameState.pond_decorations.size()):
 		var decoration := GameState.pond_decorations[index]
-		var button := Button.new()
-		button.custom_minimum_size = DECORATION_CARD_SIZE
-		button.text = "%s\nCost %d\nBeauty +%d" % [
-			_decoration_display_name(String(decoration.get("DecorationName", ""))),
-			int(decoration.get("CostMana", 0)),
-			int(decoration.get("BeautyValue", 0))
-		]
-		button.icon = load(_decoration_sprite_path(String(decoration.get("DecorationName", ""))))
-		button.expand_icon = true
-		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-		button.add_theme_constant_override("icon_max_width", DECORATION_CARD_ICON_WIDTH)
-		button.add_theme_font_size_override("font_size", 17)
-		button.add_theme_color_override("font_color", TEXT_LIGHT)
-		button.add_theme_color_override("font_hover_color", Color.WHITE)
-		button.add_theme_color_override("font_pressed_color", GOLD)
-		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.01, 0.016, 0.038, 0.98), Color("#c8943f"), 2, 8))
-		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.032, 0.05, 0.09, 1.0), GOLD, 3, 8))
-		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.02, 0.07, 0.09, 1.0), Color("#ffffff"), 3, 8))
+		var card := _make_decoration_card(decoration)
+		var button := card.get_node("ClickTarget") as Button
 		button.pressed.connect(_select_decoration.bind(index))
-		row.add_child(button)
+		row.add_child(card)
 		decoration_buttons.append(button)
 
 
@@ -360,8 +342,82 @@ func _get_or_create_decoration_scroll_row() -> HBoxContainer:
 	return row
 
 
+func _make_decoration_card(decoration: Dictionary) -> Control:
+	var decoration_name := String(decoration.get("DecorationName", ""))
+	var card := Control.new()
+	card.name = "%sCard" % decoration_name.replace(" ", "")
+	card.custom_minimum_size = DECORATION_CARD_SIZE
+	card.size = DECORATION_CARD_SIZE
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var frame := PanelContainer.new()
+	frame.name = "Frame"
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_theme_stylebox_override("panel", _make_panel_style(Color(0.006, 0.012, 0.032, 0.98), Color("#c8943f"), 2, 8))
+	card.add_child(frame)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	frame.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 5)
+	margin.add_child(layout)
+
+	var name_label := _make_label(_decoration_display_name(decoration_name), 19, TEXT_LIGHT)
+	name_label.name = "Name"
+	name_label.custom_minimum_size = Vector2(1, 54)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layout.add_child(name_label)
+
+	var art := TextureRect.new()
+	art.name = "Art"
+	art.custom_minimum_size = DECORATION_CARD_ART_SIZE
+	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	art.texture = load(_decoration_sprite_path(decoration_name))
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layout.add_child(art)
+
+	var cost_label := _make_label("Mana %d" % int(decoration.get("CostMana", 0)), 22, Color("#8ce8ff"))
+	cost_label.name = "Cost"
+	cost_label.custom_minimum_size = Vector2(1, 34)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layout.add_child(cost_label)
+
+	var beauty_label := _make_label("+%d Beauty" % int(decoration.get("BeautyValue", 0)), 19, GOLD)
+	beauty_label.name = "Beauty"
+	beauty_label.custom_minimum_size = Vector2(1, 42)
+	beauty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	beauty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layout.add_child(beauty_label)
+
+	var click_target := Button.new()
+	click_target.name = "ClickTarget"
+	click_target.set_anchors_preset(Control.PRESET_FULL_RECT)
+	click_target.flat = true
+	click_target.focus_mode = Control.FOCUS_NONE
+	click_target.mouse_filter = Control.MOUSE_FILTER_STOP
+	click_target.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	click_target.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	click_target.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	click_target.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	card.add_child(click_target)
+
+	return card
+
+
 func _build_bottom_buttons(parent: Control) -> void:
 	var row := HBoxContainer.new()
+	row.name = "ActionRow"
 	row.position = Vector2(32, 1706)
 	row.size = Vector2(1016, 150)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -372,6 +428,22 @@ func _build_bottom_buttons(parent: Control) -> void:
 	row.add_child(_make_image_button(PLACE_BUTTON_TEXTURE, _on_place_pressed, Vector2(300, 118)))
 	row.add_child(_make_image_button(REMOVE_BUTTON_TEXTURE, _on_remove_pressed, Vector2(300, 118)))
 	row.add_child(_make_image_button(BACK_BUTTON_TEXTURE, _on_back_pressed, Vector2(300, 118)))
+
+
+func _prepare_action_row() -> void:
+	var row := get_node_or_null("Root/ActionRow") as HBoxContainer
+	if row == null:
+		return
+	for child in row.get_children():
+		row.remove_child(child)
+		child.queue_free()
+	row.position = Vector2(56, 1708)
+	row.size = Vector2(968, 112)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 24)
+	row.add_child(_make_text_action_button("Remove Mode", _on_remove_pressed, Color(0.16, 0.035, 0.028, 0.96), Vector2(300, 88), "RemoveButton"))
+	row.add_child(_make_text_action_button("Clear Selection", _on_clear_selection_pressed, Color(0.02, 0.105, 0.16, 0.96), Vector2(300, 88), "PlaceButton"))
+	row.add_child(_make_text_action_button("Back", _on_back_pressed, Color(0.02, 0.16, 0.052, 0.96), Vector2(300, 88), "BackButton"))
 
 
 func _refresh() -> void:
@@ -386,10 +458,13 @@ func _refresh() -> void:
 func _refresh_decoration_buttons() -> void:
 	for index in range(decoration_buttons.size()):
 		var button := decoration_buttons[index]
+		var card := button.get_parent() as Control
+		if card == null:
+			card = button
 		if index == selected_decoration_index:
-			button.modulate = Color(1.12, 1.12, 0.92, 1.0)
+			card.modulate = Color(1.18, 1.12, 0.78, 1.0)
 		else:
-			button.modulate = Color(0.92, 0.96, 1.0, 1.0)
+			card.modulate = Color(0.94, 0.98, 1.0, 1.0)
 
 
 func _refresh_slots() -> void:
@@ -502,6 +577,17 @@ func _on_remove_pressed() -> void:
 	else:
 		feedback_label.text = GameState.last_pond_decoration_message
 	_refresh()
+
+
+func _on_clear_selection_pressed() -> void:
+	SoundManager.play_click()
+	selected_slot_index = -1
+	selected_placed_decoration_name = ""
+	selected_decoration_index = -1
+	feedback_label.text = "Selection cleared."
+	_refresh_decoration_buttons()
+	_refresh_slots()
+	_refresh_placed_decorations()
 
 
 func _on_back_pressed() -> void:
@@ -673,6 +759,23 @@ func _make_image_button(texture_path: String, callback: Callable, button_size: V
 	button.stretch_mode = TextureButton.STRETCH_SCALE
 	button.custom_minimum_size = button_size
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.pressed.connect(callback)
+	return button
+
+
+func _make_text_action_button(label: String, callback: Callable, fill: Color, button_size: Vector2, node_name: String = "") -> Button:
+	var button := Button.new()
+	button.name = node_name if not node_name.is_empty() else label.replace(" ", "")
+	button.custom_minimum_size = button_size
+	button.text = label
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_font_size_override("font_size", 28)
+	button.add_theme_color_override("font_color", TEXT_LIGHT)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", GOLD)
+	button.add_theme_stylebox_override("normal", _make_panel_style(fill, Color("#c8943f"), 3, 12))
+	button.add_theme_stylebox_override("hover", _make_panel_style(fill.lightened(0.12), GOLD, 4, 12))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(fill.darkened(0.1), Color.WHITE, 4, 12))
 	button.pressed.connect(callback)
 	return button
 

@@ -47,9 +47,9 @@ func _run() -> void:
 		fail("Decoration row should show available decoration choices")
 		return
 
-	var first_card := row.get_child(0) as Button
+	var first_card := row.get_child(0) as Control
 	if first_card == null:
-		fail("Decoration choices should be visible buttons")
+		fail("Decoration choices should be visible cards")
 		return
 	if first_card.custom_minimum_size.x < 110.0 or first_card.custom_minimum_size.y < 330.0:
 		fail("Decoration choices should be tall inventory cards")
@@ -57,18 +57,32 @@ func _run() -> void:
 	if first_card.custom_minimum_size.x > 130.0:
 		fail("Decoration cards should be compact enough to show a full bottom strip")
 		return
-	if first_card.get_theme_constant("icon_max_width") < 100:
-		fail("Decoration choices should reserve a large icon area")
-		return
 	var visible_card_width := first_card.custom_minimum_size.x * 8.0 + float(row.get_theme_constant("separation")) * 7.0
 	if visible_card_width > row.size.x:
 		fail("Decoration tray should fit eight visible cards like the reference strip")
 		return
-	if not first_card.text.contains("\n"):
+	var name_label := first_card.get_node_or_null("Frame/StatLayoutMargin/Name") as Label
+	if name_label == null:
+		name_label = first_card.find_child("Name", true, false) as Label
+	if name_label == null or not name_label.text.contains("\n"):
 		fail("Decoration names should stack cleanly on narrow cards")
 		return
-	if not first_card.text.contains("Cost") or not first_card.text.contains("Beauty"):
+	var art := first_card.find_child("Art", true, false) as TextureRect
+	if art == null or art.custom_minimum_size.x < 100.0 or art.custom_minimum_size.y < 130.0:
+		fail("Decoration cards should reserve a large art area")
+		return
+	var click_target := first_card.get_node_or_null("ClickTarget") as Button
+	if click_target == null:
+		fail("Decoration cards should have a full-card click target")
+		return
+	var cost := first_card.find_child("Cost", true, false) as Label
+	var beauty := first_card.find_child("Beauty", true, false) as Label
+	if cost == null or beauty == null:
 		fail("Decoration choices should clearly show cost and beauty")
+		return
+	var clear_button := panel.get_node_or_null("Root/ActionRow/PlaceButton") as Button
+	if clear_button == null or clear_button.text != "Clear Selection":
+		fail("Bottom action row should use reference-style text buttons")
 		return
 
 	panel.queue_free()
