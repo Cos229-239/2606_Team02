@@ -81,7 +81,7 @@
     "dev": {
       "push": true,
       "nightly": false,
-      "weekly": false,
+      "weekly": true,
       "diverged": false,
       "mention": false,
       "owner_name": "",
@@ -158,7 +158,7 @@
     "main": false,
     "gh-pages": false,
     "CodyBackPersonal": false,
-    "dev": false,
+    "dev": true,
     "JildenPersonal": true,
     "KimberlySwinderman": true,
     "PatrickPersonal": false,
