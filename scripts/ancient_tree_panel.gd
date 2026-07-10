@@ -57,7 +57,7 @@ func _refresh() -> void:
 	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
 
 	water_button.disabled = growth >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
-	water_button.modulate = Color(1.0, 1.0, 1.0, 0.52) if water_button.disabled else Color.WHITE
+	water_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if water_button.disabled else Color.WHITE
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
