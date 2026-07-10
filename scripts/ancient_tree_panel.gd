@@ -3,6 +3,7 @@ extends Control
 signal closed
 
 const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
+const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
 const BLUE := Color("#58d9ff")
@@ -17,7 +18,7 @@ var growth_value_label: Label
 var growth_caption_label: Label
 var next_reward_label: Label
 var feedback_label: Label
-var water_button: Button
+var water_button: TextureButton
 var upgrade_button: Button
 var growth_ring: PanelContainer
 
@@ -56,7 +57,7 @@ func _refresh() -> void:
 	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
 
 	water_button.disabled = growth >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
-	water_button.text = "RESTORED" if growth >= 100 else "WATER"
+	water_button.modulate = Color(1.0, 1.0, 1.0, 0.52) if water_button.disabled else Color.WHITE
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
@@ -190,7 +191,7 @@ func _add_action_buttons() -> void:
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
-	water_button = _make_action_button("WATER", Color("#07395c"), Color("#34aee2"))
+	water_button = _make_water_image_button()
 	water_button.name = "RestoreButton"
 	water_button.position = Vector2(560, 1438)
 	water_button.size = Vector2(438, 112)
@@ -234,6 +235,19 @@ func _make_action_button(text: String, bg: Color, accent: Color) -> Button:
 	button.add_theme_stylebox_override("hover", _make_frame_style(Color(accent.r, accent.g, accent.b, 0.72), Color("#f5d66f"), 3, 4))
 	button.add_theme_stylebox_override("pressed", _make_frame_style(Color(accent.r, accent.g, accent.b, 0.92), Color("#ffffff"), 3, 4))
 	button.add_theme_stylebox_override("disabled", _make_frame_style(Color(0.02, 0.02, 0.025, 0.82), Color("#6f5327"), 3, 4))
+	return button
+
+
+func _make_water_image_button() -> TextureButton:
+	var button := TextureButton.new()
+	var texture := load(WATER_BUTTON_ART)
+	button.texture_normal = texture
+	button.texture_hover = texture
+	button.texture_pressed = texture
+	button.texture_disabled = texture
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_SCALE
+	button.tooltip_text = "Water Ancient Tree"
 	return button
 
 
