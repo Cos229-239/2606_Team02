@@ -992,6 +992,7 @@ func _reset_fairies_to_defaults() -> void:
 
 func _reset_quests_to_defaults() -> void:
 	quests.clear()
+	# === Collect Mana chain ===
 	quests.append(_make_quest(
 		"first_harvest",
 		"First Harvest",
@@ -999,35 +1000,33 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_GOAL_COLLECT_MANA,
 		50,
 		QUEST_REWARD_COINS,
-		25
+		25,
+		"collect_mana",
+		1
 	))
 	quests.append(_make_quest(
-		"restore_waters",
-		"Restore the Waters",
-		"Use mana to restore the Sacred Koi Pond.",
-		QUEST_GOAL_RESTORE_POND,
-		1,
-		QUEST_REWARD_MANA,
-		25
-	))
-	quests.append(_make_quest(
-		"fairy_work",
-		"A Fairy's Work",
-		"Assign a fairy to the Flower Grove.",
-		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
-		1,
+		"mana_gatherer",
+		"Mana Gatherer",
+		"Collect 250 mana from the Flower Grove.",
+		QUEST_GOAL_COLLECT_MANA,
+		250,
 		QUEST_REWARD_COINS,
-		50
+		60,
+		"collect_mana",
+		2
 	))
 	quests.append(_make_quest(
-		"beginner_brewer",
-		"Beginner Brewer",
-		"Craft your first Mana Potion.",
-		QUEST_GOAL_CRAFT_POTION,
-		1,
+		"mana_hoarder",
+		"Mana Hoarder",
+		"Collect 750 mana from the Flower Grove.",
+		QUEST_GOAL_COLLECT_MANA,
+		750,
 		QUEST_REWARD_COINS,
-		50
+		200,
+		"collect_mana",
+		3
 	))
+	# === Upgrade Flower Grove chain ===
 	quests.append(_make_quest(
 		"village_growth",
 		"Village Growth",
@@ -1035,8 +1034,67 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_GOAL_UPGRADE_FLOWER,
 		1,
 		QUEST_REWARD_COINS,
-		75
+		75,
+		"upgrade_flower",
+		1
 	))
+	quests.append(_make_quest(
+		"grove_keeper",
+		"Grove Keeper",
+		"Upgrade the Flower Grove 3 times.",
+		QUEST_GOAL_UPGRADE_FLOWER,
+		3,
+		QUEST_REWARD_COINS,
+		100,
+		"upgrade_flower",
+		2
+	))
+	quests.append(_make_quest(
+		"grove_master",
+		"Grove Master",
+		"Upgrade the Flower Grove 9 times.",
+		QUEST_GOAL_UPGRADE_FLOWER,
+		9,
+		QUEST_REWARD_COINS,
+		300,
+		"upgrade_flower",
+		3
+	))
+	# === Craft Potion chain ===
+	quests.append(_make_quest(
+		"beginner_brewer",
+		"Beginner Brewer",
+		"Craft your first Mana Potion.",
+		QUEST_GOAL_CRAFT_POTION,
+		1,
+		QUEST_REWARD_COINS,
+		50,
+		"craft_potion",
+		1
+	))
+	quests.append(_make_quest(
+		"master_brewer",
+		"Master Brewer",
+		"Craft 5 Mana Potions.",
+		QUEST_GOAL_CRAFT_POTION,
+		5,
+		QUEST_REWARD_COINS,
+		120,
+		"craft_potion",
+		2
+	))
+	quests.append(_make_quest(
+		"legendary_brewer",
+		"Legendary Brewer",
+		"Craft 15 Mana Potions.",
+		QUEST_GOAL_CRAFT_POTION,
+		15,
+		QUEST_REWARD_COINS,
+		350,
+		"craft_potion",
+		3
+	))
+	# === Market Trade chain ===
 	quests.append(_make_quest(
 		"first_trade",
 		"First Trade",
@@ -1044,7 +1102,111 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_GOAL_MARKET_TRADE,
 		1,
 		QUEST_REWARD_COINS,
-		60
+		60,
+		"market_trade",
+		1
+	))
+	quests.append(_make_quest(
+		"seasoned_trader",
+		"Seasoned Trader",
+		"Fulfill 5 Market Stall orders.",
+		QUEST_GOAL_MARKET_TRADE,
+		5,
+		QUEST_REWARD_COINS,
+		150,
+		"market_trade",
+		2
+	))
+	quests.append(_make_quest(
+		"master_merchant",
+		"Master Merchant",
+		"Fulfill 15 Market Stall orders.",
+		QUEST_GOAL_MARKET_TRADE,
+		15,
+		QUEST_REWARD_COINS,
+		450,
+		"market_trade",
+		3
+	))
+	# === Assign Flower Fairy chain ===
+	quests.append(_make_quest(
+		"fairy_work",
+		"A Fairy's Work",
+		"Assign a fairy to the Flower Grove.",
+		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
+		1,
+		QUEST_REWARD_COINS,
+		50,
+		"assign_flower_fairy",
+		1
+	))
+	quests.append(_make_quest(
+		"fairy_circle",
+		"Fairy Circle",
+		"Assign a fairy to the Flower Grove 3 times.",
+		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
+		3,
+		QUEST_REWARD_MANA,
+		80,
+		"assign_flower_fairy",
+		2
+	))
+	quests.append(_make_quest(
+		"fairy_monarch",
+		"Fairy Monarch",
+		"Assign a fairy to the Flower Grove 9 times.",
+		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
+		9,
+		QUEST_REWARD_MANA,
+		240,
+		"assign_flower_fairy",
+		3
+	))
+	# === Forge Upgrade chain ===
+	quests.append(_make_quest(
+		"first_forging",
+		"First Forging",
+		"Purchase an Arcane Forge upgrade.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		1,
+		QUEST_REWARD_COINS,
+		100,
+		"forge_upgrade",
+		1
+	))
+	quests.append(_make_quest(
+		"master_forger",
+		"Master Forger",
+		"Purchase 3 Arcane Forge upgrades.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		3,
+		QUEST_REWARD_COINS,
+		200,
+		"forge_upgrade",
+		2
+	))
+	quests.append(_make_quest(
+		"grand_forger",
+		"Grand Forger",
+		"Purchase 9 Arcane Forge upgrades.",
+		QUEST_GOAL_FORGE_UPGRADE,
+		9,
+		QUEST_REWARD_COINS,
+		600,
+		"forge_upgrade",
+		3
+	))
+	# === One-off quests (not repeatable in-game) ===
+	quests.append(_make_quest(
+		"restore_waters",
+		"Restore the Waters",
+		"Use mana to restore the Sacred Koi Pond.",
+		QUEST_GOAL_RESTORE_POND,
+		1,
+		QUEST_REWARD_MANA,
+		25,
+		"restore_waters",
+		1
 	))
 	quests.append(_make_quest(
 		"awaken_roots",
@@ -1053,20 +1215,16 @@ func _reset_quests_to_defaults() -> void:
 		QUEST_GOAL_RESTORE_TREE,
 		1,
 		QUEST_REWARD_MANA,
-		75
-	))
-	quests.append(_make_quest(
-		"first_forging",
-		"First Forging",
-		"Purchase an Arcane Forge upgrade.",
-		QUEST_GOAL_FORGE_UPGRADE,
-		1,
-		QUEST_REWARD_COINS,
-		100
+		75,
+		"awaken_roots",
+		1
 	))
 
 
-func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int) -> Dictionary:
+func _make_quest(quest_id: String, title: String, description: String, goal_type: String, required_progress: int, reward_type: String, reward_amount: int, chain_id: String = "", tier: int = 1) -> Dictionary:
+	var resolved_chain := chain_id
+	if resolved_chain == "":
+		resolved_chain = quest_id
 	return {
 		"QuestID": quest_id,
 		"QuestTitle": title,
@@ -1077,7 +1235,9 @@ func _make_quest(quest_id: String, title: String, description: String, goal_type
 		"RewardType": reward_type,
 		"RewardAmount": reward_amount,
 		"IsCompleted": false,
-		"IsClaimed": false
+		"IsClaimed": false,
+		"ChainID": resolved_chain,
+		"Tier": tier
 	}
 
 
@@ -1106,6 +1266,25 @@ func add_quest_progress(goal_type: String, amount: int) -> void:
 			preserve_feedback_once = true
 			save_status_changed.emit("Quest Complete!")
 
+func get_quest_bucket(quest: Dictionary) -> String:
+	if bool(quest.get("IsClaimed", false)):
+		return "completed"
+	var chain_id := String(quest.get("ChainID", ""))
+	var tier := int(quest.get("Tier", 1))
+	for other in quests:
+		if String(other.get("ChainID", "")) != chain_id:
+			continue
+		if int(other.get("Tier", 1)) < tier and not bool(other.get("IsClaimed", false)):
+			return "future"
+	return "active"
+
+
+func get_quests_in_bucket(bucket: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for quest in quests:
+		if get_quest_bucket(quest) == bucket:
+			result.append(quest)
+	return result
 
 func claim_quest_reward(quest_id: String) -> bool:
 	for index in range(quests.size()):
@@ -1331,7 +1510,9 @@ func apply_save_data(data: Dictionary) -> void:
 					"RewardType": String(saved_quest.get("RewardType", QUEST_REWARD_COINS)),
 					"RewardAmount": int(saved_quest.get("RewardAmount", 0)),
 					"IsCompleted": bool(saved_quest.get("IsCompleted", false)),
-					"IsClaimed": bool(saved_quest.get("IsClaimed", false))
+					"IsClaimed": bool(saved_quest.get("IsClaimed", false)),
+					"ChainID": String(saved_quest.get("ChainID", String(saved_quest.get("QuestID", "")))),
+					"Tier": int(saved_quest.get("Tier", 1))
 				})
 	else:
 		_reset_quests_to_defaults()
