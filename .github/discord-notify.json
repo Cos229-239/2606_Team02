@@ -1,0 +1,53 @@
+{
+  "enabled": false,
+  "nightly_report_kickoff": false,
+  "include": {
+    "title_team": true,
+    "title_action": true,
+    "description": true,
+    "branch_name": true,
+    "status": true,
+    "ahead_behind": true,
+    "files_changed": true,
+    "commit_message": true,
+    "actor": true,
+    "timestamp": true,
+    "timestamp_date": true,
+    "timestamp_time": true,
+    "timestamp_date_label": true,
+    "timestamp_time_label": true,
+    "repo": true,
+    "push_size": true,
+    "commit_author": true,
+    "footer_timestamp": true
+  },
+  "branches": {
+    "main": {
+      "push": false,
+      "nightly": false,
+      "weekly": false,
+      "diverged": false,
+      "mention": false,
+      "owner_name": "",
+      "owner_discord_user_id": ""
+    },
+    "gh-pages": {
+      "push": false,
+      "nightly": false,
+      "weekly": false,
+      "diverged": false,
+      "mention": false,
+      "owner_name": "",
+      "owner_discord_user_id": ""
+    }
+  },
+  "nightly_branches": {
+    "main": false,
+    "gh-pages": false
+  },
+  "weekly_branches": {
+    "main": false,
+    "gh-pages": false
+  },
+  "version": 1
+}
