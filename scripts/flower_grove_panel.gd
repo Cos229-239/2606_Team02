@@ -358,7 +358,11 @@ func _update_visual_grid_slot(button: Button, tier: int, locked: bool, tier_data
 			slot_text.add_theme_color_override("font_color", Color("#c6baa1"))
 		return
 
-	plot_texture.texture = load("res://assets/sprites/flower_grove/plot_tap_to_plant.png")
+	var sprite_path := String(tier_data.get("Sprite", ""))
+	if tier == GameState.FLOWER_TIER_EMPTY or sprite_path.is_empty():
+		plot_texture.texture = load("res://assets/sprites/flower_grove/plot_tap_to_plant.png")
+	else:
+		plot_texture.texture = load(sprite_path)
 	if slot_text:
 		if tier == GameState.FLOWER_TIER_EMPTY:
 			slot_text.text = "Tap to Plant"
