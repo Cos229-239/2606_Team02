@@ -247,7 +247,7 @@ func get_flower_tier_data(tier: int) -> Dictionary:
 		FLOWER_TIER_SEED:
 			return {
 				"Name": "Seed",
-				"Sprite": "res://assets/sprites/environment/blue_bloom.png",
+				"Sprite": "res://assets/sprites/environment/seed.png",
 				"ManaValue": 2,
 				"ManaProductionRate": 1,
 				"MergeTier": 1
@@ -255,7 +255,7 @@ func get_flower_tier_data(tier: int) -> Dictionary:
 		FLOWER_TIER_FLOWER:
 			return {
 				"Name": "Flower",
-				"Sprite": "res://assets/sprites/environment/purple_bloom.png",
+				"Sprite": "res://assets/sprites/environment/bloom_flower.png",
 				"ManaValue": 5,
 				"ManaProductionRate": 3,
 				"MergeTier": 2
@@ -263,7 +263,7 @@ func get_flower_tier_data(tier: int) -> Dictionary:
 		FLOWER_TIER_BLOOM:
 			return {
 				"Name": "Bloom",
-				"Sprite": "res://assets/sprites/environment/golden_bloom.png",
+				"Sprite": "res://assets/sprites/environment/bloom_stage3.png",
 				"ManaValue": 12,
 				"ManaProductionRate": 8,
 				"MergeTier": 3
@@ -271,7 +271,7 @@ func get_flower_tier_data(tier: int) -> Dictionary:
 		FLOWER_TIER_RARE_BLOSSOM:
 			return {
 				"Name": "Rare Blossom",
-				"Sprite": "res://assets/sprites/environment/bloom_lilypad.png",
+				"Sprite": "res://assets/sprites/environment/dreambloom.png",
 				"ManaValue": 30,
 				"ManaProductionRate": 20,
 				"MergeTier": 4
@@ -340,8 +340,24 @@ func merge_flower_grid_slots(from_slot: int, to_slot: int) -> Dictionary:
 		return result
 	if from_tier != to_tier:
 		return result
+
 	if from_tier >= FLOWER_TIER_RARE_BLOSSOM:
-		result["Message"] = "Rare Blossom is max tier."
+		var cashout_reward := int(get_flower_tier_data(from_tier).get("ManaValue", 0)) * 3 * 2
+		var cashout_production := int(get_flower_tier_data(from_tier).get("ManaProductionRate", 0)) * 2
+
+		flower_grove_grid_slots[from_slot]["Tier"] = FLOWER_TIER_EMPTY
+		flower_grove_grid_slots[to_slot]["Tier"] = FLOWER_TIER_EMPTY
+		flower_grove_base_mana_production_rate -= float(cashout_production)
+		total_mana += cashout_reward
+
+		resources_changed.emit()
+		flower_grove_changed.emit()
+		save_game()
+
+		result["Success"] = true
+		result["Message"] = "Rare Blossoms cashed out!"
+		result["Reward"] = cashout_reward
+		result["NewTier"] = FLOWER_TIER_EMPTY
 		return result
 
 	var old_production := int(get_flower_tier_data(from_tier).get("ManaProductionRate", 0)) * 2
