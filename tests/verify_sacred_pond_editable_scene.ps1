@@ -16,7 +16,6 @@ $requiredNodes = @(
     'name="ActionRow"',
     'name="RestoreButton"',
     'name="DecorateButton"',
-    'name="UpgradesButton"',
     'name="BackButton"'
 )
 

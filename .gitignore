@@ -1,88 +1,22 @@
-###############################################################################
-#
-# .gitignore
-#
-# AUTHOR: Patrick J. Kelly
-# DATE: May 2026
-#
-# PURPOSE:
-# This file tells Git what NOT to upload to GitHub.
-#
-# CORE RULE:
-# If YOU did not type it yourself, it probably does not belong in Git.
-#
-# IMPORTANT ABOUT ORDER (READ THIS):
-# - Git reads this file TOP → BOTTOM
-# - If a file is ignored early, it STAYS ignored
-# - UNLESS a later rule uses "!" to override it
-#
-# → ALL EXCEPTIONS MUST BE AT THE BOTTOM OF THIS FILE
-#
-# If something is not committing when it should:
-# - It is being ignored above
-# - You must explicitly UN-IGNORE it at the bottom
-#
-###############################################################################
+# Godot editor/cache data
+.godot/
+.import/
 
+# Exported builds and local scratch output
+builds/
+work/
 
-###############################################################################
-# ENVIRONMENT FILES (STRICT)
-#
-# These often contain:
-# - API keys
-# - passwords
-# - local machine config
-#
-# RULE:
-# NEVER commit real environment files
-#
-# NOTE:
-# We intentionally DO NOT use ".env.*"
-# because it incorrectly ignores files like:
-#   .xcode.env
-###############################################################################
-
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-
-###############################################################################
-# OS / EDITOR JUNK
-#
-# Shared by: macOS, Windows, VS Code, Visual Studio, JetBrains
-###############################################################################
-
-.DS_Store
-Thumbs.db
-desktop.ini
-
-.vs/
-.vscode/
-.idea/
-*.iml
-
-
-###############################################################################
-# LOGS / TEMP / BACKUPS
-#
-# Shared by: OS, editors, package managers, build tools
-###############################################################################
-
+# Logs and temporary files
 *.log
 *.tmp
-*.temp
-*.swp
-*.swo
 *.bak
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
 
+HEAD
 
 ###############################################################################
 # DEPENDENCIES / PACKAGE MANAGERS
@@ -403,3 +337,7 @@ firestore-debug.log
 .godot/editor/filesystem_cache10
 Stashed changes
 .DS_Store
+
+# Local editor settings
+.vscode/
+ TurboPersonal

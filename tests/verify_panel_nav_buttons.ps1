@@ -6,7 +6,6 @@ $sacredPondScript = Get-Content -Raw -Path (Join-Path $projectRoot "scripts\sacr
 
 $requiredAssets = @(
     "assets\sprites\ui\panel_back.png",
-    "assets\sprites\ui\panel_upgrades.png",
     "assets\sprites\ui\panel_restore.png",
     "assets\sprites\ui\panel_decorate.png"
 )
@@ -33,16 +32,13 @@ foreach ($snippet in $requiredMainVillageSnippets) {
 $requiredPondSnippets = @(
     "const PANEL_BUTTONS",
     "panel_back.png",
-    "panel_upgrades.png",
     "panel_restore.png",
     "panel_decorate.png",
     'buttons.add_child(_make_panel_nav_button("Restore", _on_restore_pressed))',
     'buttons.add_child(_make_panel_nav_button("Decorate", _on_decorate_pressed))',
-    'buttons.add_child(_make_panel_nav_button("Upgrades", _on_upgrades_pressed))',
     'buttons.add_child(_make_panel_nav_button("Back", _on_back_pressed))',
     "func _make_panel_nav_button",
-    "TextureButton",
-    "func _on_upgrades_pressed"
+    "TextureButton"
 )
 
 foreach ($snippet in $requiredPondSnippets) {

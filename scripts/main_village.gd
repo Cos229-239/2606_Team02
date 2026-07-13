@@ -7,6 +7,7 @@ const PotionShopPanelScene := preload("res://ui/PotionShopPanel.tscn")
 const QuestPanelScene := preload("res://ui/QuestPanel.tscn")
 const ExplorePanelScene := preload("res://ui/ExplorePanel.tscn")
 const BuildingsPanelScene := preload("res://ui/BuildingsPanel.tscn")
+const InventoryPanelScene := preload("res://ui/InventoryPanel.tscn")
 const SettingsPanelScene := preload("res://ui/SettingsPanel.tscn")
 const PondDecoratePanelScene := preload("res://ui/PondDecoratePanel.tscn")
 const AncientTreePanelScene := preload("res://ui/AncientTreePanel.tscn")
@@ -45,8 +46,10 @@ var open_panel: Control
 var attention_layer: Control
 var restoration_visual_layer: Control
 var pond_decoration_visual_layer: Control
+var fairy_worker_visual_layer: Control
 var quests_button: TextureButton
 var quests_badge: Label
+var fairy_visual_refresh_elapsed: float = 0.0
 
 func _ready() -> void:
 	_hide_editor_label_previews()
@@ -56,11 +59,14 @@ func _ready() -> void:
 	GameState.resources_changed.connect(_refresh_attention_indicators)
 	GameState.resources_changed.connect(_refresh_restoration_visuals)
 	GameState.flower_grove_changed.connect(_refresh_attention_indicators)
+	GameState.flower_grove_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.fairy_house_changed.connect(_refresh_attention_indicators)
+	GameState.fairy_house_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.potion_shop_changed.connect(_refresh_attention_indicators)
 	GameState.sacred_pond_changed.connect(_refresh_restoration_visuals)
 	GameState.sacred_pond_changed.connect(_refresh_pond_decoration_visuals)
 	GameState.sacred_pond_changed.connect(_refresh_attention_indicators)
+	GameState.sacred_pond_changed.connect(_refresh_fairy_worker_visuals)
 	GameState.quests_changed.connect(_refresh_quest_button)
 	GameState.quests_changed.connect(_refresh_attention_indicators)
 	GameState.save_status_changed.connect(_show_feedback)
@@ -77,11 +83,23 @@ func _ready() -> void:
 			_show_tutorial()
 
 
+func _process(delta: float) -> void:
+	if fairy_worker_visual_layer == null:
+		return
+	if open_panel != null:
+		fairy_visual_refresh_elapsed = 0.0
+		return
+	fairy_visual_refresh_elapsed += delta
+	if fairy_visual_refresh_elapsed >= 1.0:
+		fairy_visual_refresh_elapsed = 0.0
+		_refresh_fairy_worker_visuals()
+
+
 func _build_screen() -> void:
 	_build_village_background()
 	_build_building_hit_layer()
 	_build_restoration_focus()
-	_add_placeholder_area_button("Ancient Tree", _get_placement_rect("AncientTreePlacement", Rect2(350, 140, 380, 418)), _open_ancient_tree)
+	_add_landmark_hit_button("Ancient Tree", _get_placement_rect("AncientTreePlacement", Rect2(350, 140, 380, 418)), _open_ancient_tree)
 	_build_restoration_visual_layer()
 
 	_add_area_button("Sacred Koi Pond", _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276)), Color("#123e7a"), _open_sacred_pond, "Water Purity")
@@ -89,9 +107,9 @@ func _build_screen() -> void:
 	_add_area_button("Potion Shop", _get_placement_rect("PotionShopPlacement", Rect2(714, 502, 278, 254)), Color("#5c2e78"), _open_potion_shop, "Mana Potion")
 	_add_area_button("Flower Grove", _get_placement_rect("FlowerGrovePlacement", Rect2(392, 807, 308, 238)), Color("#4b2670"), _open_flower_grove, "Mana Garden")
 	_add_area_button("Fairy House", _get_placement_rect("FairyHousePlacement", Rect2(156, 1260, 288, 244)), Color("#6b4a24"), _open_fairy_house, "Luna Assigned")
-	_build_market_stall_placeholder(_get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)))
-	_add_placeholder_area_button("Market Stall", _get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)), _open_market_stall)
-	_add_placeholder_area_button("Arcane Forge", _get_placement_rect("ArcaneForgePlacement", Rect2(760, 1030, 250, 235)), _open_arcane_forge)
+	_add_area_button("Market Stall", _get_placement_rect("MarketStallPlacement", Rect2(673, 1258, 298, 224)), Color("#7a3f1f"), _open_market_stall, "Trade Orders")
+	_add_area_button("Arcane Forge", _get_placement_rect("ArcaneForgePlacement", Rect2(760, 1030, 250, 235)), Color("#2c516f"), _open_arcane_forge, "Gear Upgrades")
+	_build_fairy_worker_visual_layer()
 	_build_attention_layer()
 	_build_pond_decoration_visual_layer()
 	_build_hud()
@@ -191,6 +209,7 @@ func _build_hud() -> void:
 	hud.add_child(_make_resource_panel("Mana", "M", Color("#59bfff"), mana_label))
 	hud.add_child(_make_resource_panel("Coins", "C", Color("#f6c14a"), coins_label))
 	hud.add_child(_make_restoration_panel())
+	hud.add_child(_make_inventory_button())
 
 	feedback_label = Label.new()
 	feedback_label.position = Vector2(310, 104)
@@ -274,6 +293,14 @@ func _make_restoration_panel() -> PanelContainer:
 	restoration_bar.show_percentage = false
 	stack.add_child(restoration_bar)
 	return panel
+
+
+func _make_inventory_button() -> Button:
+	var button := _make_small_button("Inventory", _open_inventory)
+	button.name = "InventoryButton"
+	button.custom_minimum_size = Vector2(150, 66)
+	button.add_theme_font_size_override("font_size", 18)
+	return button
 
 
 func _make_ui_text(text: String, font_size: int, color: Color) -> Label:
@@ -432,19 +459,26 @@ func _refresh_pond_decoration_visuals() -> void:
 	for decoration in GameState.pond_decorations:
 		if not bool(decoration.get("IsPlaced", false)):
 			continue
-		var slot_index := int(decoration.get("SlotIndex", -1))
-		if slot_index < 0:
-			continue
 		var decoration_name := String(decoration.get("DecorationName", ""))
 		var marker_size := _pond_decoration_world_size(decoration_name)
+		var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
 		var marker := _add_layer_sprite(
 			pond_decoration_visual_layer,
 			_pond_decoration_sprite_path(decoration_name),
-			_pond_decoration_world_slot(slot_index) - marker_size * 0.5,
+			GameState.get_pond_decoration_screen_position(decoration, pond_rect) - marker_size * 0.5,
 			marker_size
 		)
 		marker.z_index = 18
 		marker.modulate.a = 0.9
+
+
+func _pond_decoration_world_position(editor_position: Vector2) -> Vector2:
+	var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
+	var decoration := {
+		"PositionX": editor_position.x,
+		"PositionY": editor_position.y
+	}
+	return GameState.get_pond_decoration_screen_position(decoration, pond_rect)
 
 
 func _pond_decoration_world_slot(slot_index: int) -> Vector2:
@@ -469,6 +503,22 @@ func _pond_decoration_sprite_path(decoration_name: String) -> String:
 		return "res://assets/sprites/environment/bloom_lilypad.png"
 	if decoration_name == "Sacred Bridge":
 		return "res://assets/sprites/environment/sacred_bridge.png"
+	if decoration_name == "Crystal Lotus":
+		return "res://assets/sprites/environment/crystal_lotus.png"
+	if decoration_name == "Stone Koi Statue":
+		return "res://assets/sprites/environment/stone_koi_statue.png"
+	if decoration_name == "Crystal Pillar":
+		return "res://assets/sprites/environment/crystal_pillar.png"
+	if decoration_name == "Moonstone Steps":
+		return "res://assets/sprites/environment/moonstone_steps.png"
+	if decoration_name == "Fern Spring":
+		return "res://assets/sprites/environment/fern_spring.png"
+	if decoration_name == "Flame Basin":
+		return "res://assets/sprites/environment/flame_basin.png"
+	if decoration_name == "Reed Cluster":
+		return "res://assets/sprites/environment/reed_cluster.png"
+	if decoration_name == "Willow Arch":
+		return "res://assets/sprites/environment/willow_arch.png"
 	return "res://assets/sprites/environment/bloom_lilypad.png"
 
 
@@ -481,6 +531,22 @@ func _pond_decoration_world_size(decoration_name: String) -> Vector2:
 		return Vector2(58, 42)
 	if decoration_name == "Sacred Bridge":
 		return Vector2(76, 52)
+	if decoration_name == "Crystal Lotus":
+		return Vector2(62, 76)
+	if decoration_name == "Stone Koi Statue":
+		return Vector2(60, 78)
+	if decoration_name == "Crystal Pillar":
+		return Vector2(54, 76)
+	if decoration_name == "Moonstone Steps":
+		return Vector2(68, 52)
+	if decoration_name == "Fern Spring":
+		return Vector2(66, 62)
+	if decoration_name == "Flame Basin":
+		return Vector2(66, 58)
+	if decoration_name == "Reed Cluster":
+		return Vector2(54, 78)
+	if decoration_name == "Willow Arch":
+		return Vector2(68, 80)
 	return Vector2(46, 46)
 
 
@@ -504,8 +570,10 @@ func _refresh_restoration_visuals() -> void:
 			_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/environment/moon_lantern.png", pos, Vector2(24, 44), Color(1.0, 1.0, 1.0, 0.82))
 
 	if restoration >= 100:
-		_add_layer_ellipse(restoration_visual_layer, Vector2(540, 465), Vector2(120, 54), Color("#ffd762"), 0.18)
+		_add_layer_ellipse(restoration_visual_layer, Vector2(260, 640), Vector2(136, 52), Color("#ffd762"), 0.22)
+		_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/characters/koi_gold.png", Vector2(214, 604), Vector2(96, 64), Color(1.0, 0.92, 0.62, 0.96))
 		_add_layer_sprite(restoration_visual_layer, "res://assets/sprites/environment/spirit_stone.png", Vector2(510, 408), Vector2(58, 68), Color(1.0, 0.92, 0.62, 0.86))
+		_add_restoration_label("Sun Koi Guardian", Vector2(184, 668))
 
 
 func _add_restoration_label(text: String, position: Vector2) -> void:
@@ -758,8 +826,198 @@ func _add_potion_shop_details(rect: Rect2) -> void:
 	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.90), Vector2(rect.size.x * 0.44, max(18.0, rect.size.y * 0.11)), 0.20)
 
 
-func _build_market_stall_placeholder(rect: Rect2) -> void:
-	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.93), Vector2(rect.size.x * 0.44, max(18.0, rect.size.y * 0.12)), 0.17)
+func _build_fairy_worker_visual_layer() -> void:
+	fairy_worker_visual_layer = Control.new()
+	fairy_worker_visual_layer.name = "Fairy Worker Visuals"
+	fairy_worker_visual_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fairy_worker_visual_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fairy_worker_visual_layer.z_index = 24
+	add_child(fairy_worker_visual_layer)
+	_refresh_fairy_worker_visuals()
+
+
+func _refresh_fairy_worker_visuals() -> void:
+	if fairy_worker_visual_layer == null:
+		return
+	for child in fairy_worker_visual_layer.get_children():
+		child.queue_free()
+
+	var flower_rect := _get_placement_rect("FlowerGrovePlacement", Rect2(392, 807, 308, 238))
+	var pond_rect := _get_placement_rect("SacredKoiPondPlacement", Rect2(90, 484, 342, 276))
+	var fairy_rect := _get_placement_rect("FairyHousePlacement", Rect2(156, 1260, 288, 244))
+	var flower_index := 0
+	var pond_index := 0
+	var resting_index := 0
+
+	for fairy in GameState.fairies:
+		if not bool(fairy.get("IsUnlocked", false)):
+			continue
+		var assigned_area := String(fairy.get("AssignedArea", GameState.FAIRY_AREA_UNASSIGNED))
+		var fairy_name := String(fairy.get("FairyName", "Fairy"))
+		if assigned_area == GameState.FAIRY_AREA_FLOWER_GROVE:
+			_add_fairy_worker_visual(fairy, _get_flower_fairy_position(flower_rect, flower_index), "Gathering", _get_area_ready_count(GameState.FAIRY_AREA_FLOWER_GROVE))
+			flower_index += 1
+		elif assigned_area == GameState.FAIRY_AREA_SACRED_POND:
+			_add_fairy_worker_visual(fairy, _get_pond_fairy_position(pond_rect, pond_index), "Tending", _get_area_ready_count(GameState.FAIRY_AREA_SACRED_POND))
+			pond_index += 1
+		else:
+			_add_fairy_worker_visual(fairy, _get_resting_fairy_position(fairy_rect, resting_index), "Resting", 0, true)
+			resting_index += 1
+
+
+func _get_flower_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.18, 0.18),
+		Vector2(0.72, 0.24),
+		Vector2(0.46, 0.66),
+		Vector2(0.30, 0.52)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _get_pond_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.18, 0.30),
+		Vector2(0.78, 0.34),
+		Vector2(0.58, 0.72),
+		Vector2(0.34, 0.66)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _get_resting_fairy_position(rect: Rect2, index: int) -> Vector2:
+	var offsets := [
+		Vector2(0.72, 0.18),
+		Vector2(0.30, 0.76),
+		Vector2(0.54, 0.88),
+		Vector2(0.18, 0.38)
+	]
+	return rect.position + rect.size * offsets[index % offsets.size()]
+
+
+func _get_area_ready_count(area: String) -> int:
+	if area == GameState.FAIRY_AREA_SACRED_POND:
+		return GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_SACRED_POND)
+	if area == GameState.FAIRY_AREA_FLOWER_GROVE:
+		return GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_FLOWER_GROVE) + GameState.get_fairy_task_ready_count(GameState.FAIRY_TASK_FORAGE_INGREDIENTS)
+	return 0
+
+
+func _add_fairy_worker_visual(fairy: Dictionary, center_position: Vector2, status_text: String, ready_count: int = 0, resting: bool = false) -> void:
+	var fairy_name := String(fairy.get("FairyName", "Fairy"))
+	var role_color := _get_fairy_role_color(fairy)
+	var orb := _add_layer_sprite(
+		fairy_worker_visual_layer,
+		"res://assets/sprites/effects/glow_orb.png",
+		center_position - Vector2(34, 25),
+		Vector2(68, 68),
+		Color(role_color.r, role_color.g, role_color.b, 0.52 if resting else 0.74)
+	)
+	orb.z_index = 1
+
+	var sprite := _add_layer_sprite(
+		fairy_worker_visual_layer,
+		_get_home_fairy_sprite_path(fairy_name),
+		center_position - Vector2(30, 54),
+		Vector2(60, 94),
+		Color(1.0, 1.0, 1.0, 0.72 if resting else 0.96)
+	)
+	sprite.z_index = 2
+
+	var badge := _make_fairy_status_badge(fairy_name, status_text, role_color, center_position, ready_count, resting)
+	fairy_worker_visual_layer.add_child(badge)
+
+	if ready_count > 0:
+		var ready_badge := _make_fairy_ready_badge(center_position, ready_count)
+		fairy_worker_visual_layer.add_child(ready_badge)
+
+	_animate_fairy_worker(sprite, orb, badge, resting)
+
+
+func _make_fairy_status_badge(fairy_name: String, status_text: String, role_color: Color, center_position: Vector2, ready_count: int, resting: bool) -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.name = "FairyStatus_%s" % fairy_name
+	badge.position = center_position + Vector2(-72, 28)
+	badge.custom_minimum_size = Vector2(144, 48)
+	badge.size = badge.custom_minimum_size
+	badge.z_index = 4
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var border_color := Color("#f3d57a") if ready_count > 0 else role_color
+	var bg_color := Color(0.040, 0.030, 0.014, 0.86) if ready_count > 0 else Color(0.012, 0.018, 0.028, 0.78)
+	if resting:
+		bg_color = Color(0.018, 0.018, 0.030, 0.72)
+	badge.add_theme_stylebox_override("panel", _make_style(bg_color, border_color, 2, 10))
+
+	var label := Label.new()
+	label.text = "%s\n%s" % [fairy_name, "Ready x%d" % ready_count if ready_count > 0 else status_text]
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color("#fff2a8") if ready_count > 0 else role_color)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	badge.add_child(label)
+	return badge
+
+
+func _make_fairy_ready_badge(center_position: Vector2, ready_count: int) -> Label:
+	var label := Label.new()
+	label.name = "FairyReadyBadge"
+	label.text = "!"
+	if ready_count > 1:
+		label.text = "%d" % ready_count
+	label.position = center_position + Vector2(28, -56)
+	label.size = Vector2(36, 36)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.z_index = 5
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color("#061014"))
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_stylebox_override("normal", _make_style(Color("#f3d57a"), Color("#fff2a8"), 2, 18))
+	return label
+
+
+func _animate_fairy_worker(sprite: Sprite2D, orb: Sprite2D, badge: Control, resting: bool) -> void:
+	var bob_distance := 5.0 if resting else 9.0
+	var duration := 1.45 if resting else 1.05
+	var sprite_start := sprite.position
+	var orb_start := orb.position
+	var badge_start := badge.position
+	var tween := create_tween()
+	tween.set_loops()
+	tween.tween_property(sprite, "position", sprite_start + Vector2(0, -bob_distance), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(orb, "position", orb_start + Vector2(0, -bob_distance * 0.55), duration)
+	tween.parallel().tween_property(badge, "position", badge_start + Vector2(0, -bob_distance * 0.25), duration)
+	tween.tween_property(sprite, "position", sprite_start, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(orb, "position", orb_start, duration)
+	tween.parallel().tween_property(badge, "position", badge_start, duration)
+	tween.tween_interval(0.02)
+
+
+func _get_home_fairy_sprite_path(fairy_name: String) -> String:
+	match fairy_name:
+		"Luna":
+			return "res://assets/sprites/characters/fairy_luna.png"
+		"Pip":
+			return "res://assets/sprites/characters/fairy_pond_keeper.png"
+		"Nim":
+			return "res://assets/sprites/characters/fairy_potion_maker.png"
+	return "res://assets/sprites/characters/fairy_placeholder.png"
+
+
+func _get_fairy_role_color(fairy: Dictionary) -> Color:
+	var role := String(fairy.get("FairyRole", "Helper"))
+	if role == "Gatherer":
+		return Color("#f3d57a")
+	if role == "Pond Keeper":
+		return Color("#80d6ff")
+	if role == "Forager":
+		return Color("#c784ff")
+	return Color("#b98c43")
 
 
 func _build_attention_layer() -> void:
@@ -867,7 +1125,7 @@ func _animate_koi_loop(koi: Sprite2D, start_position: Vector2, end_position: Vec
 	tween.parallel().tween_property(koi, "rotation", (start_position - end_position).angle() - 0.12, duration * 0.5)
 
 
-func _add_placeholder_area_button(title: String, rect: Rect2, callback: Callable) -> void:
+func _add_landmark_hit_button(title: String, rect: Rect2, callback: Callable) -> void:
 	_add_shadow_ellipse(rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.93), Vector2(rect.size.x * 0.42, max(18.0, rect.size.y * 0.12)), 0.16)
 	_add_tappable_glow(rect)
 
@@ -884,23 +1142,6 @@ func _add_placeholder_area_button(title: String, rect: Rect2, callback: Callable
 	hit_area.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	hit_area.pressed.connect(callback)
 	building_hit_layer.add_child(hit_area)
-
-	var label := Button.new()
-	label.text = title
-	if title == "Ancient Tree":
-		return
-	var label_rect := _get_area_label_rect(title, rect)
-	label.size = label_rect.size
-	label.position = label_rect.position
-	label.custom_minimum_size = label.size
-	label.focus_mode = Control.FOCUS_NONE
-	label.z_index = 25
-	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_font_size_override("font_size", 17)
-	_apply_sign_style(label)
-	label.pressed.connect(callback)
-	add_child(label)
 
 
 func _add_home_label(text: String, position: Vector2, size: Vector2) -> Button:
@@ -1261,6 +1502,11 @@ func _open_arcane_forge() -> void:
 func _open_market_stall() -> void:
 	SoundManager.play_click()
 	_show_panel(MarketStallPanelScene.instantiate())
+
+
+func _open_inventory() -> void:
+	SoundManager.play_click()
+	_show_panel(InventoryPanelScene.instantiate())
 
 
 func open_nav_panel(panel_name: String) -> void:

@@ -1,6 +1,7 @@
 extends Control
 
 var continue_button: Button
+var reset_overlay: ColorRect
 var confirm_panel: PanelContainer
 var feedback_label: Label
 
@@ -77,6 +78,8 @@ func _build_menu() -> void:
 	version.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(version)
 
+	_build_reset_confirmation()
+
 
 func _make_button(text: String, callback: Callable) -> Button:
 	var button := Button.new()
@@ -142,61 +145,103 @@ func _on_reset_pressed() -> void:
 
 
 func _show_reset_confirmation() -> void:
-	if confirm_panel:
-		confirm_panel.queue_free()
+	reset_overlay.visible = true
+	feedback_label.text = "Reset needs confirmation."
+
+
+func _confirm_reset() -> void:
+	GameState.reset_save()
+	_hide_reset_confirmation("Save reset.")
+	_refresh_buttons()
+
+
+func _cancel_reset() -> void:
+	_hide_reset_confirmation("Reset cancelled.")
+
+
+func _hide_reset_confirmation(message: String) -> void:
+	if reset_overlay:
+		reset_overlay.visible = false
+	if feedback_label:
+		feedback_label.text = message
+
+
+func _build_reset_confirmation() -> void:
+	reset_overlay = ColorRect.new()
+	reset_overlay.name = "ResetConfirmationOverlay"
+	reset_overlay.visible = false
+	reset_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	reset_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reset_overlay.color = Color(0.0, 0.0, 0.0, 0.58)
+	add_child(reset_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reset_overlay.add_child(center)
 
 	confirm_panel = PanelContainer.new()
-	confirm_panel.position = Vector2(160, 980)
-	confirm_panel.size = Vector2(760, 310)
+	confirm_panel.name = "ResetConfirmationPanel"
+	confirm_panel.custom_minimum_size = Vector2(820, 360)
 	var confirm_style := StyleBoxFlat.new()
-	confirm_style.bg_color = Color("#0a0e16", 0.92)
-	confirm_style.border_color = Color("#f3d57a", 0.55)
-	confirm_style.set_border_width_all(2)
+	confirm_style.bg_color = Color("#0a0e16", 0.96)
+	confirm_style.border_color = Color("#f3d57a", 0.68)
+	confirm_style.set_border_width_all(3)
 	confirm_style.corner_radius_top_left = 16
 	confirm_style.corner_radius_top_right = 16
 	confirm_style.corner_radius_bottom_left = 16
 	confirm_style.corner_radius_bottom_right = 16
 	confirm_panel.add_theme_stylebox_override("panel", confirm_style)
-	add_child(confirm_panel)
+	center.add_child(confirm_panel)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
+	margin.add_theme_constant_override("margin_left", 34)
+	margin.add_theme_constant_override("margin_right", 34)
+	margin.add_theme_constant_override("margin_top", 32)
+	margin.add_theme_constant_override("margin_bottom", 32)
 	confirm_panel.add_child(margin)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 18)
+	layout.add_theme_constant_override("separation", 22)
 	margin.add_child(layout)
 
-	var label := Label.new()
-	label.text = "Reset Save?\nThis clears local progress."
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 28)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	layout.add_child(label)
+	var title := Label.new()
+	title.text = "Reset Save?"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", Color("#f3d57a"))
+	title.add_theme_color_override("font_shadow_color", Color.BLACK)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(title)
+
+	var body := Label.new()
+	body.text = "This clears local progress and restarts the tutorial. This cannot be undone."
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(720, 92)
+	body.add_theme_font_size_override("font_size", 24)
+	body.add_theme_color_override("font_color", Color("#fff2d6"))
+	body.add_theme_color_override("font_shadow_color", Color.BLACK)
+	body.add_theme_constant_override("shadow_offset_x", 2)
+	body.add_theme_constant_override("shadow_offset_y", 2)
+	layout.add_child(body)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 20)
 	layout.add_child(row)
-	row.add_child(_make_button("Confirm Reset", _confirm_reset))
-	row.add_child(_make_button("Cancel", _cancel_reset))
-	for btn in row.get_children():
-		btn.custom_minimum_size = Vector2(330, 80)
-		btn.add_theme_font_size_override("font_size", 26)
 
+	var confirm := _make_button("Reset Save", _confirm_reset)
+	confirm.name = "ConfirmResetButton"
+	confirm.custom_minimum_size = Vector2(330, 80)
+	confirm.add_theme_font_size_override("font_size", 26)
+	row.add_child(confirm)
 
-func _confirm_reset() -> void:
-	GameState.reset_save()
-	_cancel_reset()
-	_refresh_buttons()
-
-
-func _cancel_reset() -> void:
-	if confirm_panel:
-		confirm_panel.queue_free()
-		confirm_panel = null
+	var cancel := _make_button("Cancel", _cancel_reset)
+	cancel.name = "CancelResetButton"
+	cancel.custom_minimum_size = Vector2(330, 80)
+	cancel.add_theme_font_size_override("font_size", 26)
+	row.add_child(cancel)
 
 
 func _on_quit_pressed() -> void:

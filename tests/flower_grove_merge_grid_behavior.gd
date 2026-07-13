@@ -36,13 +36,31 @@ func _init() -> void:
 	if bool(state.flower_grove_grid_slots[6].get("Locked", true)):
 		fail("Unlock plot should unlock more grid slots")
 
+	state.flower_grove_grid_slots[0]["Tier"] = state.FLOWER_TIER_RARE_BLOSSOM
+	state.flower_grove_grid_slots[1]["Tier"] = state.FLOWER_TIER_RARE_BLOSSOM
+	state.flower_grove_base_mana_production_rate = 50.0
+	state.total_mana = 0
+	var cashout_result: Dictionary = state.merge_flower_grid_slots(0, 1)
+	if not bool(cashout_result.get("Success", false)):
+		fail("Matching Rare Blossoms should cash out")
+	if int(cashout_result.get("Reward", 0)) != 180:
+		fail("Rare Blossom cash-out should reward 180 mana")
+	if state.total_mana != 180:
+		fail("Rare Blossom cash-out should add mana")
+	if int(state.flower_grove_grid_slots[0].get("Tier", -1)) != state.FLOWER_TIER_EMPTY:
+		fail("Rare Blossom cash-out should clear source slot")
+	if int(state.flower_grove_grid_slots[1].get("Tier", -1)) != state.FLOWER_TIER_EMPTY:
+		fail("Rare Blossom cash-out should clear target slot")
+	if int(state.flower_grove_base_mana_production_rate) != 10:
+		fail("Rare Blossom cash-out should remove both flowers from production")
+
 	var save_data: Dictionary = state.get_save_data()
 	var loaded: Node = load("res://scripts/game_state.gd").new()
 	loaded.apply_save_data(save_data)
 	if loaded.flower_grove_grid_slots.size() != 12:
 		fail("Grid slot count should persist")
-	if int(loaded.flower_grove_grid_slots[1].get("Tier", 0)) != loaded.FLOWER_TIER_FLOWER:
-		fail("Merged flower tier should persist")
+	if int(loaded.flower_grove_grid_slots[1].get("Tier", -1)) != loaded.FLOWER_TIER_EMPTY:
+		fail("Cashed-out flower slot should persist as empty")
 	if bool(loaded.flower_grove_grid_slots[6].get("Locked", true)):
 		fail("Unlocked grid slot should persist")
 

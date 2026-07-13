@@ -172,13 +172,12 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="MarketStallPlacement" type="Control" parent="EditableHomeMap" unique_id=440046696]
-modulate = Color(0.88, 0.88, 0.88, 0.74)
 anchors_preset = 0
 offset_left = 665.0
 offset_top = 929.0
 offset_right = 1094.3
 offset_bottom = 1259.6
-metadata/_edit_note_ = "Drag this node to move the Market Stall placeholder. Resize the node to scale it."
+metadata/_edit_note_ = "Drag this node to move the Market Stall. Resize the node to scale it."
 
 [node name="Sprite" type="TextureRect" parent="EditableHomeMap/MarketStallPlacement" unique_id=807472974]
 material = SubResource("ShaderMaterial_BuildingGlowPulse")
@@ -194,13 +193,12 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="ArcaneForgePlacement" type="Control" parent="EditableHomeMap" unique_id=4631824]
-modulate = Color(0.88, 0.88, 0.88, 0.78)
 anchors_preset = 0
 offset_left = -35.0
 offset_top = 650.0
 offset_right = 330.0
 offset_bottom = 1085.0
-metadata/_edit_note_ = "Drag this node to move the Arcane Forge placeholder. Resize the node to scale it."
+metadata/_edit_note_ = "Drag this node to move the Arcane Forge. Resize the node to scale it."
 
 [node name="Sprite" type="TextureRect" parent="EditableHomeMap/ArcaneForgePlacement" unique_id=1347071551]
 material = SubResource("ShaderMaterial_BuildingGlowPulse")

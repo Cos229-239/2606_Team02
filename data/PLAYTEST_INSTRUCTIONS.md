@@ -16,9 +16,10 @@ Start with the core loop:
 5. Return to the village.
 6. Open Fairy House and assign a fairy.
 7. Open Sacred Pond and restore it.
-8. Open Potion Shop, craft a potion, then sell it.
-9. Open Quests and claim any completed reward.
-10. Save, close, reopen, and continue.
+8. Open Potion Shop, craft a Mana Potion and a Spirit Tonic if you have Spirit Energy, then sell one.
+9. Open Inventory and confirm resources, potions, and pond goods are listed.
+10. Open Quests and claim any completed reward.
+11. Save, close, reopen, and continue.
 
 ## Playtest Length
 Each playtest should take about 5-10 minutes.
@@ -34,8 +35,7 @@ Include:
 - Severity.
 
 ## Features Not Included Yet
-- Potion Shop has only one recipe.
-- No inventory screen.
+- Potion Shop has a small recipe list.
 - No daily quests or events.
 - No fish breeding.
 - No monetization.
