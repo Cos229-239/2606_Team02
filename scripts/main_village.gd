@@ -158,9 +158,13 @@ func _build_village_background() -> void:
 	move_child(background, 1)
 
 
-func _make_background_glow_material() -> ShaderMaterial:
+func _make_background_glow_material():
+	var shader = load(BACKGROUND_GLOW_SHADER_PATH)
+	if shader == null:
+		return null
+
 	var glow_material := ShaderMaterial.new()
-	glow_material.shader = load(BACKGROUND_GLOW_SHADER_PATH)
+	glow_material.shader = shader
 	glow_material.set_shader_parameter("pulse_speed", 1.35)
 	glow_material.set_shader_parameter("pulse_strength", 0.26)
 	glow_material.set_shader_parameter("glow_threshold", 0.34)
@@ -1302,8 +1306,8 @@ func _add_sprite(path: String, top_left: Vector2, size: Vector2, rotation: float
 	return sprite
 
 
-func _load_texture(path: String) -> Texture2D:
-	var texture := load(path) as Texture2D
+func _load_texture(path: String):
+	var texture = load(path)
 	if texture:
 		return texture
 
