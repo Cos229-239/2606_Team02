@@ -10,6 +10,7 @@ const ORDERS_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_orders_button.p
 const UPGRADES_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrades_nav_button.png"
 const STORAGE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_storage_button.png"
 const BACK_NAV_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_back_nav_button.png"
+const GROWTH_MEDALLION_ART := "res://assets/sprites/ui/ancient_tree_growth_medallion.png"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
 const BLUE := Color("#58d9ff")
@@ -26,7 +27,7 @@ var next_reward_label: Label
 var feedback_label: Label
 var water_button: TextureButton
 var upgrade_button: TextureButton
-var growth_ring: PanelContainer
+var growth_ring: TextureRect
 
 
 func _ready() -> void:
@@ -69,8 +70,8 @@ func _refresh() -> void:
 	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if upgrade_button.disabled else Color.WHITE
 
 	if growth_ring:
-		var alpha := 0.74 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.22
-		growth_ring.modulate = Color(1.0, 1.0, 1.0, alpha)
+		var glow := 0.92 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.08
+		growth_ring.modulate = Color(glow, glow, glow, 1.0)
 
 
 func _add_background() -> void:
@@ -159,31 +160,32 @@ func _add_title() -> void:
 
 
 func _add_growth_badge() -> void:
-	growth_ring = PanelContainer.new()
-	growth_ring.position = Vector2(410, 1168)
-	growth_ring.size = Vector2(260, 230)
-	growth_ring.add_theme_stylebox_override("panel", _make_frame_style(Color("#021e1e", 0.88), Color("#d4a34e"), 4, 112))
+	growth_ring = TextureRect.new()
+	growth_ring.texture = load(GROWTH_MEDALLION_ART)
+	growth_ring.position = Vector2(390, 1120)
+	growth_ring.size = Vector2(300, 300)
+	growth_ring.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	growth_ring.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	growth_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(growth_ring)
 
-	var inner := PanelContainer.new()
-	inner.position = Vector2(22, 16)
-	inner.size = Vector2(216, 198)
-	inner.add_theme_stylebox_override("panel", _make_frame_style(Color("#032a28", 0.86), Color("#38d6c9"), 2, 96))
-	growth_ring.add_child(inner)
-
-	growth_value_label = _make_label("0%", 64, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_value_label.position = Vector2(410, 1222)
-	growth_value_label.size = Vector2(260, 74)
+	growth_value_label = _make_label("0%", 60, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	growth_value_label.position = Vector2(430, 1230)
+	growth_value_label.size = Vector2(220, 68)
 	growth_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	growth_value_label.add_theme_color_override("font_outline_color", Color("#102018"))
+	growth_value_label.add_theme_constant_override("outline_size", 5)
 	add_child(growth_value_label)
 
-	growth_caption_label = _make_label("GROWTH", 24, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_caption_label.position = Vector2(0, 1270)
-	growth_caption_label.size = Vector2(1080, 38)
+	growth_caption_label = _make_label("GROWTH", 24, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
+	growth_caption_label.position = Vector2(430, 1288)
+	growth_caption_label.size = Vector2(220, 36)
+	growth_caption_label.add_theme_color_override("font_outline_color", Color("#102018"))
+	growth_caption_label.add_theme_constant_override("outline_size", 3)
 	add_child(growth_caption_label)
 
 	next_reward_label = _make_label("", 21, Color("#d7f7d2"), HORIZONTAL_ALIGNMENT_CENTER)
-	next_reward_label.position = Vector2(250, 1340)
+	next_reward_label.position = Vector2(250, 1354)
 	next_reward_label.size = Vector2(580, 48)
 	add_child(next_reward_label)
 
