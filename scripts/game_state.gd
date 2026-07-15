@@ -1742,3 +1742,75 @@ func set_sfx_volume(value: float) -> void:
 	if SoundManager:
 		SoundManager.set_sfx_volume(sfx_volume)
 	save_game()
+
+func get_exploration_data(location_id: String) -> Dictionary:
+	match location_id:
+		"forest_trail":
+			return {
+				"LocationID": "forest_trail",
+				"Name": "Forest Trail",
+				"UnlockLevel": 3,
+				"CostMana": 30,
+				"DurationSeconds": 300,
+				"RewardCoinsMin": 100,
+				"RewardCoinsMax": 100
+			}
+		"moonlit_clearing":
+			return {
+				"LocationID": "moonlit_clearing",
+				"Name": "Moonlit Clearing",
+				"UnlockLevel": 6,
+				"CostMana": 300,
+				"DurationSeconds": 1800,
+				"RewardCoinsMin": 500,
+				"RewardCoinsMax": 1000
+			}
+		"crystal_hollow":
+			return {
+				"LocationID": "crystal_hollow",
+				"Name": "Crystal Hollow",
+				"UnlockLevel": 9,
+				"CostMana": 1000,
+				"DurationSeconds": 3600,
+				"RewardCoinsMin": 1000,
+				"RewardCoinsMax": 3000
+			}
+	return {}
+
+
+func get_exploration_locations() -> Array[Dictionary]:
+	return [
+		get_exploration_data("forest_trail"),
+		get_exploration_data("moonlit_clearing"),
+		get_exploration_data("crystal_hollow")
+	]
+
+
+func get_exploration_gate_level() -> int:
+	
+	return min(flower_grove_level, potion_shop_level)
+
+
+func is_exploration_unlocked(location_id: String) -> bool:
+	var data := get_exploration_data(location_id)
+	if data.is_empty():
+		return false
+	return get_exploration_gate_level() >= int(data.get("UnlockLevel", 999))
+
+
+func start_exploration(location_id: String) -> Dictionary:
+	var data := get_exploration_data(location_id)
+	if data.is_empty():
+		return {"Success": false, "Message": "Unknown location."}
+	if not is_exploration_unlocked(location_id):
+		var needed := int(data.get("UnlockLevel", 0))
+		return {"Success": false, "Message": "Locked. Needs Flower Grove and Potion Shop at level %d." % needed}
+	var cost := int(data.get("CostMana", 0))
+	if total_mana < cost:
+		return {"Success": false, "Message": "Not enough Mana."}
+
+	total_mana -= cost
+	resources_changed.emit()
+	save_game()
+	
+	return {"Success": true, "Message": "Exploring %s..." % String(data.get("Name", "location"))}
