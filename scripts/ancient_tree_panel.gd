@@ -63,11 +63,11 @@ func _refresh() -> void:
 	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
 
 	water_button.disabled = growth >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
-	water_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if water_button.disabled else Color.WHITE
+	water_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if water_button.disabled else Color.WHITE
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
-	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if upgrade_button.disabled else Color.WHITE
+	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if upgrade_button.disabled else Color.WHITE
 
 	if growth_ring:
 		var alpha := 0.74 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.22
@@ -190,6 +190,7 @@ func _add_growth_badge() -> void:
 
 
 func _add_action_buttons() -> void:
+	_add_button_backing(Vector2(82, 1414), Vector2(438, 188), 10)
 	upgrade_button = _make_image_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
 	upgrade_button.name = "UpgradeButton"
 	upgrade_button.position = Vector2(82, 1414)
@@ -197,6 +198,7 @@ func _add_action_buttons() -> void:
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
+	_add_button_backing(Vector2(560, 1414), Vector2(438, 188), 10)
 	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree")
 	water_button.name = "RestoreButton"
 	water_button.position = Vector2(560, 1414)
@@ -216,6 +218,7 @@ func _add_bottom_navigation() -> void:
 	]
 	var x := 56
 	for index in range(labels.size()):
+		_add_button_backing(Vector2(x + index * 202, 1650), Vector2(172, 207), 8)
 		var button := _make_image_button(art_paths[index], labels[index])
 		button.name = "AncientTree%sNavButton" % labels[index]
 		button.position = Vector2(x + index * 202, 1650)
@@ -262,6 +265,15 @@ func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	button.stretch_mode = TextureButton.STRETCH_SCALE
 	button.tooltip_text = tooltip
 	return button
+
+
+func _add_button_backing(position: Vector2, size: Vector2, radius: int) -> void:
+	var backing := PanelContainer.new()
+	backing.position = position
+	backing.size = size
+	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backing.add_theme_stylebox_override("panel", _make_frame_style(Color(0.0, 0.0, 0.0, 0.82), Color("#2a1d0c", 0.62), 1, radius))
+	add_child(backing)
 
 
 func _load_button_texture(texture_path: String) -> Texture2D:
