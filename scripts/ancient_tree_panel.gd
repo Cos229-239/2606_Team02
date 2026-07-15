@@ -5,6 +5,11 @@ signal closed
 const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
 const UPGRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrade_button.png"
 const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
+const TRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_trade_button.png"
+const ORDERS_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_orders_button.png"
+const UPGRADES_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrades_nav_button.png"
+const STORAGE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_storage_button.png"
+const BACK_NAV_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_back_nav_button.png"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
 const BLUE := Color("#58d9ff")
@@ -187,27 +192,34 @@ func _add_growth_badge() -> void:
 func _add_action_buttons() -> void:
 	upgrade_button = _make_image_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
 	upgrade_button.name = "UpgradeButton"
-	upgrade_button.position = Vector2(82, 1438)
-	upgrade_button.size = Vector2(438, 112)
+	upgrade_button.position = Vector2(82, 1414)
+	upgrade_button.size = Vector2(438, 188)
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
 	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree")
 	water_button.name = "RestoreButton"
-	water_button.position = Vector2(560, 1438)
-	water_button.size = Vector2(438, 112)
+	water_button.position = Vector2(560, 1414)
+	water_button.size = Vector2(438, 188)
 	water_button.pressed.connect(_on_water_pressed)
 	add_child(water_button)
 
 
 func _add_bottom_navigation() -> void:
 	var labels := ["Trade", "Orders", "Upgrades", "Storage", "Back"]
-	var icons := ["T", "O", "U", "S", "<"]
+	var art_paths := [
+		TRADE_BUTTON_ART,
+		ORDERS_BUTTON_ART,
+		UPGRADES_BUTTON_ART,
+		STORAGE_BUTTON_ART,
+		BACK_NAV_BUTTON_ART,
+	]
 	var x := 56
 	for index in range(labels.size()):
-		var button := _make_nav_button(labels[index], icons[index])
-		button.position = Vector2(x + index * 202, 1666)
-		button.size = Vector2(172, 160)
+		var button := _make_image_button(art_paths[index], labels[index])
+		button.name = "AncientTree%sNavButton" % labels[index]
+		button.position = Vector2(x + index * 202, 1650)
+		button.size = Vector2(172, 207)
 		var nav_label: String = labels[index]
 		if labels[index] == "Back":
 			button.pressed.connect(_on_back_pressed)
@@ -218,7 +230,7 @@ func _add_bottom_navigation() -> void:
 
 func _add_feedback() -> void:
 	feedback_label = _make_label("", 25, GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	feedback_label.position = Vector2(150, 1562)
+	feedback_label.position = Vector2(150, 1594)
 	feedback_label.size = Vector2(780, 58)
 	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(feedback_label)
