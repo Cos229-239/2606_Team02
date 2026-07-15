@@ -42,7 +42,6 @@ func _ready() -> void:
 func _build_screen() -> void:
 	_add_background()
 	_add_top_resource_bar()
-	_add_back_button()
 	_add_title()
 	_add_growth_badge()
 	_add_action_buttons()
