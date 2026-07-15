@@ -241,7 +241,7 @@ func _make_action_button(text: String, bg: Color, accent: Color) -> Button:
 
 func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	var button := TextureButton.new()
-	var texture := load(texture_path)
+	var texture := _load_button_texture(texture_path)
 	button.texture_normal = texture
 	button.texture_hover = texture
 	button.texture_pressed = texture
@@ -250,6 +250,19 @@ func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	button.stretch_mode = TextureButton.STRETCH_SCALE
 	button.tooltip_text = tooltip
 	return button
+
+
+func _load_button_texture(texture_path: String) -> Texture2D:
+	var texture := load(texture_path) as Texture2D
+	if texture:
+		return texture
+
+	var image := Image.new()
+	if image.load(texture_path) == OK:
+		return ImageTexture.create_from_image(image)
+
+	push_warning("Ancient Tree button art failed to load: %s" % texture_path)
+	return null
 
 
 func _make_nav_button(text: String, icon_text: String) -> Button:
