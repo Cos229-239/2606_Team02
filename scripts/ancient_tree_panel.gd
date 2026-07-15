@@ -3,6 +3,7 @@ extends Control
 signal closed
 
 const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
+const ANCIENT_TREE_GROWTH_ART_PATTERN := "res://assets/sprites/panels/ancient_tree_growth/ancient_tree_growth_%03d.jpg"
 const UPGRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrade_button.png"
 const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
 const TRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_trade_button.png"
@@ -28,6 +29,8 @@ var feedback_label: Label
 var water_button: TextureButton
 var upgrade_button: TextureButton
 var growth_ring: TextureRect
+var background_art: TextureRect
+var current_growth_stage := -1
 
 
 func _ready() -> void:
@@ -58,6 +61,7 @@ func _refresh() -> void:
 	potions_value_label.text = str(GameState.mana_potion_count)
 
 	var growth := GameState.grove_restoration
+	_update_growth_background(growth)
 	growth_value_label.text = "%d%%" % growth
 	growth_caption_label.text = "GROWTH"
 	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
@@ -75,19 +79,30 @@ func _refresh() -> void:
 
 
 func _add_background() -> void:
-	var backing := TextureRect.new()
-	backing.texture = load(ANCIENT_TREE_PANEL_ART)
-	backing.set_anchors_preset(Control.PRESET_FULL_RECT)
-	backing.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backing.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backing)
+	background_art = TextureRect.new()
+	background_art.texture = load(ANCIENT_TREE_PANEL_ART)
+	background_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background_art)
 
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.12)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
+
+
+func _update_growth_background(growth: int) -> void:
+	var stage := clampi(int(floor(float(growth) / 5.0)) * 5, 0, 100)
+	if stage == current_growth_stage:
+		return
+	current_growth_stage = stage
+	var stage_path := ANCIENT_TREE_GROWTH_ART_PATTERN % stage
+	var texture := _load_button_texture(stage_path)
+	if texture:
+		background_art.texture = texture
 
 
 func _add_top_resource_bar() -> void:
