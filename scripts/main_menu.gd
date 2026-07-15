@@ -255,7 +255,7 @@ func _show_feedback(message: String) -> void:
 
 
 func _add_sprite(path: String, top_left: Vector2, sprite_size: Vector2, sprite_rotation: float = 0.0, tint: Color = Color.WHITE) -> Sprite2D:
-	var texture := load(path)
+	var texture := _load_texture(path)
 	var sprite := Sprite2D.new()
 	sprite.texture = texture
 	sprite.position = top_left + sprite_size * 0.5
@@ -266,3 +266,16 @@ func _add_sprite(path: String, top_left: Vector2, sprite_size: Vector2, sprite_r
 		sprite.scale = Vector2(sprite_size.x / texture.get_width(), sprite_size.y / texture.get_height())
 	add_child(sprite)
 	return sprite
+
+
+func _load_texture(path: String) -> Texture2D:
+	var texture := load(path) as Texture2D
+	if texture:
+		return texture
+
+	var image := Image.new()
+	if image.load(path) == OK:
+		return ImageTexture.create_from_image(image)
+
+	push_warning("Texture failed to load: %s" % path)
+	return null
