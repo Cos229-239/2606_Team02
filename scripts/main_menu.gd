@@ -268,10 +268,10 @@ func _add_sprite(path: String, top_left: Vector2, sprite_size: Vector2, sprite_r
 	return sprite
 
 
-func _load_texture(path: String):
-	var texture = load(path)
-	if texture:
-		return texture
+func _load_texture(path: String) -> Texture2D:
+	var resource: Resource = load(path)
+	if resource is Texture2D:
+		return resource as Texture2D
 
 	var image := Image.new()
 	if image.load(path) == OK:

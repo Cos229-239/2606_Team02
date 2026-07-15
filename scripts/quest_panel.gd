@@ -105,7 +105,6 @@ func _refresh() -> void:
 	for child in quest_list.get_children():
 		child.queue_free()
 
- HEAD
 	_update_tab_highlight()
 
 	if current_tab == "active":
@@ -170,7 +169,6 @@ func _sort_quests_for_display(a: Dictionary, b: Dictionary) -> bool:
 	if not is_equal_approx(a_progress, b_progress):
 		return a_progress > b_progress
 	return String(a.get("QuestTitle", "")) < String(b.get("QuestTitle", ""))
- TurboPersonal
 
 
 func _make_quest_card(quest: Dictionary) -> PanelContainer:
@@ -220,7 +218,6 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	progress.show_percentage = false
 	layout.add_child(progress)
 
- HEAD
 	if current_tab == "completed":
 		layout.add_child(_make_label("Reward claimed", 22, Color("#9fe0a0")))
 	elif current_tab == "future":
@@ -250,7 +247,6 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 			_refresh()
 	)
 	layout.add_child(claim_button)
- TurboPersonal
 
 	return card
 

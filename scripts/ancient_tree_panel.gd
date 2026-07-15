@@ -252,10 +252,10 @@ func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	return button
 
 
-func _load_button_texture(texture_path: String):
-	var texture = load(texture_path)
-	if texture:
-		return texture
+func _load_button_texture(texture_path: String) -> Texture2D:
+	var resource: Resource = load(texture_path)
+	if resource is Texture2D:
+		return resource as Texture2D
 
 	var image := Image.new()
 	if image.load(texture_path) == OK:
