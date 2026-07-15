@@ -20,8 +20,7 @@ var growth_caption_label: Label
 var next_reward_label: Label
 var feedback_label: Label
 var water_button: TextureButton
-var upgrade_button: Button
-var upgrade_button_art: TextureRect
+var upgrade_button: TextureButton
 var growth_ring: PanelContainer
 
 
@@ -63,7 +62,7 @@ func _refresh() -> void:
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
-	upgrade_button_art.modulate = Color(1.0, 1.0, 1.0, 0.88) if upgrade_button.disabled else Color.WHITE
+	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if upgrade_button.disabled else Color.WHITE
 
 	if growth_ring:
 		var alpha := 0.74 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.22
@@ -186,11 +185,10 @@ func _add_growth_badge() -> void:
 
 
 func _add_action_buttons() -> void:
-	upgrade_button = _make_art_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
+	upgrade_button = _make_image_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
 	upgrade_button.name = "UpgradeButton"
 	upgrade_button.position = Vector2(82, 1438)
 	upgrade_button.size = Vector2(438, 112)
-	upgrade_button_art = upgrade_button.get_node("Art") as TextureRect
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
@@ -241,26 +239,6 @@ func _make_action_button(text: String, bg: Color, accent: Color) -> Button:
 	return button
 
 
-func _make_art_button(texture_path: String, tooltip: String) -> Button:
-	var button := Button.new()
-	button.text = ""
-	button.tooltip_text = tooltip
-	button.add_theme_stylebox_override("normal", _make_transparent_style())
-	button.add_theme_stylebox_override("hover", _make_transparent_style())
-	button.add_theme_stylebox_override("pressed", _make_transparent_style())
-	button.add_theme_stylebox_override("disabled", _make_transparent_style())
-
-	var art := TextureRect.new()
-	art.name = "Art"
-	art.texture = load(texture_path)
-	art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = TextureRect.STRETCH_SCALE
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(art)
-	return button
-
-
 func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	var button := TextureButton.new()
 	var texture := load(texture_path)
@@ -272,18 +250,6 @@ func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	button.stretch_mode = TextureButton.STRETCH_SCALE
 	button.tooltip_text = tooltip
 	return button
-
-
-func _make_transparent_style() -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color.TRANSPARENT
-	style.border_color = Color.TRANSPARENT
-	style.set_border_width_all(0)
-	style.content_margin_left = 0
-	style.content_margin_right = 0
-	style.content_margin_top = 0
-	style.content_margin_bottom = 0
-	return style
 
 
 func _make_nav_button(text: String, icon_text: String) -> Button:
