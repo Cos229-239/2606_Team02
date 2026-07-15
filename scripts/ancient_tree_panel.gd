@@ -3,6 +3,7 @@ extends Control
 signal closed
 
 const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
+const UPGRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrade_button.png"
 const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
@@ -19,7 +20,7 @@ var growth_caption_label: Label
 var next_reward_label: Label
 var feedback_label: Label
 var water_button: TextureButton
-var upgrade_button: Button
+var upgrade_button: TextureButton
 var growth_ring: PanelContainer
 
 
@@ -61,7 +62,7 @@ func _refresh() -> void:
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
-	upgrade_button.text = "UPGRADED" if growth >= 100 and reward_level == 0 else "UPGRADE"
+	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if upgrade_button.disabled else Color.WHITE
 
 	if growth_ring:
 		var alpha := 0.74 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.22
@@ -184,14 +185,14 @@ func _add_growth_badge() -> void:
 
 
 func _add_action_buttons() -> void:
-	upgrade_button = _make_action_button("UPGRADE", Color("#063c21"), Color("#40a85a"))
+	upgrade_button = _make_image_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
 	upgrade_button.name = "UpgradeButton"
 	upgrade_button.position = Vector2(82, 1438)
 	upgrade_button.size = Vector2(438, 112)
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
-	water_button = _make_water_image_button()
+	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree")
 	water_button.name = "RestoreButton"
 	water_button.position = Vector2(560, 1438)
 	water_button.size = Vector2(438, 112)
@@ -238,16 +239,16 @@ func _make_action_button(text: String, bg: Color, accent: Color) -> Button:
 	return button
 
 
-func _make_water_image_button() -> TextureButton:
+func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	var button := TextureButton.new()
-	var texture := load(WATER_BUTTON_ART)
+	var texture := load(texture_path)
 	button.texture_normal = texture
 	button.texture_hover = texture
 	button.texture_pressed = texture
 	button.texture_disabled = texture
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_SCALE
-	button.tooltip_text = "Water Ancient Tree"
+	button.tooltip_text = tooltip
 	return button
 
 
