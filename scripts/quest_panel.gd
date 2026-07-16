@@ -105,8 +105,19 @@ func _refresh() -> void:
 	for child in quest_list.get_children():
 		child.queue_free()
 
- HEAD
 	_update_tab_highlight()
+
+	if summary_label:
+		var claimable_count := 0
+		var in_progress_count := 0
+		for quest in GameState.quests:
+			if bool(quest.get("IsClaimed", false)):
+				continue
+			if bool(quest.get("IsCompleted", false)):
+				claimable_count += 1
+			else:
+				in_progress_count += 1
+		summary_label.text = "%d ready to claim - %d in progress" % [claimable_count, in_progress_count]
 
 	if current_tab == "active":
 		title_label.text = "Active Quests"
@@ -134,29 +145,6 @@ func _empty_text_for_tab() -> String:
 		return "No upcoming quests. You've unlocked them all!"
 	return "No completed quests yet."
 
-	var active_quests: Array[Dictionary] = []
-	var claimable_count := 0
-	var in_progress_count := 0
-	for quest in GameState.quests:
-		if bool(quest.get("IsClaimed", false)):
-			continue
-		active_quests.append(quest)
-		if bool(quest.get("IsCompleted", false)):
-			claimable_count += 1
-		else:
-			in_progress_count += 1
-
-	active_quests.sort_custom(_sort_quests_for_display)
-	if summary_label:
-		summary_label.text = "%d ready to claim - %d in progress" % [claimable_count, in_progress_count]
-
-	if active_quests.is_empty():
-		quest_list.add_child(_make_empty_state())
-		return
-
-	for quest in active_quests:
-		quest_list.add_child(_make_quest_card(quest))
-
 
 func _sort_quests_for_display(a: Dictionary, b: Dictionary) -> bool:
 	var a_completed := bool(a.get("IsCompleted", false))
@@ -170,7 +158,6 @@ func _sort_quests_for_display(a: Dictionary, b: Dictionary) -> bool:
 	if not is_equal_approx(a_progress, b_progress):
 		return a_progress > b_progress
 	return String(a.get("QuestTitle", "")) < String(b.get("QuestTitle", ""))
- TurboPersonal
 
 
 func _make_quest_card(quest: Dictionary) -> PanelContainer:
@@ -220,7 +207,6 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	progress.show_percentage = false
 	layout.add_child(progress)
 
- HEAD
 	if current_tab == "completed":
 		layout.add_child(_make_label("Reward claimed", 22, Color("#9fe0a0")))
 	elif current_tab == "future":
@@ -250,7 +236,6 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 			_refresh()
 	)
 	layout.add_child(claim_button)
- TurboPersonal
 
 	return card
 

@@ -1984,7 +1984,6 @@ func _reset_quests_to_defaults() -> void:
 		1
 	))
 	quests.append(_make_quest(
- HEAD
 		"mana_gatherer",
 		"Mana Gatherer",
 		"Collect 250 mana from the Flower Grove.",
@@ -2120,14 +2119,12 @@ func _reset_quests_to_defaults() -> void:
 		25
 	))
 	quests.append(_make_quest(
-TurboPersonal
 		"fairy_work",
 		"A Fairy's Work",
 		"Assign a fairy to the Flower Grove.",
 		QUEST_GOAL_ASSIGN_FLOWER_FAIRY,
 		1,
 		QUEST_REWARD_COINS,
- HEAD
 		50,
 		"assign_flower_fairy",
 		1
@@ -2199,8 +2196,6 @@ TurboPersonal
 		25,
 		"restore_waters",
 		1
-
-		50
 	))
 	quests.append(_make_quest(
 		"beginner_brewer",
@@ -2228,7 +2223,6 @@ TurboPersonal
 		1,
 		QUEST_REWARD_COINS,
 		60
- TurboPersonal
 	))
 	quests.append(_make_quest(
 		"awaken_roots",
@@ -2237,12 +2231,9 @@ TurboPersonal
 		QUEST_GOAL_RESTORE_TREE,
 		1,
 		QUEST_REWARD_MANA,
- HEAD
 		75,
 		"awaken_roots",
 		1
-
-		75
 	))
 	quests.append(_make_quest(
 		"first_forging",
@@ -2252,7 +2243,6 @@ TurboPersonal
 		1,
 		QUEST_REWARD_COINS,
 		100
- TurboPersonal
 	))
 
 
@@ -2689,7 +2679,6 @@ func apply_save_data(data: Dictionary) -> void:
 	if saved_tree_rewards is Array:
 		for reward_level in saved_tree_rewards:
 			ancient_tree_claimed_rewards.append(int(reward_level))
- HEAD
 	forge_level = int(data.get("forge_level", 1))
 	forge_flower_focus_level = int(data.get("forge_flower_focus_level", 0))
 	forge_potion_gilding_level = int(data.get("forge_potion_gilding_level", 0))
@@ -2721,7 +2710,6 @@ func apply_save_data(data: Dictionary) -> void:
 	forge_pond_resonance_level = min(max(0, int(data.get("forge_pond_resonance_level", 0))), 3)
 	forge_level = 1 + forge_flower_focus_level + forge_potion_gilding_level + forge_pond_resonance_level
 	_apply_saved_quests(data.get("quests", []))
- TurboPersonal
 	has_completed_onboarding = bool(data.get("has_completed_onboarding", true))
 	first_merge_complete = bool(data.get("first_merge_complete", has_completed_onboarding))
 	show_tutorial_after_reset = bool(data.get("show_tutorial_after_reset", false))
