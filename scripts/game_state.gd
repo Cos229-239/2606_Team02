@@ -2120,17 +2120,6 @@ func _reset_quests_to_defaults() -> void:
 		1
 	))
 	quests.append(_make_quest(
-		"awaken_roots",
-		"Awaken the Roots",
-		"Restore the Ancient Tree.",
-		QUEST_GOAL_RESTORE_TREE,
-		1,
-		QUEST_REWARD_MANA,
-		75,
-		"awaken_roots",
-		1
-	))
-	quests.append(_make_quest(
 		"fairy_work",
 		"A Fairy's Work",
 		"Assign a fairy to the Flower Grove.",
