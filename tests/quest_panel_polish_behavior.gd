@@ -51,8 +51,8 @@ func _run() -> void:
 	if _find_node(panel, "QuestCard_first_harvest") != null:
 		fail("Claimed quest should disappear from the active quest list")
 		return
-	if summary.text != "0 ready to claim - 7 in progress":
-		fail("Quest summary should refresh after claiming a reward")
+	if summary.text != "0 ready to claim - 8 in progress":
+		fail("Quest summary should refresh after claiming a reward and unlocking the next tier")
 		return
 
 	panel.queue_free()

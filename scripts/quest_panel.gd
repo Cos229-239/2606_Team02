@@ -110,9 +110,7 @@ func _refresh() -> void:
 	if summary_label:
 		var claimable_count := 0
 		var in_progress_count := 0
-		for quest in GameState.quests:
-			if bool(quest.get("IsClaimed", false)):
-				continue
+		for quest in GameState.get_quests_in_bucket("active"):
 			if bool(quest.get("IsCompleted", false)):
 				claimable_count += 1
 			else:
@@ -212,9 +210,10 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 	elif current_tab == "future":
 		layout.add_child(_make_label("Unlocks after the previous tier.", 22, Color("#c9b78a")))
 	else:
-		var claim_button := _make_button("Claim Reward")
+		var claim_button := _make_button("Claim Reward" if is_completed else "Keep Going")
+		claim_button.name = "ClaimButton_%s" % String(quest.get("QuestID", "quest"))
 		claim_button.custom_minimum_size = Vector2(260, 58)
-		claim_button.disabled = not bool(quest.get("IsCompleted", false))
+		claim_button.disabled = not is_completed
 		var quest_id := String(quest.get("QuestID", ""))
 		claim_button.pressed.connect(func() -> void:
 			SoundManager.play_collect()
@@ -223,19 +222,6 @@ func _make_quest_card(quest: Dictionary) -> PanelContainer:
 				_refresh()
 		)
 		layout.add_child(claim_button)
-
-	var claim_button := _make_button("Claim Reward" if is_completed else "Keep Going")
-	claim_button.name = "ClaimButton_%s" % String(quest.get("QuestID", "quest"))
-	claim_button.custom_minimum_size = Vector2(260, 58)
-	claim_button.disabled = not is_completed
-	var quest_id := String(quest.get("QuestID", ""))
-	claim_button.pressed.connect(func() -> void:
-		SoundManager.play_collect()
-		if GameState.claim_quest_reward(quest_id):
-			feedback_label.text = "Quest Complete! Reward claimed."
-			_refresh()
-	)
-	layout.add_child(claim_button)
 
 	return card
 

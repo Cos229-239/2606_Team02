@@ -4,8 +4,10 @@ func _init() -> void:
 	var state = load("res://scripts/game_state.gd").new()
 	state.reset_to_defaults()
 
-	if state.quests.size() != 8:
-		fail("Expected eight starting quests")
+	if state.get_quests_in_bucket("active").size() != 8:
+		fail("Expected eight active starting quests")
+	if state.get_quests_in_bucket("future").size() != 12:
+		fail("Expected twelve future tiered quests")
 	if state.has_claimable_quest_rewards():
 		fail("No quests should be claimable at start")
 
@@ -18,6 +20,8 @@ func _init() -> void:
 		fail("First Harvest reward should be claimable")
 	if state.total_coins != 25:
 		fail("First Harvest should reward 25 coins")
+	if state.get_quest_bucket({"QuestID": "mana_gatherer", "ChainID": "collect_mana", "Tier": 2}) != "active":
+		fail("Claiming First Harvest should unlock the next mana quest tier")
 
 	state.total_mana = 25
 	if not state.restore_sacred_pond():

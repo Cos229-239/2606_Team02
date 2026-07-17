@@ -2185,45 +2185,7 @@ func _reset_quests_to_defaults() -> void:
 		"forge_upgrade",
 		3
 	))
-	#  One-off quests (not repeatable in-game) 
-	quests.append(_make_quest(
-		"restore_waters",
-		"Restore the Waters",
-		"Use mana to restore the Sacred Koi Pond.",
-		QUEST_GOAL_RESTORE_POND,
-		1,
-		QUEST_REWARD_MANA,
-		25,
-		"restore_waters",
-		1
-	))
-	quests.append(_make_quest(
-		"beginner_brewer",
-		"Beginner Brewer",
-		"Craft your first Mana Potion.",
-		QUEST_GOAL_CRAFT_POTION,
-		1,
-		QUEST_REWARD_COINS,
-		50
-	))
-	quests.append(_make_quest(
-		"village_growth",
-		"Village Growth",
-		"Upgrade the Flower Grove.",
-		QUEST_GOAL_UPGRADE_FLOWER,
-		1,
-		QUEST_REWARD_COINS,
-		75
-	))
-	quests.append(_make_quest(
-		"first_trade",
-		"First Trade",
-		"Fulfill a Market Stall order.",
-		QUEST_GOAL_MARKET_TRADE,
-		1,
-		QUEST_REWARD_COINS,
-		60
-	))
+	# One-off quests.
 	quests.append(_make_quest(
 		"awaken_roots",
 		"Awaken the Roots",
@@ -2234,15 +2196,6 @@ func _reset_quests_to_defaults() -> void:
 		75,
 		"awaken_roots",
 		1
-	))
-	quests.append(_make_quest(
-		"first_forging",
-		"First Forging",
-		"Purchase an Arcane Forge upgrade.",
-		QUEST_GOAL_FORGE_UPGRADE,
-		1,
-		QUEST_REWARD_COINS,
-		100
 	))
 
 
