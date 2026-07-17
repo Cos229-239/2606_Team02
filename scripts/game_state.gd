@@ -2109,14 +2109,26 @@ func _reset_quests_to_defaults() -> void:
 	))
 	# Assign Flower Fairy chain
 	quests.append(_make_quest(
-
 		"restore_waters",
 		"Restore the Waters",
 		"Use mana to restore the Sacred Koi Pond.",
 		QUEST_GOAL_RESTORE_POND,
 		1,
 		QUEST_REWARD_MANA,
-		25
+		25,
+		"restore_waters",
+		1
+	))
+	quests.append(_make_quest(
+		"awaken_roots",
+		"Awaken the Roots",
+		"Restore the Ancient Tree.",
+		QUEST_GOAL_RESTORE_TREE,
+		1,
+		QUEST_REWARD_MANA,
+		75,
+		"awaken_roots",
+		1
 	))
 	quests.append(_make_quest(
 		"fairy_work",

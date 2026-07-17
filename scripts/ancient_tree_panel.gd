@@ -3,7 +3,15 @@ extends Control
 signal closed
 
 const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.jpg"
+const ANCIENT_TREE_GROWTH_ART_PATTERN := "res://assets/sprites/panels/ancient_tree_growth/ancient_tree_growth_%03d.jpg"
+const UPGRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrade_button.png"
 const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
+const TRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_trade_button.png"
+const ORDERS_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_orders_button.png"
+const UPGRADES_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrades_nav_button.png"
+const STORAGE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_storage_button.png"
+const BACK_NAV_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_back_nav_button.png"
+const GROWTH_MEDALLION_ART := "res://assets/sprites/ui/ancient_tree_growth_medallion.png"
 const GOLD := Color("#f5d66f")
 const SOFT_GOLD := Color("#fff2c6")
 const BLUE := Color("#58d9ff")
@@ -19,8 +27,10 @@ var growth_caption_label: Label
 var next_reward_label: Label
 var feedback_label: Label
 var water_button: TextureButton
-var upgrade_button: Button
-var growth_ring: PanelContainer
+var upgrade_button: TextureButton
+var growth_ring: TextureRect
+var background_art: TextureRect
+var current_growth_stage := -1
 
 
 func _ready() -> void:
@@ -36,7 +46,6 @@ func _ready() -> void:
 func _build_screen() -> void:
 	_add_background()
 	_add_top_resource_bar()
-	_add_back_button()
 	_add_title()
 	_add_growth_badge()
 	_add_action_buttons()
@@ -52,36 +61,48 @@ func _refresh() -> void:
 	potions_value_label.text = str(GameState.mana_potion_count)
 
 	var growth := GameState.grove_restoration
+	_update_growth_background(growth)
 	growth_value_label.text = "%d%%" % growth
 	growth_caption_label.text = "GROWTH"
 	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
 
 	water_button.disabled = growth >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
-	water_button.modulate = Color(1.0, 1.0, 1.0, 0.88) if water_button.disabled else Color.WHITE
+	water_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if water_button.disabled else Color.WHITE
 
 	var reward_level := _get_next_claimable_reward_level()
 	upgrade_button.disabled = reward_level == 0
-	upgrade_button.text = "UPGRADED" if growth >= 100 and reward_level == 0 else "UPGRADE"
+	upgrade_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if upgrade_button.disabled else Color.WHITE
 
 	if growth_ring:
-		var alpha := 0.74 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.22
-		growth_ring.modulate = Color(1.0, 1.0, 1.0, alpha)
+		var glow := 0.92 + clampf(float(growth) / 100.0, 0.0, 1.0) * 0.08
+		growth_ring.modulate = Color(glow, glow, glow, 1.0)
 
 
 func _add_background() -> void:
-	var backing := TextureRect.new()
-	backing.texture = load(ANCIENT_TREE_PANEL_ART)
-	backing.set_anchors_preset(Control.PRESET_FULL_RECT)
-	backing.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backing.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backing)
+	background_art = TextureRect.new()
+	background_art.texture = load(ANCIENT_TREE_PANEL_ART)
+	background_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background_art)
 
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.12)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
+
+
+func _update_growth_background(growth: int) -> void:
+	var stage := clampi(int(floor(float(growth) / 5.0)) * 5, 0, 100)
+	if stage == current_growth_stage:
+		return
+	current_growth_stage = stage
+	var stage_path := ANCIENT_TREE_GROWTH_ART_PATTERN % stage
+	var texture := _load_button_texture(stage_path)
+	if texture:
+		background_art.texture = texture
 
 
 func _add_top_resource_bar() -> void:
@@ -154,59 +175,70 @@ func _add_title() -> void:
 
 
 func _add_growth_badge() -> void:
-	growth_ring = PanelContainer.new()
-	growth_ring.position = Vector2(410, 1168)
-	growth_ring.size = Vector2(260, 230)
-	growth_ring.add_theme_stylebox_override("panel", _make_frame_style(Color("#021e1e", 0.88), Color("#d4a34e"), 4, 112))
+	growth_ring = TextureRect.new()
+	growth_ring.texture = load(GROWTH_MEDALLION_ART)
+	growth_ring.position = Vector2(390, 1120)
+	growth_ring.size = Vector2(300, 300)
+	growth_ring.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	growth_ring.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	growth_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(growth_ring)
 
-	var inner := PanelContainer.new()
-	inner.position = Vector2(22, 16)
-	inner.size = Vector2(216, 198)
-	inner.add_theme_stylebox_override("panel", _make_frame_style(Color("#032a28", 0.86), Color("#38d6c9"), 2, 96))
-	growth_ring.add_child(inner)
-
-	growth_value_label = _make_label("0%", 64, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_value_label.position = Vector2(410, 1222)
-	growth_value_label.size = Vector2(260, 74)
+	growth_value_label = _make_label("0%", 60, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	growth_value_label.position = Vector2(430, 1230)
+	growth_value_label.size = Vector2(220, 68)
 	growth_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	growth_value_label.add_theme_color_override("font_outline_color", Color("#102018"))
+	growth_value_label.add_theme_constant_override("outline_size", 5)
 	add_child(growth_value_label)
 
-	growth_caption_label = _make_label("GROWTH", 24, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_caption_label.position = Vector2(0, 1270)
-	growth_caption_label.size = Vector2(1080, 38)
+	growth_caption_label = _make_label("GROWTH", 24, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
+	growth_caption_label.position = Vector2(430, 1288)
+	growth_caption_label.size = Vector2(220, 36)
+	growth_caption_label.add_theme_color_override("font_outline_color", Color("#102018"))
+	growth_caption_label.add_theme_constant_override("outline_size", 3)
 	add_child(growth_caption_label)
 
 	next_reward_label = _make_label("", 21, Color("#d7f7d2"), HORIZONTAL_ALIGNMENT_CENTER)
-	next_reward_label.position = Vector2(250, 1340)
+	next_reward_label.position = Vector2(250, 1354)
 	next_reward_label.size = Vector2(580, 48)
 	add_child(next_reward_label)
 
 
 func _add_action_buttons() -> void:
-	upgrade_button = _make_action_button("UPGRADE", Color("#063c21"), Color("#40a85a"))
+	_add_button_backing(Vector2(82, 1414), Vector2(438, 188), 10)
+	upgrade_button = _make_image_button(UPGRADE_BUTTON_ART, "Claim Ancient Tree reward")
 	upgrade_button.name = "UpgradeButton"
-	upgrade_button.position = Vector2(82, 1438)
-	upgrade_button.size = Vector2(438, 112)
+	upgrade_button.position = Vector2(82, 1414)
+	upgrade_button.size = Vector2(438, 188)
 	upgrade_button.pressed.connect(_on_upgrade_pressed)
 	add_child(upgrade_button)
 
-	water_button = _make_water_image_button()
+	_add_button_backing(Vector2(560, 1414), Vector2(438, 188), 10)
+	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree")
 	water_button.name = "RestoreButton"
-	water_button.position = Vector2(560, 1438)
-	water_button.size = Vector2(438, 112)
+	water_button.position = Vector2(560, 1414)
+	water_button.size = Vector2(438, 188)
 	water_button.pressed.connect(_on_water_pressed)
 	add_child(water_button)
 
 
 func _add_bottom_navigation() -> void:
 	var labels := ["Trade", "Orders", "Upgrades", "Storage", "Back"]
-	var icons := ["T", "O", "U", "S", "<"]
+	var art_paths := [
+		TRADE_BUTTON_ART,
+		ORDERS_BUTTON_ART,
+		UPGRADES_BUTTON_ART,
+		STORAGE_BUTTON_ART,
+		BACK_NAV_BUTTON_ART,
+	]
 	var x := 56
 	for index in range(labels.size()):
-		var button := _make_nav_button(labels[index], icons[index])
-		button.position = Vector2(x + index * 202, 1666)
-		button.size = Vector2(172, 160)
+		_add_button_backing(Vector2(x + index * 202, 1650), Vector2(172, 207), 8)
+		var button := _make_image_button(art_paths[index], labels[index])
+		button.name = "AncientTree%sNavButton" % labels[index]
+		button.position = Vector2(x + index * 202, 1650)
+		button.size = Vector2(172, 207)
 		var nav_label: String = labels[index]
 		if labels[index] == "Back":
 			button.pressed.connect(_on_back_pressed)
@@ -217,7 +249,7 @@ func _add_bottom_navigation() -> void:
 
 func _add_feedback() -> void:
 	feedback_label = _make_label("", 25, GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	feedback_label.position = Vector2(150, 1562)
+	feedback_label.position = Vector2(150, 1594)
 	feedback_label.size = Vector2(780, 58)
 	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(feedback_label)
@@ -238,17 +270,39 @@ func _make_action_button(text: String, bg: Color, accent: Color) -> Button:
 	return button
 
 
-func _make_water_image_button() -> TextureButton:
+func _make_image_button(texture_path: String, tooltip: String) -> TextureButton:
 	var button := TextureButton.new()
-	var texture := load(WATER_BUTTON_ART)
+	var texture := _load_button_texture(texture_path)
 	button.texture_normal = texture
 	button.texture_hover = texture
 	button.texture_pressed = texture
 	button.texture_disabled = texture
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_SCALE
-	button.tooltip_text = "Water Ancient Tree"
+	button.tooltip_text = tooltip
 	return button
+
+
+func _add_button_backing(position: Vector2, size: Vector2, radius: int) -> void:
+	var backing := PanelContainer.new()
+	backing.position = position
+	backing.size = size
+	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backing.add_theme_stylebox_override("panel", _make_frame_style(Color(0.0, 0.0, 0.0, 0.82), Color("#2a1d0c", 0.62), 1, radius))
+	add_child(backing)
+
+
+func _load_button_texture(texture_path: String) -> Texture2D:
+	var resource: Resource = load(texture_path)
+	if resource is Texture2D:
+		return resource as Texture2D
+
+	var image := Image.new()
+	if image.load(texture_path) == OK:
+		return ImageTexture.create_from_image(image)
+
+	push_warning("Ancient Tree button art failed to load: %s" % texture_path)
+	return null
 
 
 func _make_nav_button(text: String, icon_text: String) -> Button:

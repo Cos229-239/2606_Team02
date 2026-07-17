@@ -136,6 +136,7 @@ func _build_building_hit_layer() -> void:
 func _build_village_background() -> void:
 	var existing_background := get_node_or_null("EditableHomeMap/BackgroundPreview") as TextureRect
 	if existing_background:
+		existing_background.texture = _load_texture(VILLAGE_BACKGROUND_PATH)
 		existing_background.material = _make_background_glow_material()
 		return
 
@@ -147,7 +148,7 @@ func _build_village_background() -> void:
 	move_child(backing, 0)
 
 	var background := TextureRect.new()
-	background.texture = load(VILLAGE_BACKGROUND_PATH)
+	background.texture = _load_texture(VILLAGE_BACKGROUND_PATH)
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -157,9 +158,13 @@ func _build_village_background() -> void:
 	move_child(background, 1)
 
 
-func _make_background_glow_material() -> ShaderMaterial:
+func _make_background_glow_material():
+	var shader = load(BACKGROUND_GLOW_SHADER_PATH)
+	if shader == null:
+		return null
+
 	var glow_material := ShaderMaterial.new()
-	glow_material.shader = load(BACKGROUND_GLOW_SHADER_PATH)
+	glow_material.shader = shader
 	glow_material.set_shader_parameter("pulse_speed", 1.35)
 	glow_material.set_shader_parameter("pulse_strength", 0.26)
 	glow_material.set_shader_parameter("glow_threshold", 0.34)
@@ -590,7 +595,7 @@ func _add_restoration_label(text: String, position: Vector2) -> void:
 
 
 func _add_layer_sprite(parent: Node, path: String, top_left: Vector2, size: Vector2, tint: Color = Color.WHITE) -> Sprite2D:
-	var texture := load(path)
+	var texture := _load_texture(path)
 	var sprite := Sprite2D.new()
 	sprite.texture = texture
 	sprite.position = top_left + size * 0.5
@@ -1234,7 +1239,7 @@ func _make_nav_button(text: String, texture_path: String, callback: Callable) ->
 	button.name = "%sNavButton" % text.replace(" ", "")
 	button.custom_minimum_size = Vector2(184, 106)
 	button.size = Vector2(184, 106)
-	button.texture_normal = load(texture_path)
+	button.texture_normal = _load_texture(texture_path)
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -1288,7 +1293,7 @@ func _style_quest_badge(badge: Label) -> void:
 
 
 func _add_sprite(path: String, top_left: Vector2, size: Vector2, rotation: float = 0.0, tint: Color = Color.WHITE) -> Sprite2D:
-	var texture := load(path)
+	var texture := _load_texture(path)
 	var sprite := Sprite2D.new()
 	sprite.texture = texture
 	sprite.position = top_left + size * 0.5
@@ -1299,6 +1304,19 @@ func _add_sprite(path: String, top_left: Vector2, size: Vector2, rotation: float
 		sprite.scale = Vector2(size.x / texture.get_width(), size.y / texture.get_height())
 	add_child(sprite)
 	return sprite
+
+
+func _load_texture(path: String) -> Texture2D:
+	var resource: Resource = load(path)
+	if resource is Texture2D:
+		return resource as Texture2D
+
+	var image := Image.new()
+	if image.load(path) == OK:
+		return ImageTexture.create_from_image(image)
+
+	push_warning("Texture failed to load: %s" % path)
+	return null
 
 
 func _add_poly(points: PackedVector2Array, color: Color) -> Polygon2D:
