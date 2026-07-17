@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b1cg4n0bhk7fm"
-path="res://.godot/imported/ancient_tree_upgrade_button.png-3b4e43f1313169a97cc48cececc86b6a.ctex"
+uid="uid://c8levoc0yhy7c"
+path="res://.godot/imported/ancient_tree_growth_015.jpg-daecd809aa11edf28dd0e8b1662e3373.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/ui/ancient_tree_upgrade_button.png"
-dest_files=["res://.godot/imported/ancient_tree_upgrade_button.png-3b4e43f1313169a97cc48cececc86b6a.ctex"]
+source_file="res://assets/sprites/panels/ancient_tree_growth/ancient_tree_growth_015.jpg"
+dest_files=["res://.godot/imported/ancient_tree_growth_015.jpg-daecd809aa11edf28dd0e8b1662e3373.ctex"]
 
 [params]
 
