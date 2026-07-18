@@ -1,15 +1,15 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://d4dnmvoeui2fp"]
 
-[ext_resource type="Script" path="res://scripts/fairy_house_panel.gd" id="1_lvnyy"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_house_interior.png" id="2_pt6mn"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/title_plaque.png" id="3_t6wvy"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_luna_gatherer.png" id="4_k5fun"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png" id="5_6ncqt"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/fairy_nim_sleeping.png" id="6_ttsoe"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_workers.png" id="7_16jc7"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_tasks.png" id="8_yxeod"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_upgrades.png" id="9_f0jg4"]
-[ext_resource type="Texture2D" path="res://assets/sprites/fairy_house/button_back.png" id="10_i1onl"]
+[ext_resource type="Script" uid="uid://bslaalrinbeaj" path="res://scripts/fairy_house_panel.gd" id="1_lvnyy"]
+[ext_resource type="Texture2D" uid="uid://6fnib53qspm8" path="res://assets/sprites/fairy_house/fairy_house_interior.png" id="2_pt6mn"]
+[ext_resource type="Texture2D" uid="uid://bxaac1kaxxaeo" path="res://assets/sprites/fairy_house/title_plaque.png" id="3_t6wvy"]
+[ext_resource type="Texture2D" uid="uid://h7of068lyjgh" path="res://assets/sprites/fairy_house/fairy_luna_gatherer.png" id="4_k5fun"]
+[ext_resource type="Texture2D" uid="uid://c3kb8lgagjfhp" path="res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png" id="5_6ncqt"]
+[ext_resource type="Texture2D" uid="uid://4vq5cwfsk0k7" path="res://assets/sprites/fairy_house/fairy_nim_sleeping.png" id="6_ttsoe"]
+[ext_resource type="Texture2D" uid="uid://cpufq51ka5w3c" path="res://assets/sprites/fairy_house/button_workers.png" id="7_16jc7"]
+[ext_resource type="Texture2D" uid="uid://pwmnspjwrgqe" path="res://assets/sprites/fairy_house/button_tasks.png" id="8_yxeod"]
+[ext_resource type="Texture2D" uid="uid://mk8b7g4sf81" path="res://assets/sprites/fairy_house/button_upgrades.png" id="9_f0jg4"]
+[ext_resource type="Texture2D" uid="uid://dk40cisif6l64" path="res://assets/sprites/fairy_house/button_back.png" id="10_i1onl"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tirmr"]
 bg_color = Color(0.012, 0.018, 0.04, 0.8)
@@ -96,6 +96,7 @@ corner_radius_bottom_left = 16
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ujv1v"]
 
 [node name="FairyHousePanel" type="PanelContainer" unique_id=1808758873]
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_lvnyy")
@@ -148,11 +149,11 @@ offset_left = 112.0
 offset_top = 204.0
 offset_right = 968.0
 offset_bottom = 282.0
-theme_override_font_sizes/font_size = 23
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 23
 text = "Residents  3 / 3        Workers Active  2        Resting  1        House Level  1"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -178,15 +179,15 @@ texture = ExtResource("6_ttsoe")
 
 [node name="WorkersTitle" type="Label" parent="Root" unique_id=1691224328]
 layout_mode = 0
-offset_left = 90.0
-offset_top = 1098.0
-offset_right = 990.0
-offset_bottom = 1146.0
-theme_override_font_sizes/font_size = 32
+offset_left = 88.0
+offset_top = 1129.0
+offset_right = 988.0
+offset_bottom = 1177.0
 theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 32
 text = "Fairy Workers"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -194,12 +195,10 @@ autowrap_mode = 3
 
 [node name="FairyCardsScroll" type="ScrollContainer" parent="Root" unique_id=837443539]
 layout_mode = 0
-offset_left = 72.0
-offset_top = 1152.0
-offset_right = 1008.0
-offset_bottom = 1502.0
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 0
+offset_left = 60.0
+offset_top = 1218.0
+offset_right = 1029.0
+offset_bottom = 1635.0
 
 [node name="FairyCardsContainer" type="HBoxContainer" parent="Root/FairyCardsScroll" unique_id=154346982]
 layout_mode = 2
@@ -243,11 +242,11 @@ texture = ExtResource("4_k5fun")
 [node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewLunaCard/Margin/Layout/ContentRow" unique_id=605542236]
 custom_minimum_size = Vector2(148, 220)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
 text = "Luna
 Gatherer
 Level 1
@@ -318,11 +317,11 @@ texture = ExtResource("5_6ncqt")
 [node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewPipCard/Margin/Layout/ContentRow" unique_id=1957528775]
 custom_minimum_size = Vector2(148, 220)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
 text = "Pip
 Pond Keeper
 Level 1
@@ -393,11 +392,11 @@ texture = ExtResource("6_ttsoe")
 [node name="Details" type="Label" parent="Root/FairyCardsScroll/FairyCardsContainer/EditorPreviewNimCard/Margin/Layout/ContentRow" unique_id=1546369501]
 custom_minimum_size = Vector2(148, 220)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 0.95686275, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
 text = "Nim
 Helper
 Level 1
@@ -437,21 +436,21 @@ offset_left = 110.0
 offset_top = 1510.0
 offset_right = 970.0
 offset_bottom = 1558.0
-theme_override_font_sizes/font_size = 25
 theme_override_colors/font_color = Color(0.9607843, 0.84313726, 0.4745098, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 25
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="ActionBarBackground" type="PanelContainer" parent="Root" unique_id=740983832]
 layout_mode = 0
-offset_left = 32.0
-offset_top = 1632.0
-offset_right = 1048.0
-offset_bottom = 1806.0
+offset_left = 36.0
+offset_top = 1650.0
+offset_right = 1052.0
+offset_bottom = 1824.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ebu57")
 
@@ -477,7 +476,7 @@ flat = true
 
 [node name="Art" type="Sprite2D" parent="Root/ActionRow/WorkersButton" unique_id=1995878475]
 texture_filter = 2
-position = Vector2(119, 56)
+position = Vector2(119, 76)
 scale = Vector2(0.17487141, 0.17487141)
 texture = ExtResource("7_16jc7")
 
@@ -494,7 +493,7 @@ flat = true
 
 [node name="Art" type="Sprite2D" parent="Root/ActionRow/TasksButton" unique_id=1354346821]
 texture_filter = 2
-position = Vector2(109, 56)
+position = Vector2(107, 76)
 scale = Vector2(0.18257956, 0.18257956)
 texture = ExtResource("8_yxeod")
 
@@ -511,7 +510,7 @@ flat = true
 
 [node name="Art" type="Sprite2D" parent="Root/ActionRow/UpgradeHouseButton" unique_id=1509510094]
 texture_filter = 2
-position = Vector2(125, 56)
+position = Vector2(117, 77)
 scale = Vector2(0.16949153, 0.16949153)
 texture = ExtResource("9_f0jg4")
 
@@ -528,6 +527,6 @@ flat = true
 
 [node name="Art" type="Sprite2D" parent="Root/ActionRow/BackButton" unique_id=1650879777]
 texture_filter = 2
-position = Vector2(109, 56)
+position = Vector2(106, 77)
 scale = Vector2(0.20354809, 0.20354809)
 texture = ExtResource("10_i1onl")

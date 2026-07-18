@@ -18,7 +18,9 @@ const UNASSIGN_TEXT := "Unassign"
 const FAIRY_PORTRAITS := {
 	"Luna": "res://assets/sprites/fairy_house/fairy_luna_gatherer.png",
 	"Pip": "res://assets/sprites/fairy_house/fairy_pip_pond_keeper.png",
-	"Nim": "res://assets/sprites/fairy_house/fairy_nim_sleeping.png"
+	"Nim": "res://assets/sprites/fairy_house/fairy_nim_sleeping.png",
+	"Sol": "res://assets/sprites/fairy_house/fairy_sol_gatherer.png",
+	"Mira": "res://assets/sprites/fairy_house/fairy_mira_pond_keeper.png"
 }
 
 func _ready() -> void:
@@ -115,9 +117,16 @@ func _build_panel() -> void:
 	workers_title.add_theme_constant_override("shadow_offset_y", 2)
 	layout.add_child(workers_title)
 
+	var cards_scroll := ScrollContainer.new()
+	cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	cards_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	cards_scroll.custom_minimum_size = Vector2(1, 356)
+	layout.add_child(cards_scroll)
+
 	fairy_cards_container = HBoxContainer.new()
 	fairy_cards_container.add_theme_constant_override("separation", 14)
-	layout.add_child(fairy_cards_container)
+	fairy_cards_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	cards_scroll.add_child(fairy_cards_container)
 
 	feedback_label = Label.new()
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -704,30 +713,46 @@ func _make_recruit_card(fairy: Dictionary) -> PanelContainer:
 	margin.add_child(layout)
 
 	var fairy_name := String(fairy.get("FairyName", "Fairy"))
-	var title := Label.new()
-	title.text = "%s\nRecruit" % fairy_name
-	title.add_theme_font_size_override("font_size", 24)
-	title.add_theme_color_override("font_color", Color("#d8c8ff"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	layout.add_child(title)
 
-	var body := Label.new()
-	body.text = "%s\nLevel 1\n\n%s\n\nCost:\n%s" % [
+	var content_row := HBoxContainer.new()
+	content_row.name = "ContentRow"
+	content_row.custom_minimum_size = Vector2(258, 220)
+	content_row.add_theme_constant_override("separation", 12)
+	layout.add_child(content_row)
+
+	var portrait := Control.new()
+	portrait.name = "PortraitFrame"
+	portrait.custom_minimum_size = Vector2(96, 220)
+	portrait.clip_contents = true
+	var portrait_texture := load(_get_fairy_portrait(fairy_name)) as Texture2D
+	var portrait_sprite := Sprite2D.new()
+	portrait_sprite.name = "Portrait"
+	portrait_sprite.texture = portrait_texture
+	portrait_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	portrait_sprite.position = _get_portrait_position(fairy_name)
+	if portrait_texture:
+		var scale_factor: float = _get_portrait_scale(fairy_name, portrait_texture)
+		portrait_sprite.scale = Vector2.ONE * scale_factor
+	portrait.add_child(portrait_sprite)
+	content_row.add_child(portrait)
+
+	var details := Label.new()
+	details.name = "Details"
+	details.text = "%s\nRecruit\n\n%s\nLevel 1\n\n%s\n\nCost:\n%s" % [
+		fairy_name,
 		String(fairy.get("FairyRole", "Helper")),
 		GameState.get_fairy_specialty_text(fairy),
 		GameState.get_fairy_recruit_cost_text(fairy_name)
 	]
-	body.custom_minimum_size = Vector2(1, 205)
-	body.add_theme_font_size_override("font_size", 16)
-	body.add_theme_color_override("font_color", Color("#fff0c2"))
-	body.add_theme_color_override("font_shadow_color", Color.BLACK)
-	body.add_theme_constant_override("shadow_offset_x", 2)
-	body.add_theme_constant_override("shadow_offset_y", 2)
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	layout.add_child(body)
+	details.custom_minimum_size = Vector2(148, 220)
+	details.add_theme_font_size_override("font_size", 16)
+	details.add_theme_color_override("font_color", Color("#fff0c2"))
+	details.add_theme_color_override("font_shadow_color", Color.BLACK)
+	details.add_theme_constant_override("shadow_offset_x", 2)
+	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	content_row.add_child(details)
 
 	var recruit := Button.new()
 	recruit.text = "Recruit"
