@@ -85,16 +85,22 @@ func _add_title_header() -> void:
 
 
 func _add_mode_panel() -> void:
-	var margin := _make_full_margin(95, 95, 1045, 405)
+	var margin := _make_full_margin(95, 95, 1045, 555)
 	add_child(margin)
 	var panel := PanelContainer.new()
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.016, 0.018, 0.026, 0.84), Color("#b98c43"), 2, 14))
 	margin.add_child(panel)
 	var pad := _make_margin(24, 24, 20, 20)
 	panel.add_child(pad)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pad.add_child(scroll)
 	content_stack = VBoxContainer.new()
+	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_stack.add_theme_constant_override("separation", 12)
-	pad.add_child(content_stack)
+	scroll.add_child(content_stack)
 
 
 func _add_bottom_tabs() -> void:
