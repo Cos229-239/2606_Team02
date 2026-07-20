@@ -69,8 +69,8 @@ func _add_top_bar() -> void:
 func _add_title_header() -> void:
 	var plaque := TextureRect.new()
 	plaque.texture = load(TITLE_PLAQUE_ART)
-	plaque.position = Vector2(120, 98)
-	plaque.size = Vector2(840, 188)
+	plaque.position = Vector2(260, 104)
+	plaque.size = Vector2(560, 126)
 	plaque.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	plaque.stretch_mode = TextureRect.STRETCH_SCALE
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -78,7 +78,7 @@ func _add_title_header() -> void:
 
 	level_label = _make_label("", 25, Color("#f8ffce"), HORIZONTAL_ALIGNMENT_CENTER)
 	level_label.name = "MarketLevelLabel"
-	level_label.position = Vector2(300, 250)
+	level_label.position = Vector2(300, 224)
 	level_label.size = Vector2(480, 40)
 	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(level_label)
