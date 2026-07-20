@@ -3,7 +3,6 @@ extends Control
 signal closed
 
 const BG_PATH := "res://assets/sprites/market_stall/market_stall_background.png"
-const SQUIRREL_MERCHANT_PATH := "res://assets/sprites/market_stall/squirrel_merchant.png"
 const ORDER_IDS := ["mana_bundle", "potion_crate", "spirit_contract"]
 const TAB_CARDS := {
 	"Trade": "res://assets/sprites/market_stall/market_trade_card.png",
@@ -33,7 +32,6 @@ func _ready() -> void:
 
 func _build_panel() -> void:
 	_add_background()
-	_add_merchant()
 	_add_top_bar()
 	_add_title_header()
 	_add_mode_panel()
@@ -54,18 +52,6 @@ func _add_background() -> void:
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
-
-
-func _add_merchant() -> void:
-	var merchant := TextureRect.new()
-	merchant.name = "SquirrelMerchant"
-	merchant.texture = load(SQUIRREL_MERCHANT_PATH)
-	merchant.position = Vector2(575, 376)
-	merchant.size = Vector2(380, 526)
-	merchant.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	merchant.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	merchant.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(merchant)
 
 
 func _add_top_bar() -> void:
