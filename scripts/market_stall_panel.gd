@@ -60,8 +60,8 @@ func _add_merchant() -> void:
 	var merchant := TextureRect.new()
 	merchant.name = "SquirrelMerchant"
 	merchant.texture = load(SQUIRREL_MERCHANT_PATH)
-	merchant.position = Vector2(510, 382)
-	merchant.size = Vector2(370, 520)
+	merchant.position = Vector2(575, 376)
+	merchant.size = Vector2(380, 526)
 	merchant.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	merchant.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	merchant.mouse_filter = Control.MOUSE_FILTER_IGNORE
