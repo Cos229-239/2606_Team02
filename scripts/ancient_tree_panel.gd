@@ -184,17 +184,17 @@ func _add_growth_badge() -> void:
 	growth_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(growth_ring)
 
-	growth_value_label = _make_label("0%", 60, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_value_label.position = Vector2(430, 1230)
-	growth_value_label.size = Vector2(220, 68)
+	growth_value_label = _make_label("0%", 56, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	growth_value_label.position = Vector2(410, 1222)
+	growth_value_label.size = Vector2(260, 72)
 	growth_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	growth_value_label.add_theme_color_override("font_outline_color", Color("#102018"))
 	growth_value_label.add_theme_constant_override("outline_size", 5)
 	add_child(growth_value_label)
 
-	growth_caption_label = _make_label("GROWTH", 24, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
-	growth_caption_label.position = Vector2(430, 1288)
-	growth_caption_label.size = Vector2(220, 36)
+	growth_caption_label = _make_label("GROWTH", 22, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
+	growth_caption_label.position = Vector2(430, 1292)
+	growth_caption_label.size = Vector2(220, 38)
 	growth_caption_label.add_theme_color_override("font_outline_color", Color("#102018"))
 	growth_caption_label.add_theme_constant_override("outline_size", 3)
 	add_child(growth_caption_label)
