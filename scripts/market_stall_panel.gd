@@ -83,13 +83,13 @@ func _add_title_header() -> void:
 
 
 func _add_mode_panel() -> void:
-	var margin := _make_full_margin(92, 92, 1160, 330)
+	var margin := _make_full_margin(122, 122, 1248, 360)
 	add_child(margin)
 	var panel := PanelContainer.new()
 	panel.clip_contents = true
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.045, 0.027, 0.020, 0.86), Color("#c9954e"), 2, 14))
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.070, 0.038, 0.022, 0.68), Color("#c9954e"), 2, 14))
 	margin.add_child(panel)
-	var pad := _make_margin(24, 24, 20, 20)
+	var pad := _make_margin(22, 22, 16, 16)
 	panel.add_child(pad)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -97,7 +97,7 @@ func _add_mode_panel() -> void:
 	pad.add_child(scroll)
 	content_stack = VBoxContainer.new()
 	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_stack.add_theme_constant_override("separation", 12)
+	content_stack.add_theme_constant_override("separation", 10)
 	scroll.add_child(content_stack)
 
 
@@ -179,7 +179,7 @@ func _refresh() -> void:
 
 
 func _add_banner(text: String) -> void:
-	var label := _make_label(text, 23, Color("#fff0c2"), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _make_label(text, 21, Color("#ffe5aa"), HORIZONTAL_ALIGNMENT_CENTER)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content_stack.add_child(label)
 
@@ -190,10 +190,10 @@ func _make_order_card(order: Dictionary) -> PanelContainer:
 	var can_trade := _can_fulfill_order(order)
 	card.name = "MarketOrderCard_%s" % order_id
 	card.add_theme_stylebox_override("panel", _make_order_card_style(can_trade))
-	var margin := _make_margin(16, 16, 12, 12)
+	var margin := _make_margin(14, 14, 10, 10)
 	card.add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 12)
 	margin.add_child(row)
 	_add_order_icon(row, order_id)
 	var text_stack := VBoxContainer.new()
@@ -203,21 +203,21 @@ func _make_order_card(order: Dictionary) -> PanelContainer:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 10)
 	text_stack.add_child(header)
-	var title := _make_label(String(order.get("Title", "Order")), 20, Color("#fff2c6"))
+	var title := _make_label(String(order.get("Title", "Order")), 19, Color("#ffe7af"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	header.add_child(_make_status_pill("Ready" if can_trade else "Missing", can_trade, order_id))
 
-	var desc := _make_label(String(order.get("Description", "")), 15, Color("#e8dfca"))
+	var desc := _make_label(String(order.get("Description", "")), 14, Color("#f0ddbd"))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_stack.add_child(desc)
-	text_stack.add_child(_make_label("Needs: %s" % _format_order_cost(order), 15, Color("#f3d57a")))
+	text_stack.add_child(_make_label("Needs: %s" % _format_order_cost(order), 14, Color("#eac46e")))
 	text_stack.add_child(_make_label("Pays: %d Coins + %d Reputation" % [
 		int(order.get("RewardCoins", 0)),
 		int(order.get("ReputationReward", 0))
-	], 15, Color("#f3d57a")))
+	], 14, Color("#eac46e")))
 
-	var status_label := _make_label(_format_order_status(order), 15, Color("#99e8ac") if can_trade else Color("#ffb6a0"))
+	var status_label := _make_label(_format_order_status(order), 14, Color("#d8f0b3") if can_trade else Color("#ffb6a0"))
 	status_label.name = "MarketOrderStatus_%s" % order_id
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_stack.add_child(status_label)
@@ -277,7 +277,7 @@ func _can_fulfill_order(order: Dictionary) -> bool:
 
 
 func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
-	var pill := _make_label(text, 14, Color("#102018") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
+	var pill := _make_label(text, 13, Color("#2b1b0e") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
 	pill.name = "MarketOrderPill_%s" % order_id
 	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pill.custom_minimum_size = Vector2(96, 34)
@@ -287,8 +287,8 @@ func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
 	pill.add_theme_stylebox_override(
 		"normal",
 		_make_panel_style(
-			Color("#8ef0a6", 0.94) if ready else Color("#4a2730", 0.94),
-			Color("#f5d66f") if ready else Color("#ff9c7d"),
+			Color("#f4d36d", 0.94) if ready else Color("#4a2730", 0.90),
+			Color("#fff0aa") if ready else Color("#ff9c7d"),
 			2,
 			8
 		)
@@ -298,8 +298,8 @@ func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
 
 func _make_order_card_style(ready: bool) -> StyleBoxFlat:
 	return _make_panel_style(
-		Color(0.052, 0.060, 0.035, 0.92) if ready else Color(0.060, 0.036, 0.022, 0.88),
-		Color("#8ef0a6") if ready else Color("#8d6a33"),
+		Color(0.095, 0.058, 0.034, 0.72) if ready else Color(0.060, 0.036, 0.022, 0.64),
+		Color("#e9c46a") if ready else Color("#9f7436"),
 		3 if ready else 2,
 		10
 	)
