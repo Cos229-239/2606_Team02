@@ -3,7 +3,7 @@ extends Control
 signal closed
 
 const BG_PATH := "res://assets/sprites/market_stall/market_stall_background.png"
-const TITLE_PLAQUE_ART := "res://assets/sprites/ui/decorate_title_plaque.png"
+const TITLE_PLAQUE_ART := "res://assets/sprites/market_stall/market_stall_title.png"
 const ORDER_IDS := ["mana_bundle", "potion_crate", "spirit_contract"]
 const TAB_CARDS := {
 	"Trade": "res://assets/sprites/market_stall/market_trade_card.png",
@@ -69,24 +69,16 @@ func _add_top_bar() -> void:
 func _add_title_header() -> void:
 	var plaque := TextureRect.new()
 	plaque.texture = load(TITLE_PLAQUE_ART)
-	plaque.position = Vector2(124, 104)
-	plaque.size = Vector2(832, 176)
+	plaque.position = Vector2(120, 98)
+	plaque.size = Vector2(840, 188)
 	plaque.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	plaque.stretch_mode = TextureRect.STRETCH_SCALE
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(plaque)
 
-	var title := _make_label("Market Stall", 58, Color("#ffe2a0"), HORIZONTAL_ALIGNMENT_CENTER)
-	title.position = Vector2(230, 140)
-	title.size = Vector2(620, 70)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_color_override("font_outline_color", Color("#1a1008"))
-	title.add_theme_constant_override("outline_size", 3)
-	add_child(title)
-
 	level_label = _make_label("", 25, Color("#f8ffce"), HORIZONTAL_ALIGNMENT_CENTER)
 	level_label.name = "MarketLevelLabel"
-	level_label.position = Vector2(300, 210)
+	level_label.position = Vector2(300, 250)
 	level_label.size = Vector2(480, 40)
 	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(level_label)
