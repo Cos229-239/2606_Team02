@@ -289,6 +289,9 @@ func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
 	pill.name = "MarketOrderPill_%s" % order_id
 	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pill.custom_minimum_size = Vector2(96, 34)
+	pill.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	pill.add_theme_constant_override("shadow_offset_x", 0)
+	pill.add_theme_constant_override("shadow_offset_y", 0)
 	pill.add_theme_stylebox_override(
 		"normal",
 		_make_panel_style(
