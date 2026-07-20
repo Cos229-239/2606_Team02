@@ -119,6 +119,8 @@ var inventory_notes: Array[String] = []
 var ancient_tree_level: int = 1
 var ancient_tree_restore_cost: int = 75
 var ancient_tree_claimed_rewards: Array[int] = []
+var ancient_tree_experience: int = 0
+var ancient_tree_seed_count: int = 0
 var forge_level: int = 1
 var forge_flower_focus_level: int = 0
 var forge_potion_gilding_level: int = 0
@@ -1026,16 +1028,48 @@ func restore_ancient_tree() -> Dictionary:
 
 	total_mana -= ancient_tree_restore_cost
 	grove_restoration = min(100, grove_restoration + 10)
+	var watering_reward := _grant_ancient_tree_watering_reward()
 	ancient_tree_restore_cost = int(ceil(float(ancient_tree_restore_cost) * 1.35))
 	update_ancient_tree_level()
 	add_quest_progress(QUEST_GOAL_RESTORE_TREE, 1)
 
 	resources_changed.emit()
+	inventory_changed.emit()
 	ancient_tree_changed.emit()
 	save_game()
-	var message := "Ancient Tree restored to %d%%." % grove_restoration
+	var reward_text := String(watering_reward.get("Text", ""))
+	var message := "Ancient Tree restored to %d%%. Found %s." % [grove_restoration, reward_text]
 	save_status_changed.emit(message)
-	return {"Success": true, "Message": message}
+	return {
+		"Success": true,
+		"Message": message,
+		"RewardType": String(watering_reward.get("Type", "")),
+		"RewardAmount": int(watering_reward.get("Amount", 0)),
+		"RewardText": reward_text
+	}
+
+
+func _grant_ancient_tree_watering_reward() -> Dictionary:
+	var amount := 0
+	match randi() % 4:
+		0:
+			amount = randi_range(12, 26) + ancient_tree_level * 3
+			total_mana += amount
+			return {"Type": "Mana", "Amount": amount, "Text": "+%d Mana" % amount}
+		1:
+			amount = randi_range(8, 22) + ancient_tree_level * 4
+			total_coins += amount
+			return {"Type": "Coins", "Amount": amount, "Text": "+%d Coins" % amount}
+		2:
+			amount = randi_range(8, 18) + ancient_tree_level * 3
+			ancient_tree_experience += amount
+			return {"Type": "Tree XP", "Amount": amount, "Text": "+%d Tree XP" % amount}
+		_:
+			amount = 1
+			if ancient_tree_level >= 3 and randi_range(0, 1) == 1:
+				amount += 1
+			ancient_tree_seed_count += amount
+			return {"Type": "Ancient Seeds", "Amount": amount, "Text": "+%d Ancient Seed%s" % [amount, "" if amount == 1 else "s"]}
 
 
 func get_ancient_tree_reward_data(level: int) -> Dictionary:
@@ -2397,6 +2431,18 @@ func get_inventory_items() -> Array[Dictionary]:
 		"Category": "Decor",
 		"Description": "Placed pond ornaments that increase Beauty and restoration bonuses."
 	})
+	items.append({
+		"Name": "Tree XP",
+		"Quantity": ancient_tree_experience,
+		"Category": "Ancient Tree",
+		"Description": "Mystic experience gathered while watering the Ancient Tree."
+	})
+	items.append({
+		"Name": "Ancient Seeds",
+		"Quantity": ancient_tree_seed_count,
+		"Category": "Ancient Tree",
+		"Description": "Rare seeds shaken loose by the Ancient Tree during restoration."
+	})
 	return items
 
 
@@ -2491,6 +2537,8 @@ func get_save_data() -> Dictionary:
 		"ancient_tree_level": ancient_tree_level,
 		"ancient_tree_restore_cost": ancient_tree_restore_cost,
 		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
+		"ancient_tree_experience": ancient_tree_experience,
+		"ancient_tree_seed_count": ancient_tree_seed_count,
 		"forge_level": forge_level,
 		"forge_flower_focus_level": forge_flower_focus_level,
 		"forge_potion_gilding_level": forge_potion_gilding_level,
@@ -2629,6 +2677,8 @@ func apply_save_data(data: Dictionary) -> void:
 	ancient_tree_level = int(data.get("ancient_tree_level", 1))
 	ancient_tree_restore_cost = int(data.get("ancient_tree_restore_cost", 75))
 	ancient_tree_claimed_rewards.clear()
+	ancient_tree_experience = int(data.get("ancient_tree_experience", 0))
+	ancient_tree_seed_count = int(data.get("ancient_tree_seed_count", 0))
 	var saved_tree_rewards = data.get("ancient_tree_claimed_rewards", [])
 	if saved_tree_rewards is Array:
 		for reward_level in saved_tree_rewards:
@@ -2799,6 +2849,8 @@ func reset_to_defaults() -> void:
 	ancient_tree_level = 1
 	ancient_tree_restore_cost = 75
 	ancient_tree_claimed_rewards.clear()
+	ancient_tree_experience = 0
+	ancient_tree_seed_count = 0
 	forge_level = 1
 	forge_flower_focus_level = 0
 	forge_potion_gilding_level = 0

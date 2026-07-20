@@ -383,7 +383,8 @@ func _on_water_pressed() -> void:
 	var result: Dictionary = GameState.restore_ancient_tree()
 	feedback_label.text = String(result.get("Message", ""))
 	if bool(result.get("Success", false)):
-		_show_floating_text("+ Growth", Vector2(330, 1240), GREEN)
+		SoundManager.play_collect()
+		_show_floating_text(String(result.get("RewardText", "+ Growth")), Vector2(330, 1240), GOLD)
 	_refresh()
 
 
