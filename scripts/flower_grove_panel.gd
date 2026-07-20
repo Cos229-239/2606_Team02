@@ -91,18 +91,18 @@ func _build_panel() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 46)
 	title.add_theme_color_override("font_color", Color("#f3d57a"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 3)
-	title.add_theme_constant_override("shadow_offset_y", 3)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	title.visible = false
 	panel_body.add_child(title)
 
 	stats_label = Label.new()
 	stats_label.add_theme_font_size_override("font_size", 22)
 	stats_label.add_theme_color_override("font_color", Color.WHITE)
-	stats_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	stats_label.add_theme_constant_override("shadow_offset_x", 2)
-	stats_label.add_theme_constant_override("shadow_offset_y", 2)
+	stats_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	stats_label.add_theme_constant_override("shadow_offset_x", 0)
+	stats_label.add_theme_constant_override("shadow_offset_y", 0)
 	panel_body.add_child(stats_label)
 	stats_right_label = null
 
@@ -150,9 +150,9 @@ func _build_merge_grid() -> void:
 		slot_button.custom_minimum_size = Vector2(248, 110)
 		slot_button.add_theme_font_size_override("font_size", 18)
 		slot_button.add_theme_color_override("font_color", Color("#fff2a8"))
-		slot_button.add_theme_color_override("font_shadow_color", Color.BLACK)
-		slot_button.add_theme_constant_override("shadow_offset_x", 2)
-		slot_button.add_theme_constant_override("shadow_offset_y", 2)
+		slot_button.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+		slot_button.add_theme_constant_override("shadow_offset_x", 0)
+		slot_button.add_theme_constant_override("shadow_offset_y", 0)
 		slot_button.gui_input.connect(func(event: InputEvent) -> void:
 			_on_grid_slot_gui_input(index, event)
 		)
@@ -480,9 +480,9 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 	label.position = start_position
 	label.add_theme_font_size_override("font_size", 34)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(label)
 	var tween := create_tween()
 	tween.tween_property(label, "position", start_position + Vector2(0, -90), 0.75)

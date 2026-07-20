@@ -87,9 +87,9 @@ func _build_panel() -> void:
 	stats_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stats_label.add_theme_font_size_override("font_size", 24)
 	stats_label.add_theme_color_override("font_color", Color.WHITE)
-	stats_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	stats_label.add_theme_constant_override("shadow_offset_x", 2)
-	stats_label.add_theme_constant_override("shadow_offset_y", 2)
+	stats_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	stats_label.add_theme_constant_override("shadow_offset_x", 0)
+	stats_label.add_theme_constant_override("shadow_offset_y", 0)
 	stats_panel.add_child(stats_label)
 
 	var progress_margin := MarginContainer.new()
@@ -119,9 +119,9 @@ func _build_panel() -> void:
 	feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	feedback_label.add_theme_font_size_override("font_size", 26)
 	feedback_label.add_theme_color_override("font_color", Color("#f3d57a"))
-	feedback_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	feedback_label.add_theme_constant_override("shadow_offset_x", 2)
-	feedback_label.add_theme_constant_override("shadow_offset_y", 2)
+	feedback_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	feedback_label.add_theme_constant_override("shadow_offset_x", 0)
+	feedback_label.add_theme_constant_override("shadow_offset_y", 0)
 	feedback_margin.add_child(feedback_label)
 
 	var button_margin := MarginContainer.new()
@@ -403,9 +403,9 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 	label.position = start_position
 	label.add_theme_font_size_override("font_size", 34)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(label)
 	var tween := create_tween()
 	tween.tween_property(label, "position", start_position + Vector2(0, -90), 0.75)

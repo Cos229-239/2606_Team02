@@ -333,9 +333,9 @@ func _make_icon_badge(text: String, color: Color, badge_size: Vector2, font_size
 	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge.add_theme_font_size_override("font_size", font_size)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	badge.add_theme_color_override("font_shadow_color", Color.BLACK)
-	badge.add_theme_constant_override("shadow_offset_x", 2)
-	badge.add_theme_constant_override("shadow_offset_y", 2)
+	badge.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	badge.add_theme_constant_override("shadow_offset_x", 0)
+	badge.add_theme_constant_override("shadow_offset_y", 0)
 	badge.add_theme_stylebox_override("normal", _make_frame_style(Color(color.r, color.g, color.b, 0.82), Color("#f5d66f"), 2, int(badge_size.x * 0.5)))
 	return badge
 
@@ -346,9 +346,9 @@ func _make_label(text: String, font_size: int, color: Color, alignment: Horizont
 	label.horizontal_alignment = alignment
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	return label
 

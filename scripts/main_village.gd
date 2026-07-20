@@ -181,9 +181,9 @@ func _build_title() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 40)
 	title.add_theme_color_override("font_color", Color("#d9bb72"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 3)
-	title.add_theme_constant_override("shadow_offset_y", 3)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(title)
 
 
@@ -195,9 +195,9 @@ func _build_version_label() -> void:
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.add_theme_font_size_override("font_size", 15)
 	version.add_theme_color_override("font_color", Color("#fff2a8"))
-	version.add_theme_color_override("font_shadow_color", Color.BLACK)
-	version.add_theme_constant_override("shadow_offset_x", 2)
-	version.add_theme_constant_override("shadow_offset_y", 2)
+	version.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	version.add_theme_constant_override("shadow_offset_x", 0)
+	version.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(version)
 
 
@@ -222,9 +222,9 @@ func _build_hud() -> void:
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	feedback_label.add_theme_font_size_override("font_size", 26)
 	feedback_label.add_theme_color_override("font_color", Color("#f5d66f"))
-	feedback_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	feedback_label.add_theme_constant_override("shadow_offset_x", 3)
-	feedback_label.add_theme_constant_override("shadow_offset_y", 3)
+	feedback_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	feedback_label.add_theme_constant_override("shadow_offset_x", 0)
+	feedback_label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(feedback_label)
 
 
@@ -254,9 +254,9 @@ func _make_resource_panel(title: String, icon_text: String, icon_color: Color, v
 	stack.add_child(name_label)
 	value_label.add_theme_font_size_override("font_size", 24)
 	value_label.add_theme_color_override("font_color", Color("#fff2a8"))
-	value_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	value_label.add_theme_constant_override("shadow_offset_x", 2)
-	value_label.add_theme_constant_override("shadow_offset_y", 2)
+	value_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	value_label.add_theme_constant_override("shadow_offset_x", 0)
+	value_label.add_theme_constant_override("shadow_offset_y", 0)
 	stack.add_child(value_label)
 	return panel
 
@@ -287,9 +287,9 @@ func _make_restoration_panel() -> PanelContainer:
 
 	restoration_label.add_theme_font_size_override("font_size", 20)
 	restoration_label.add_theme_color_override("font_color", Color("#fff2a8"))
-	restoration_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	restoration_label.add_theme_constant_override("shadow_offset_x", 2)
-	restoration_label.add_theme_constant_override("shadow_offset_y", 2)
+	restoration_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	restoration_label.add_theme_constant_override("shadow_offset_x", 0)
+	restoration_label.add_theme_constant_override("shadow_offset_y", 0)
 	stack.add_child(restoration_label)
 
 	restoration_bar.min_value = 0
@@ -313,9 +313,9 @@ func _make_ui_text(text: String, font_size: int, color: Color) -> Label:
 	label.text = text
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	return label
 
 
@@ -327,9 +327,9 @@ func _make_icon_badge(text: String, color: Color, badge_size: Vector2, font_size
 	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge.add_theme_font_size_override("font_size", font_size)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	badge.add_theme_color_override("font_shadow_color", Color.BLACK)
-	badge.add_theme_constant_override("shadow_offset_x", 2)
-	badge.add_theme_constant_override("shadow_offset_y", 2)
+	badge.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	badge.add_theme_constant_override("shadow_offset_x", 0)
+	badge.add_theme_constant_override("shadow_offset_y", 0)
 	badge.add_theme_stylebox_override("normal", _make_style(Color(color.r, color.g, color.b, 0.82), Color("#d0a34f"), 2, 18))
 	return badge
 
@@ -587,9 +587,9 @@ func _add_restoration_label(text: String, position: Vector2) -> void:
 	label.position = position
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	restoration_visual_layer.add_child(label)
 
@@ -711,7 +711,7 @@ func _add_area_button(title: String, rect: Rect2, color: Color, callback: Callab
 	label.focus_mode = Control.FOCUS_NONE
 	label.z_index = 25
 	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	label.add_theme_font_size_override("font_size", 17)
 	_apply_sign_style(label)
 	label.pressed.connect(callback)
@@ -959,9 +959,9 @@ func _make_fairy_status_badge(fairy_name: String, status_text: String, role_colo
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", Color("#fff2a8") if ready_count > 0 else role_color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	badge.add_child(label)
 	return badge
 
@@ -979,9 +979,9 @@ func _make_fairy_ready_badge(center_position: Vector2, ready_count: int) -> Labe
 	label.z_index = 5
 	label.add_theme_font_size_override("font_size", 22)
 	label.add_theme_color_override("font_color", Color("#061014"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 1)
-	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.add_theme_stylebox_override("normal", _make_style(Color("#f3d57a"), Color("#fff2a8"), 2, 18))
 	return label
 
@@ -1080,9 +1080,9 @@ func _add_attention_marker(top_left: Vector2, text: String, color: Color, marker
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	marker.add_theme_font_size_override("font_size", font_size)
 	marker.add_theme_color_override("font_color", Color.WHITE)
-	marker.add_theme_color_override("font_shadow_color", Color.BLACK)
-	marker.add_theme_constant_override("shadow_offset_x", 2)
-	marker.add_theme_constant_override("shadow_offset_y", 2)
+	marker.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	marker.add_theme_constant_override("shadow_offset_x", 0)
+	marker.add_theme_constant_override("shadow_offset_y", 0)
 	marker.add_theme_stylebox_override("normal", _make_style(Color(color.r, color.g, color.b, 0.82), Color("#fff2a8"), 2, 18))
 	attention_layer.add_child(marker)
 
@@ -1158,7 +1158,7 @@ func _add_home_label(text: String, position: Vector2, size: Vector2) -> Button:
 	label.focus_mode = Control.FOCUS_NONE
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	label.add_theme_font_size_override("font_size", 20)
 	_apply_sign_style(label)
 	add_child(label)
@@ -1272,9 +1272,9 @@ func _make_quest_badge() -> Label:
 	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge.add_theme_font_size_override("font_size", 18)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	badge.add_theme_color_override("font_shadow_color", Color.BLACK)
-	badge.add_theme_constant_override("shadow_offset_x", 2)
-	badge.add_theme_constant_override("shadow_offset_y", 2)
+	badge.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	badge.add_theme_constant_override("shadow_offset_x", 0)
+	badge.add_theme_constant_override("shadow_offset_y", 0)
 	_style_quest_badge(badge)
 	badge.visible = false
 	return badge
@@ -1416,9 +1416,9 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 	label.position = start_position
 	label.add_theme_font_size_override("font_size", 34)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(label)
 	var tween := create_tween()
 	tween.tween_property(label, "position", start_position + Vector2(0, -80), 0.8)

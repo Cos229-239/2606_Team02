@@ -93,18 +93,18 @@ func _build_panel() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 46)
 	title.add_theme_color_override("font_color", Color("#f3d57a"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 3)
-	title.add_theme_constant_override("shadow_offset_y", 3)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	title.visible = false
 	layout.add_child(title)
 
 	stats_label = Label.new()
 	stats_label.add_theme_font_size_override("font_size", 22)
 	stats_label.add_theme_color_override("font_color", Color.WHITE)
-	stats_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	stats_label.add_theme_constant_override("shadow_offset_x", 2)
-	stats_label.add_theme_constant_override("shadow_offset_y", 2)
+	stats_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	stats_label.add_theme_constant_override("shadow_offset_x", 0)
+	stats_label.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(stats_label)
 
 	var workers_title := Label.new()
@@ -112,9 +112,9 @@ func _build_panel() -> void:
 	workers_title.text = "Fairy Workers"
 	workers_title.add_theme_font_size_override("font_size", 24)
 	workers_title.add_theme_color_override("font_color", Color("#f3d57a"))
-	workers_title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	workers_title.add_theme_constant_override("shadow_offset_x", 2)
-	workers_title.add_theme_constant_override("shadow_offset_y", 2)
+	workers_title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	workers_title.add_theme_constant_override("shadow_offset_x", 0)
+	workers_title.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(workers_title)
 
 	var cards_scroll := ScrollContainer.new()
@@ -338,9 +338,9 @@ func _make_upgrade_card() -> PanelContainer:
 	title.text = "Next Upgrade"
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color("#a8ff9b"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(title)
 
 	var body := Label.new()
@@ -348,9 +348,9 @@ func _make_upgrade_card() -> PanelContainer:
 	body.custom_minimum_size = Vector2(1, 190)
 	body.add_theme_font_size_override("font_size", 18)
 	body.add_theme_color_override("font_color", Color("#fff0c2"))
-	body.add_theme_color_override("font_shadow_color", Color.BLACK)
-	body.add_theme_constant_override("shadow_offset_x", 2)
-	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	body.add_theme_constant_override("shadow_offset_x", 0)
+	body.add_theme_constant_override("shadow_offset_y", 0)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(body)
 
@@ -393,9 +393,9 @@ func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
 	title.text = title_text
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color("#f3d57a"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(title)
 
@@ -404,9 +404,9 @@ func _make_info_card(title_text: String, body_text: String) -> PanelContainer:
 	body.custom_minimum_size = Vector2(1, 240)
 	body.add_theme_font_size_override("font_size", 19)
 	body.add_theme_color_override("font_color", Color("#fff0c2"))
-	body.add_theme_color_override("font_shadow_color", Color.BLACK)
-	body.add_theme_constant_override("shadow_offset_x", 2)
-	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	body.add_theme_constant_override("shadow_offset_x", 0)
+	body.add_theme_constant_override("shadow_offset_y", 0)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(body)
 	return card
@@ -437,18 +437,18 @@ func _make_task_inbox_card() -> PanelContainer:
 	status.text = "REWARD INBOX"
 	status.add_theme_font_size_override("font_size", 15)
 	status.add_theme_color_override("font_color", Color("#f3d57a"))
-	status.add_theme_color_override("font_shadow_color", Color.BLACK)
-	status.add_theme_constant_override("shadow_offset_x", 2)
-	status.add_theme_constant_override("shadow_offset_y", 2)
+	status.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	status.add_theme_constant_override("shadow_offset_x", 0)
+	status.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(status)
 
 	var title := Label.new()
 	title.text = "%d Ready" % ready_count
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color("#fff0c2"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(title)
 
 	var body := Label.new()
@@ -456,9 +456,9 @@ func _make_task_inbox_card() -> PanelContainer:
 	body.custom_minimum_size = Vector2(1, 178)
 	body.add_theme_font_size_override("font_size", 17)
 	body.add_theme_color_override("font_color", Color("#fff0c2"))
-	body.add_theme_color_override("font_shadow_color", Color.BLACK)
-	body.add_theme_constant_override("shadow_offset_x", 2)
-	body.add_theme_constant_override("shadow_offset_y", 2)
+	body.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	body.add_theme_constant_override("shadow_offset_x", 0)
+	body.add_theme_constant_override("shadow_offset_y", 0)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(body)
 
@@ -511,18 +511,18 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	status.text = String(task.get("StatusText", "Idle")).to_upper()
 	status.add_theme_font_size_override("font_size", 15)
 	status.add_theme_color_override("font_color", Color("#a8ff9b") if is_ready else Color("#80d6ff") if is_active else Color("#cbbf9a"))
-	status.add_theme_color_override("font_shadow_color", Color.BLACK)
-	status.add_theme_constant_override("shadow_offset_x", 2)
-	status.add_theme_constant_override("shadow_offset_y", 2)
+	status.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	status.add_theme_constant_override("shadow_offset_x", 0)
+	status.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(status)
 
 	var title := Label.new()
 	title.text = String(task.get("Title", "Fairy Task"))
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color("#f3d57a"))
-	title.add_theme_color_override("font_shadow_color", Color.BLACK)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(title)
 
@@ -536,9 +536,9 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	details.custom_minimum_size = Vector2(1, 98)
 	details.add_theme_font_size_override("font_size", 15)
 	details.add_theme_color_override("font_color", Color("#fff0c2"))
-	details.add_theme_color_override("font_shadow_color", Color.BLACK)
-	details.add_theme_constant_override("shadow_offset_x", 2)
-	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	details.add_theme_constant_override("shadow_offset_x", 0)
+	details.add_theme_constant_override("shadow_offset_y", 0)
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(details)
 
@@ -557,9 +557,9 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	]
 	progress_text.add_theme_font_size_override("font_size", 14)
 	progress_text.add_theme_color_override("font_color", Color("#d7ecff") if is_active else Color("#cbbf9a"))
-	progress_text.add_theme_color_override("font_shadow_color", Color.BLACK)
-	progress_text.add_theme_constant_override("shadow_offset_x", 2)
-	progress_text.add_theme_constant_override("shadow_offset_y", 2)
+	progress_text.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	progress_text.add_theme_constant_override("shadow_offset_x", 0)
+	progress_text.add_theme_constant_override("shadow_offset_y", 0)
 	progress_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(progress_text)
 
@@ -568,9 +568,9 @@ func _make_task_card(task: Dictionary) -> PanelContainer:
 	ready.text = "Ready Rewards: %d" % ready_count
 	ready.add_theme_font_size_override("font_size", 18)
 	ready.add_theme_color_override("font_color", Color("#aeea84") if ready_count > 0 else Color("#cbbf9a"))
-	ready.add_theme_color_override("font_shadow_color", Color.BLACK)
-	ready.add_theme_constant_override("shadow_offset_x", 2)
-	ready.add_theme_constant_override("shadow_offset_y", 2)
+	ready.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	ready.add_theme_constant_override("shadow_offset_x", 0)
+	ready.add_theme_constant_override("shadow_offset_y", 0)
 	layout.add_child(ready)
 
 	var collect := Button.new()
@@ -675,9 +675,9 @@ func _make_fairy_card(fairy: Dictionary) -> PanelContainer:
 	details.custom_minimum_size = Vector2(148, 220)
 	details.add_theme_font_size_override("font_size", 16)
 	details.add_theme_color_override("font_color", Color("#fff0c2"))
-	details.add_theme_color_override("font_shadow_color", Color.BLACK)
-	details.add_theme_constant_override("shadow_offset_x", 2)
-	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	details.add_theme_constant_override("shadow_offset_x", 0)
+	details.add_theme_constant_override("shadow_offset_y", 0)
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	content_row.add_child(details)
@@ -747,9 +747,9 @@ func _make_recruit_card(fairy: Dictionary) -> PanelContainer:
 	details.custom_minimum_size = Vector2(148, 220)
 	details.add_theme_font_size_override("font_size", 16)
 	details.add_theme_color_override("font_color", Color("#fff0c2"))
-	details.add_theme_color_override("font_shadow_color", Color.BLACK)
-	details.add_theme_constant_override("shadow_offset_x", 2)
-	details.add_theme_constant_override("shadow_offset_y", 2)
+	details.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	details.add_theme_constant_override("shadow_offset_x", 0)
+	details.add_theme_constant_override("shadow_offset_y", 0)
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	content_row.add_child(details)
@@ -861,9 +861,9 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 	label.position = start_position
 	label.add_theme_font_size_override("font_size", 32)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(label)
 	var tween := create_tween()
 	tween.tween_property(label, "position", start_position + Vector2(0, -86), 0.78)

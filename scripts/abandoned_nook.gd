@@ -286,9 +286,9 @@ func _show_floating_text(text: String, start_position: Vector2, color: Color) ->
 	label.position = start_position
 	label.add_theme_font_size_override("font_size", 38)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	add_child(label)
 	var tween := create_tween()
 	tween.tween_property(label, "position", start_position + Vector2(0, -90), 0.8)
@@ -470,8 +470,8 @@ func _make_message_panel(text: String) -> PanelContainer:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 34)
 	label.add_theme_color_override("font_color", Color("#fff2a8"))
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	panel.add_child(label)
 	return panel
