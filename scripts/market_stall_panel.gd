@@ -3,6 +3,7 @@ extends Control
 signal closed
 
 const BG_PATH := "res://assets/sprites/market_stall/market_stall_background.png"
+const TITLE_PLAQUE_ART := "res://assets/sprites/ui/decorate_title_plaque.png"
 const ORDER_IDS := ["mana_bundle", "potion_crate", "spirit_contract"]
 const TAB_CARDS := {
 	"Trade": "res://assets/sprites/market_stall/market_trade_card.png",
@@ -66,20 +67,29 @@ func _add_top_bar() -> void:
 
 
 func _add_title_header() -> void:
-	var margin := _make_full_margin(126, 126, 112, 1558)
-	add_child(margin)
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.030, 0.018, 0.014, 0.64), Color("#d8a35a"), 2, 14))
-	margin.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override("separation", 0)
-	panel.add_child(stack)
+	var plaque := TextureRect.new()
+	plaque.texture = load(TITLE_PLAQUE_ART)
+	plaque.position = Vector2(124, 104)
+	plaque.size = Vector2(832, 176)
+	plaque.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	plaque.stretch_mode = TextureRect.STRETCH_SCALE
+	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(plaque)
+
 	var title := _make_label("Market Stall", 58, Color("#ffe2a0"), HORIZONTAL_ALIGNMENT_CENTER)
-	stack.add_child(title)
+	title.position = Vector2(230, 140)
+	title.size = Vector2(620, 70)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_outline_color", Color("#1a1008"))
+	title.add_theme_constant_override("outline_size", 3)
+	add_child(title)
+
 	level_label = _make_label("", 25, Color("#f8ffce"), HORIZONTAL_ALIGNMENT_CENTER)
 	level_label.name = "MarketLevelLabel"
-	stack.add_child(level_label)
+	level_label.position = Vector2(300, 210)
+	level_label.size = Vector2(480, 40)
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(level_label)
 
 
 func _add_mode_panel() -> void:
