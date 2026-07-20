@@ -85,7 +85,7 @@ func _add_title_header() -> void:
 
 
 func _add_mode_panel() -> void:
-	var margin := _make_full_margin(95, 95, 1045, 555)
+	var margin := _make_full_margin(95, 95, 1125, 475)
 	add_child(margin)
 	var panel := PanelContainer.new()
 	panel.clip_contents = true
