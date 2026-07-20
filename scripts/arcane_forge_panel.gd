@@ -3,7 +3,6 @@ extends Control
 signal closed
 
 const BG_PATH := "res://assets/sprites/arcane_forge/arcane_forge_background.png"
-const TITLE_PLAQUE_ART := "res://assets/sprites/ui/decorate_title_plaque.png"
 const UPGRADE_IDS := ["flower_focus", "potion_gilding", "pond_resonance"]
 const TAB_CARDS := {
 	"Craft": "res://assets/sprites/arcane_forge/forge_craft_card.png",
@@ -70,29 +69,26 @@ func _add_top_bar() -> void:
 
 
 func _add_title_header() -> void:
-	var plaque := TextureRect.new()
-	plaque.texture = load(TITLE_PLAQUE_ART)
-	plaque.position = Vector2(124, 104)
-	plaque.size = Vector2(832, 176)
-	plaque.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	plaque.stretch_mode = TextureRect.STRETCH_SCALE
-	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(plaque)
+	var margin := _make_full_margin(126, 126, 112, 1558)
+	add_child(margin)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.010, 0.012, 0.018, 0.64), Color("#bd8d43"), 2, 14))
+	margin.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 0)
+	panel.add_child(stack)
 
 	title_label = _make_label("Arcane Forge", 58, Color("#ffd77b"), HORIZONTAL_ALIGNMENT_CENTER)
-	title_label.position = Vector2(230, 140)
-	title_label.size = Vector2(620, 70)
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_label.add_theme_color_override("font_outline_color", Color("#1a1008"))
-	title_label.add_theme_constant_override("outline_size", 3)
-	add_child(title_label)
+	title_label.add_theme_constant_override("outline_size", 2)
+	stack.add_child(title_label)
 
 	mode_label = _make_label("", 25, Color("#d9f1ff"), HORIZONTAL_ALIGNMENT_CENTER)
 	mode_label.name = "ForgeLevelLabel"
-	mode_label.position = Vector2(300, 210)
-	mode_label.size = Vector2(480, 40)
 	mode_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	add_child(mode_label)
+	stack.add_child(mode_label)
 
 
 func _add_mode_panel() -> void:
