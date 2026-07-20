@@ -55,6 +55,8 @@ const FAIRY_TASK_REQUIRED_PROGRESS := 60.0
 const FAIRY_MAX_LEVEL := 5
 const FAIRY_WORK_BONUS_PER_LEVEL := 0.5
 const FAIRY_HOUSE_MAX_LEVEL := 5
+const ANCIENT_TREE_WATER_LIMIT := 3
+const ANCIENT_TREE_WATER_WINDOW_SECONDS := 3600
 const FAIRY_HOUSE_UPGRADE_COSTS := {
 	2: {"Mana": 80, "Coins": 25, "Spirit": 0},
 	3: {"Mana": 140, "Coins": 50, "Spirit": 2},
@@ -121,6 +123,7 @@ var ancient_tree_restore_cost: int = 75
 var ancient_tree_claimed_rewards: Array[int] = []
 var ancient_tree_experience: int = 0
 var ancient_tree_seed_count: int = 0
+var ancient_tree_water_timestamps: Array[int] = []
 var forge_level: int = 1
 var forge_flower_focus_level: int = 0
 var forge_potion_gilding_level: int = 0
@@ -1019,34 +1022,80 @@ func update_ancient_tree_level() -> void:
 
 
 func restore_ancient_tree() -> Dictionary:
-	if grove_restoration >= 100:
-		save_status_changed.emit("The Ancient Tree is fully restored.")
-		return {"Success": false, "Message": "The Ancient Tree is fully restored."}
-	if total_mana < ancient_tree_restore_cost:
-		save_status_changed.emit("Not enough Mana.")
-		return {"Success": false, "Message": "Not enough Mana."}
+	return water_ancient_tree()
 
-	total_mana -= ancient_tree_restore_cost
-	grove_restoration = min(100, grove_restoration + 10)
+
+func water_ancient_tree() -> Dictionary:
+	_prune_ancient_tree_water_timestamps()
+	if ancient_tree_water_timestamps.size() >= ANCIENT_TREE_WATER_LIMIT:
+		var wait_text := get_ancient_tree_water_reset_text()
+		var blocked_message := "The Ancient Tree is resting. Water again in %s." % wait_text
+		save_status_changed.emit(blocked_message)
+		return {"Success": false, "Message": blocked_message, "RewardText": ""}
+
+	ancient_tree_water_timestamps.append(_get_now_unix())
 	var watering_reward := _grant_ancient_tree_watering_reward()
-	ancient_tree_restore_cost = int(ceil(float(ancient_tree_restore_cost) * 1.35))
-	update_ancient_tree_level()
-	add_quest_progress(QUEST_GOAL_RESTORE_TREE, 1)
-
 	resources_changed.emit()
 	inventory_changed.emit()
 	ancient_tree_changed.emit()
 	save_game()
 	var reward_text := String(watering_reward.get("Text", ""))
-	var message := "Ancient Tree restored to %d%%. Found %s." % [grove_restoration, reward_text]
+	var remaining := get_ancient_tree_water_uses_remaining()
+	var message := "The Ancient Tree shared %s. %d water%s left this hour." % [
+		reward_text,
+		remaining,
+		"" if remaining == 1 else "s"
+	]
 	save_status_changed.emit(message)
 	return {
 		"Success": true,
 		"Message": message,
 		"RewardType": String(watering_reward.get("Type", "")),
 		"RewardAmount": int(watering_reward.get("Amount", 0)),
-		"RewardText": reward_text
+		"RewardText": reward_text,
+		"RemainingWaters": remaining
 	}
+
+
+func can_water_ancient_tree() -> bool:
+	return get_ancient_tree_water_uses_remaining() > 0
+
+
+func get_ancient_tree_water_uses_remaining() -> int:
+	_prune_ancient_tree_water_timestamps()
+	return max(0, ANCIENT_TREE_WATER_LIMIT - ancient_tree_water_timestamps.size())
+
+
+func get_ancient_tree_water_status_text() -> String:
+	var remaining := get_ancient_tree_water_uses_remaining()
+	if remaining > 0:
+		return "Water uses available: %d / %d" % [remaining, ANCIENT_TREE_WATER_LIMIT]
+	return "Water again in %s" % get_ancient_tree_water_reset_text()
+
+
+func get_ancient_tree_water_reset_text() -> String:
+	_prune_ancient_tree_water_timestamps()
+	if ancient_tree_water_timestamps.is_empty():
+		return "now"
+	var oldest := int(ancient_tree_water_timestamps[0])
+	var seconds_left: int = max(1, ANCIENT_TREE_WATER_WINDOW_SECONDS - (_get_now_unix() - oldest))
+	var minutes_left := int(ceil(float(seconds_left) / 60.0))
+	if minutes_left >= 60:
+		return "1 hour"
+	return "%d minute%s" % [minutes_left, "" if minutes_left == 1 else "s"]
+
+
+func _prune_ancient_tree_water_timestamps() -> void:
+	var now := _get_now_unix()
+	var kept: Array[int] = []
+	for timestamp in ancient_tree_water_timestamps:
+		if now - int(timestamp) < ANCIENT_TREE_WATER_WINDOW_SECONDS:
+			kept.append(int(timestamp))
+	ancient_tree_water_timestamps = kept
+
+
+func _get_now_unix() -> int:
+	return int(Time.get_unix_time_from_system())
 
 
 func _grant_ancient_tree_watering_reward() -> Dictionary:
@@ -2539,6 +2588,7 @@ func get_save_data() -> Dictionary:
 		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
 		"ancient_tree_experience": ancient_tree_experience,
 		"ancient_tree_seed_count": ancient_tree_seed_count,
+		"ancient_tree_water_timestamps": ancient_tree_water_timestamps,
 		"forge_level": forge_level,
 		"forge_flower_focus_level": forge_flower_focus_level,
 		"forge_potion_gilding_level": forge_potion_gilding_level,
@@ -2679,6 +2729,12 @@ func apply_save_data(data: Dictionary) -> void:
 	ancient_tree_claimed_rewards.clear()
 	ancient_tree_experience = int(data.get("ancient_tree_experience", 0))
 	ancient_tree_seed_count = int(data.get("ancient_tree_seed_count", 0))
+	ancient_tree_water_timestamps.clear()
+	var saved_water_timestamps = data.get("ancient_tree_water_timestamps", [])
+	if saved_water_timestamps is Array:
+		for timestamp in saved_water_timestamps:
+			ancient_tree_water_timestamps.append(int(timestamp))
+	_prune_ancient_tree_water_timestamps()
 	var saved_tree_rewards = data.get("ancient_tree_claimed_rewards", [])
 	if saved_tree_rewards is Array:
 		for reward_level in saved_tree_rewards:
@@ -2851,6 +2907,7 @@ func reset_to_defaults() -> void:
 	ancient_tree_claimed_rewards.clear()
 	ancient_tree_experience = 0
 	ancient_tree_seed_count = 0
+	ancient_tree_water_timestamps.clear()
 	forge_level = 1
 	forge_flower_focus_level = 0
 	forge_potion_gilding_level = 0
