@@ -6,7 +6,6 @@ const ANCIENT_TREE_PANEL_ART := "res://assets/sprites/panels/ancient_tree_clean.
 const ANCIENT_TREE_GROWTH_ART_PATTERN := "res://assets/sprites/panels/ancient_tree_growth/ancient_tree_growth_%03d.jpg"
 const UPGRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrade_button.png"
 const WATER_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_water_button.png"
-const TITLE_PLAQUE_ART := "res://assets/sprites/ui/decorate_title_plaque.png"
 const TRADE_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_trade_button.png"
 const ORDERS_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_orders_button.png"
 const UPGRADES_BUTTON_ART := "res://assets/sprites/ui/ancient_tree_upgrades_nav_button.png"
@@ -162,22 +161,19 @@ func _add_back_button() -> void:
 
 
 func _add_title() -> void:
-	var plaque := TextureRect.new()
-	plaque.texture = load(TITLE_PLAQUE_ART)
-	plaque.position = Vector2(124, 130)
-	plaque.size = Vector2(832, 176)
-	plaque.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	plaque.stretch_mode = TextureRect.STRETCH_SCALE
-	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(plaque)
-
-	var title := _make_label("Ancient Tree", 62, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	title.position = Vector2(230, 166)
-	title.size = Vector2(620, 76)
+	var title := _make_label("ANCIENT TREE", 66, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	title.position = Vector2(256, 168)
+	title.size = Vector2(620, 82)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_outline_color", Color("#102018"))
-	title.add_theme_constant_override("outline_size", 3)
+	title.add_theme_constant_override("outline_size", 2)
 	add_child(title)
+
+	_add_rule(Vector2(276, 286), Vector2(528, 3))
+	_add_rule(Vector2(586, 286), Vector2(220, 3))
+	var gem := _make_icon_badge("D", Color("#2fd8d4"), Vector2(34, 34), 15)
+	gem.position = Vector2(523, 270)
+	add_child(gem)
 
 
 func _add_growth_badge() -> void:
