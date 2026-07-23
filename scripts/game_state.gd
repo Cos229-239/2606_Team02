@@ -119,6 +119,7 @@ var market_reputation: int = 1
 var market_orders_completed: int = 0
 var inventory_notes: Array[String] = []
 var ancient_tree_level: int = 1
+var ancient_tree_growth: int = 15
 var ancient_tree_restore_cost: int = 75
 var ancient_tree_claimed_rewards: Array[int] = []
 var ancient_tree_experience: int = 0
@@ -415,7 +416,6 @@ func restore_sacred_pond() -> bool:
 	sacred_pond_water_purity = min(sacred_pond_water_purity + get_sacred_pond_total_restore_amount(), 100)
 	sacred_pond_spirit_energy += 10 + get_sun_koi_guardian_spirit_bonus()
 	sacred_pond_restore_cost = int(ceil(float(sacred_pond_restore_cost) * 1.25))
-	grove_restoration = sacred_pond_water_purity
 	update_sacred_pond_level_and_rewards()
 	add_quest_progress(QUEST_GOAL_RESTORE_POND, 1)
 
@@ -1010,13 +1010,13 @@ func fulfill_market_order(order_id: String) -> Dictionary:
 
 
 func update_ancient_tree_level() -> void:
-	if grove_restoration >= 100:
+	if ancient_tree_growth >= 100:
 		ancient_tree_level = 5
-	elif grove_restoration >= 75:
+	elif ancient_tree_growth >= 75:
 		ancient_tree_level = 4
-	elif grove_restoration >= 50:
+	elif ancient_tree_growth >= 50:
 		ancient_tree_level = 3
-	elif grove_restoration >= 25:
+	elif ancient_tree_growth >= 25:
 		ancient_tree_level = 2
 	else:
 		ancient_tree_level = 1
@@ -1289,7 +1289,6 @@ func update_sacred_pond_level_and_rewards() -> void:
 		_unlock_pond_reward(POND_BONUS_SUN_KOI_GUARDIAN)
 
 	active_pond_bonus = _get_highest_active_pond_bonus()
-	grove_restoration = sacred_pond_water_purity
 
 
 func _unlock_pond_reward(reward_name: String) -> void:
@@ -2585,6 +2584,7 @@ func get_save_data() -> Dictionary:
 		"market_orders_completed": market_orders_completed,
 		"inventory_notes": inventory_notes,
 		"ancient_tree_level": ancient_tree_level,
+		"ancient_tree_growth": ancient_tree_growth,
 		"ancient_tree_restore_cost": ancient_tree_restore_cost,
 		"ancient_tree_claimed_rewards": ancient_tree_claimed_rewards,
 		"ancient_tree_experience": ancient_tree_experience,
@@ -2726,6 +2726,8 @@ func apply_save_data(data: Dictionary) -> void:
 	if inventory_notes.is_empty():
 		inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = int(data.get("ancient_tree_level", 1))
+	ancient_tree_growth = int(data.get("ancient_tree_growth", data.get("grove_restoration", 15)))
+	update_ancient_tree_level()
 	ancient_tree_restore_cost = int(data.get("ancient_tree_restore_cost", 75))
 	ancient_tree_claimed_rewards.clear()
 	ancient_tree_experience = int(data.get("ancient_tree_experience", 0))
@@ -2904,6 +2906,7 @@ func reset_to_defaults() -> void:
 	inventory_notes.clear()
 	inventory_notes.append("Inventory unlocked")
 	ancient_tree_level = 1
+	ancient_tree_growth = 15
 	ancient_tree_restore_cost = 75
 	ancient_tree_claimed_rewards.clear()
 	ancient_tree_experience = 0
