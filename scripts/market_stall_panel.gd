@@ -170,6 +170,7 @@ func _refresh() -> void:
 			_add_banner("Fill village orders to earn Coins and reputation.")
 			current_order_index = clampi(current_order_index, 0, ORDER_IDS.size() - 1)
 			_add_order_arrow("up")
+			_add_page_indicator(current_order_index + 1, ORDER_IDS.size(), Color("#99e8ac"))
 			var order_id := String(ORDER_IDS[current_order_index])
 			content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
 			_add_order_arrow("down")
@@ -189,6 +190,12 @@ func _refresh() -> void:
 func _add_banner(text: String) -> void:
 	var label := _make_label(text, 21, Color("#ffe5aa"), HORIZONTAL_ALIGNMENT_CENTER)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_stack.add_child(label)
+
+
+func _add_page_indicator(current_page: int, page_count: int, color: Color) -> void:
+	var label := _make_label("%d / %d" % [current_page, page_count], 17, color, HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content_stack.add_child(label)
 
 
@@ -362,6 +369,7 @@ func _on_back_pressed() -> void:
 
 func _clear_content() -> void:
 	for child in content_stack.get_children():
+		content_stack.remove_child(child)
 		child.queue_free()
 
 
