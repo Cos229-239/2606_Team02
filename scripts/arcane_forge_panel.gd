@@ -17,9 +17,9 @@ var stats_label: Label
 var title_label: Label
 var mode_label: Label
 var feedback_label: Label
-var content_scroll: ScrollContainer
 var content_stack: VBoxContainer
 var card_buttons: Dictionary = {}
+var current_upgrade_index := 0
 
 
 func _ready() -> void:
@@ -100,21 +100,11 @@ func _add_mode_panel() -> void:
 	margin.add_child(panel)
 	var pad := _make_margin(24, 24, 20, 20)
 	panel.add_child(pad)
-	content_scroll = ScrollContainer.new()
-	content_scroll.name = "ForgeUpgradeScroll"
-	content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	content_scroll.follow_focus = true
-	content_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
-	pad.add_child(content_scroll)
 	content_stack = VBoxContainer.new()
 	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_stack.add_theme_constant_override("separation", 12)
-	content_stack.gui_input.connect(_on_content_scroll_input)
-	content_scroll.add_child(content_stack)
+	pad.add_child(content_stack)
 
 
 func _add_bottom_tabs() -> void:
@@ -188,8 +178,11 @@ func _refresh() -> void:
 			_add_description("Enhance existing buildings with forged upgrades. Each completed project raises the Forge Level and improves another building.")
 		_:
 			_add_description("Spend resources on permanent upgrades that improve existing buildings.")
-			for upgrade_id in UPGRADE_IDS:
-				content_stack.add_child(_make_upgrade_card(GameState.get_forge_upgrade_data(upgrade_id)))
+			current_upgrade_index = clampi(current_upgrade_index, 0, UPGRADE_IDS.size() - 1)
+			_add_upgrade_arrow("up")
+			var upgrade_id := String(UPGRADE_IDS[current_upgrade_index])
+			content_stack.add_child(_make_upgrade_card(GameState.get_forge_upgrade_data(upgrade_id)))
+			_add_upgrade_arrow("down")
 
 	feedback_label = _make_label("", 24, Color("#82d9ff"), HORIZONTAL_ALIGNMENT_CENTER)
 	content_stack.add_child(feedback_label)
@@ -213,8 +206,6 @@ func _make_upgrade_card(upgrade: Dictionary) -> PanelContainer:
 	var is_maxed := level >= max_level
 	var can_forge := _can_purchase_upgrade(upgrade)
 	card.name = "ForgeUpgradeCard_%s" % upgrade_id
-	card.mouse_filter = Control.MOUSE_FILTER_PASS
-	card.gui_input.connect(_on_content_scroll_input)
 	card.add_theme_stylebox_override("panel", _make_upgrade_card_style(can_forge, is_maxed))
 	var margin := _make_margin(16, 16, 12, 12)
 	card.add_child(margin)
@@ -368,6 +359,28 @@ func _on_upgrade_pressed(upgrade_id: String) -> void:
 	var result: Dictionary = GameState.purchase_forge_upgrade(upgrade_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
+		_refresh()
+
+
+func _add_upgrade_arrow(direction: String) -> void:
+	var is_up := direction == "up"
+	var button := _make_button("^" if is_up else "v")
+	button.custom_minimum_size = Vector2(120, 36)
+	button.disabled = UPGRADE_IDS.size() <= 1
+	button.pressed.connect(func() -> void:
+		_on_upgrade_arrow_pressed(-1 if is_up else 1)
+	)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(button)
+	content_stack.add_child(row)
+
+
+func _on_upgrade_arrow_pressed(direction: int) -> void:
+	SoundManager.play_click()
+	if UPGRADE_IDS.is_empty():
+		return
+	current_upgrade_index = wrapi(current_upgrade_index + direction, 0, UPGRADE_IDS.size())
 	_refresh()
 
 
@@ -375,18 +388,6 @@ func _on_back_pressed() -> void:
 	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
-
-
-func _on_content_scroll_input(event: InputEvent) -> void:
-	if content_scroll == null:
-		return
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			content_scroll.scroll_vertical += 90
-			get_viewport().set_input_as_handled()
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			content_scroll.scroll_vertical = maxi(0, content_scroll.scroll_vertical - 90)
-			get_viewport().set_input_as_handled()
 
 
 func _clear_content() -> void:

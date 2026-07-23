@@ -15,10 +15,10 @@ const TAB_CARDS := {
 var active_tab := "Trade"
 var stats_label: Label
 var level_label: Label
-var content_scroll: ScrollContainer
 var content_stack: VBoxContainer
 var feedback_label: Label
 var card_buttons: Dictionary = {}
+var current_order_index := 0
 
 
 func _ready() -> void:
@@ -99,21 +99,11 @@ func _add_mode_panel() -> void:
 	margin.add_child(panel)
 	var pad := _make_margin(22, 22, 16, 16)
 	panel.add_child(pad)
-	content_scroll = ScrollContainer.new()
-	content_scroll.name = "MarketOrderScroll"
-	content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	content_scroll.follow_focus = true
-	content_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
-	pad.add_child(content_scroll)
 	content_stack = VBoxContainer.new()
 	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_stack.add_theme_constant_override("separation", 10)
-	content_stack.gui_input.connect(_on_content_scroll_input)
-	content_scroll.add_child(content_stack)
+	pad.add_child(content_stack)
 
 
 func _add_bottom_tabs() -> void:
@@ -178,8 +168,11 @@ func _refresh() -> void:
 	match active_tab:
 		"Trade", "Orders":
 			_add_banner("Fill village orders to earn Coins and reputation.")
-			for order_id in ORDER_IDS:
-				content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
+			current_order_index = clampi(current_order_index, 0, ORDER_IDS.size() - 1)
+			_add_order_arrow("up")
+			var order_id := String(ORDER_IDS[current_order_index])
+			content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
+			_add_order_arrow("down")
 		"Upgrades":
 			_add_banner("Upgrade routes unlock through the Arcane Forge. Market trades fund those village improvements.")
 		"Storage":
@@ -204,8 +197,6 @@ func _make_order_card(order: Dictionary) -> PanelContainer:
 	var order_id := String(order.get("OrderID", ""))
 	var can_trade := _can_fulfill_order(order)
 	card.name = "MarketOrderCard_%s" % order_id
-	card.mouse_filter = Control.MOUSE_FILTER_PASS
-	card.gui_input.connect(_on_content_scroll_input)
 	card.add_theme_stylebox_override("panel", _make_order_card_style(can_trade))
 	var margin := _make_margin(14, 14, 10, 10)
 	card.add_child(margin)
@@ -327,6 +318,28 @@ func _on_order_pressed(order_id: String) -> void:
 	var result: Dictionary = GameState.fulfill_market_order(order_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
+		_refresh()
+
+
+func _add_order_arrow(direction: String) -> void:
+	var is_up := direction == "up"
+	var button := _make_button("^" if is_up else "v")
+	button.custom_minimum_size = Vector2(120, 34)
+	button.disabled = ORDER_IDS.size() <= 1
+	button.pressed.connect(func() -> void:
+		_on_order_arrow_pressed(-1 if is_up else 1)
+	)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(button)
+	content_stack.add_child(row)
+
+
+func _on_order_arrow_pressed(direction: int) -> void:
+	SoundManager.play_click()
+	if ORDER_IDS.is_empty():
+		return
+	current_order_index = wrapi(current_order_index + direction, 0, ORDER_IDS.size())
 	_refresh()
 
 
@@ -334,18 +347,6 @@ func _on_back_pressed() -> void:
 	SoundManager.play_click()
 	GameState.save_game()
 	closed.emit()
-
-
-func _on_content_scroll_input(event: InputEvent) -> void:
-	if content_scroll == null:
-		return
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			content_scroll.scroll_vertical += 90
-			get_viewport().set_input_as_handled()
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			content_scroll.scroll_vertical = maxi(0, content_scroll.scroll_vertical - 90)
-			get_viewport().set_input_as_handled()
 
 
 func _clear_content() -> void:
