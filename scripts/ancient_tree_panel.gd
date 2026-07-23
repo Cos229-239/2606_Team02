@@ -60,13 +60,13 @@ func _refresh() -> void:
 	mana_value_label.text = str(GameState.total_mana)
 	potions_value_label.text = str(GameState.mana_potion_count)
 
-	var growth := GameState.grove_restoration
+	var growth := GameState.ancient_tree_growth
 	_update_growth_background(growth)
 	growth_value_label.text = "%d%%" % growth
 	growth_caption_label.text = "GROWTH"
-	next_reward_label.text = GameState.get_next_ancient_tree_reward_text()
+	next_reward_label.text = GameState.get_ancient_tree_water_status_text()
 
-	water_button.disabled = growth >= 100 or GameState.total_mana < GameState.ancient_tree_restore_cost
+	water_button.disabled = not GameState.can_water_ancient_tree()
 	water_button.modulate = Color(1.0, 1.0, 1.0, 0.98) if water_button.disabled else Color.WHITE
 
 	var reward_level := _get_next_claimable_reward_level()
@@ -165,6 +165,8 @@ func _add_title() -> void:
 	title.position = Vector2(256, 168)
 	title.size = Vector2(620, 82)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_outline_color", Color("#102018"))
+	title.add_theme_constant_override("outline_size", 2)
 	add_child(title)
 
 	_add_rule(Vector2(276, 286), Vector2(528, 3))
@@ -184,17 +186,17 @@ func _add_growth_badge() -> void:
 	growth_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(growth_ring)
 
-	growth_value_label = _make_label("0%", 60, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	growth_value_label.position = Vector2(430, 1230)
-	growth_value_label.size = Vector2(220, 68)
+	growth_value_label = _make_label("0%", 56, SOFT_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	growth_value_label.position = Vector2(410, 1222)
+	growth_value_label.size = Vector2(260, 72)
 	growth_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	growth_value_label.add_theme_color_override("font_outline_color", Color("#102018"))
 	growth_value_label.add_theme_constant_override("outline_size", 5)
 	add_child(growth_value_label)
 
-	growth_caption_label = _make_label("GROWTH", 24, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
-	growth_caption_label.position = Vector2(430, 1288)
-	growth_caption_label.size = Vector2(220, 36)
+	growth_caption_label = _make_label("GROWTH", 22, Color("#e8d693"), HORIZONTAL_ALIGNMENT_CENTER)
+	growth_caption_label.position = Vector2(430, 1292)
+	growth_caption_label.size = Vector2(220, 38)
 	growth_caption_label.add_theme_color_override("font_outline_color", Color("#102018"))
 	growth_caption_label.add_theme_constant_override("outline_size", 3)
 	add_child(growth_caption_label)
@@ -215,7 +217,7 @@ func _add_action_buttons() -> void:
 	add_child(upgrade_button)
 
 	_add_button_backing(Vector2(560, 1414), Vector2(438, 188), 10)
-	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree")
+	water_button = _make_image_button(WATER_BUTTON_ART, "Water Ancient Tree for gifts")
 	water_button.name = "RestoreButton"
 	water_button.position = Vector2(560, 1414)
 	water_button.size = Vector2(438, 188)
@@ -333,9 +335,9 @@ func _make_icon_badge(text: String, color: Color, badge_size: Vector2, font_size
 	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge.add_theme_font_size_override("font_size", font_size)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	badge.add_theme_color_override("font_shadow_color", Color.BLACK)
-	badge.add_theme_constant_override("shadow_offset_x", 2)
-	badge.add_theme_constant_override("shadow_offset_y", 2)
+	badge.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	badge.add_theme_constant_override("shadow_offset_x", 0)
+	badge.add_theme_constant_override("shadow_offset_y", 0)
 	badge.add_theme_stylebox_override("normal", _make_frame_style(Color(color.r, color.g, color.b, 0.82), Color("#f5d66f"), 2, int(badge_size.x * 0.5)))
 	return badge
 
@@ -346,9 +348,9 @@ func _make_label(text: String, font_size: int, color: Color, alignment: Horizont
 	label.horizontal_alignment = alignment
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	return label
 
@@ -380,10 +382,11 @@ func _add_rule(position: Vector2, size: Vector2) -> void:
 
 func _on_water_pressed() -> void:
 	SoundManager.play_click()
-	var result: Dictionary = GameState.restore_ancient_tree()
+	var result: Dictionary = GameState.water_ancient_tree()
 	feedback_label.text = String(result.get("Message", ""))
 	if bool(result.get("Success", false)):
-		_show_floating_text("+ Growth", Vector2(330, 1240), GREEN)
+		SoundManager.play_collect()
+		_show_floating_text(String(result.get("RewardText", "+ Growth")), Vector2(330, 1240), GOLD)
 	_refresh()
 
 

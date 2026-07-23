@@ -19,6 +19,9 @@ var mode_label: Label
 var feedback_label: Label
 var content_stack: VBoxContainer
 var card_buttons: Dictionary = {}
+var current_upgrade_index := 0
+var previous_upgrade_button: Button
+var next_upgrade_button: Button
 
 
 func _ready() -> void:
@@ -38,6 +41,7 @@ func _build_panel() -> void:
 	_add_title_header()
 	_add_mode_panel()
 	_add_bottom_tabs()
+	_add_upgrade_pager_buttons()
 
 
 func _add_background() -> void:
@@ -77,22 +81,31 @@ func _add_title_header() -> void:
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
+
 	title_label = _make_label("Arcane Forge", 58, Color("#ffd77b"), HORIZONTAL_ALIGNMENT_CENTER)
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.add_theme_color_override("font_outline_color", Color("#1a1008"))
+	title_label.add_theme_constant_override("outline_size", 2)
 	stack.add_child(title_label)
+
 	mode_label = _make_label("", 25, Color("#d9f1ff"), HORIZONTAL_ALIGNMENT_CENTER)
 	mode_label.name = "ForgeLevelLabel"
+	mode_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stack.add_child(mode_label)
 
 
 func _add_mode_panel() -> void:
-	var margin := _make_full_margin(95, 95, 1045, 405)
+	var margin := _make_full_margin(95, 95, 1125, 475)
 	add_child(margin)
 	var panel := PanelContainer.new()
+	panel.clip_contents = true
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.016, 0.018, 0.026, 0.84), Color("#b98c43"), 2, 14))
 	margin.add_child(panel)
 	var pad := _make_margin(24, 24, 20, 20)
 	panel.add_child(pad)
 	content_stack = VBoxContainer.new()
+	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_stack.add_theme_constant_override("separation", 12)
 	pad.add_child(content_stack)
 
@@ -168,8 +181,10 @@ func _refresh() -> void:
 			_add_description("Enhance existing buildings with forged upgrades. Each completed project raises the Forge Level and improves another building.")
 		_:
 			_add_description("Spend resources on permanent upgrades that improve existing buildings.")
-			for upgrade_id in UPGRADE_IDS:
-				content_stack.add_child(_make_upgrade_card(GameState.get_forge_upgrade_data(upgrade_id)))
+			current_upgrade_index = clampi(current_upgrade_index, 0, UPGRADE_IDS.size() - 1)
+			_add_page_indicator(current_upgrade_index + 1, UPGRADE_IDS.size(), Color("#82d9ff"))
+			var upgrade_id := String(UPGRADE_IDS[current_upgrade_index])
+			content_stack.add_child(_make_upgrade_card(GameState.get_forge_upgrade_data(upgrade_id)))
 
 	feedback_label = _make_label("", 24, Color("#82d9ff"), HORIZONTAL_ALIGNMENT_CENTER)
 	content_stack.add_child(feedback_label)
@@ -177,11 +192,20 @@ func _refresh() -> void:
 	for tab_name in card_buttons.keys():
 		var border := (card_buttons[tab_name] as Control).get_node("ActiveBorder") as PanelContainer
 		border.visible = tab_name == active_tab
+	var show_pager := active_tab == "Upgrades" and UPGRADE_IDS.size() > 1
+	previous_upgrade_button.visible = show_pager
+	next_upgrade_button.visible = show_pager
 
 
 func _add_description(text: String) -> void:
 	var label := _make_label(text, 24, Color("#fff2c6"), HORIZONTAL_ALIGNMENT_CENTER)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_stack.add_child(label)
+
+
+func _add_page_indicator(current_page: int, page_count: int, color: Color) -> void:
+	var label := _make_label("%d / %d" % [current_page, page_count], 18, color, HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content_stack.add_child(label)
 
 
@@ -346,6 +370,44 @@ func _on_upgrade_pressed(upgrade_id: String) -> void:
 	var result: Dictionary = GameState.purchase_forge_upgrade(upgrade_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
+		_refresh()
+
+
+func _add_upgrade_pager_buttons() -> void:
+	previous_upgrade_button = _make_pager_button("^")
+	previous_upgrade_button.position = Vector2(435, 1110)
+	previous_upgrade_button.pressed.connect(_on_previous_upgrade_pressed)
+	add_child(previous_upgrade_button)
+
+	next_upgrade_button = _make_pager_button("v")
+	next_upgrade_button.position = Vector2(435, 1436)
+	next_upgrade_button.pressed.connect(_on_next_upgrade_pressed)
+	add_child(next_upgrade_button)
+
+
+func _make_pager_button(text: String) -> Button:
+	var button := _make_button(text)
+	button.size = Vector2(210, 52)
+	button.custom_minimum_size = Vector2(210, 52)
+	button.z_index = 80
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_NONE
+	return button
+
+
+func _on_previous_upgrade_pressed() -> void:
+	_change_upgrade_page(-1)
+
+
+func _on_next_upgrade_pressed() -> void:
+	_change_upgrade_page(1)
+
+
+func _change_upgrade_page(direction: int) -> void:
+	SoundManager.play_click()
+	if UPGRADE_IDS.is_empty():
+		return
+	current_upgrade_index = (current_upgrade_index + direction + UPGRADE_IDS.size()) % UPGRADE_IDS.size()
 	_refresh()
 
 
@@ -357,6 +419,7 @@ func _on_back_pressed() -> void:
 
 func _clear_content() -> void:
 	for child in content_stack.get_children():
+		content_stack.remove_child(child)
 		child.queue_free()
 
 
@@ -408,9 +471,9 @@ func _make_label(text: String, font_size: int, color: Color, alignment: Horizont
 	label.horizontal_alignment = alignment
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	return label
 
 

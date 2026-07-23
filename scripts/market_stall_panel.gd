@@ -18,6 +18,9 @@ var level_label: Label
 var content_stack: VBoxContainer
 var feedback_label: Label
 var card_buttons: Dictionary = {}
+var current_order_index := 0
+var previous_order_button: Button
+var next_order_button: Button
 
 
 func _ready() -> void:
@@ -36,6 +39,7 @@ func _build_panel() -> void:
 	_add_title_header()
 	_add_mode_panel()
 	_add_bottom_tabs()
+	_add_order_pager_buttons()
 
 
 func _add_background() -> void:
@@ -66,32 +70,42 @@ func _add_top_bar() -> void:
 
 
 func _add_title_header() -> void:
-	var margin := _make_full_margin(126, 126, 112, 1558)
+	var margin := _make_full_margin(144, 144, 108, 1600)
 	add_child(margin)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.030, 0.018, 0.014, 0.64), Color("#d8a35a"), 2, 14))
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.030, 0.018, 0.014, 0.66), Color("#d8a35a"), 2, 14))
 	margin.add_child(panel)
+
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 0)
 	panel.add_child(stack)
-	var title := _make_label("Market Stall", 58, Color("#ffe2a0"), HORIZONTAL_ALIGNMENT_CENTER)
+
+	var title := _make_label("Market Stall", 54, Color("#ffe2a0"), HORIZONTAL_ALIGNMENT_CENTER)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_outline_color", Color("#1a1008"))
+	title.add_theme_constant_override("outline_size", 2)
 	stack.add_child(title)
+
 	level_label = _make_label("", 25, Color("#f8ffce"), HORIZONTAL_ALIGNMENT_CENTER)
 	level_label.name = "MarketLevelLabel"
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stack.add_child(level_label)
 
 
 func _add_mode_panel() -> void:
-	var margin := _make_full_margin(92, 92, 1045, 405)
+	var margin := _make_full_margin(122, 122, 1248, 360)
 	add_child(margin)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.045, 0.027, 0.020, 0.86), Color("#c9954e"), 2, 14))
+	panel.clip_contents = true
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.070, 0.038, 0.022, 0.68), Color("#c9954e"), 2, 14))
 	margin.add_child(panel)
-	var pad := _make_margin(24, 24, 20, 20)
+	var pad := _make_margin(22, 22, 16, 16)
 	panel.add_child(pad)
 	content_stack = VBoxContainer.new()
-	content_stack.add_theme_constant_override("separation", 12)
+	content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_stack.add_theme_constant_override("separation", 10)
 	pad.add_child(content_stack)
 
 
@@ -157,8 +171,10 @@ func _refresh() -> void:
 	match active_tab:
 		"Trade", "Orders":
 			_add_banner("Fill village orders to earn Coins and reputation.")
-			for order_id in ORDER_IDS:
-				content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
+			current_order_index = clampi(current_order_index, 0, ORDER_IDS.size() - 1)
+			_add_page_indicator(current_order_index + 1, ORDER_IDS.size(), Color("#99e8ac"))
+			var order_id := String(ORDER_IDS[current_order_index])
+			content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
 		"Upgrades":
 			_add_banner("Upgrade routes unlock through the Arcane Forge. Market trades fund those village improvements.")
 		"Storage":
@@ -170,11 +186,20 @@ func _refresh() -> void:
 	for tab_name in card_buttons.keys():
 		var border := (card_buttons[tab_name] as Control).get_node("ActiveBorder") as PanelContainer
 		border.visible = tab_name == active_tab
+	var show_pager := active_tab in ["Trade", "Orders"] and ORDER_IDS.size() > 1
+	previous_order_button.visible = show_pager
+	next_order_button.visible = show_pager
 
 
 func _add_banner(text: String) -> void:
-	var label := _make_label(text, 23, Color("#fff0c2"), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _make_label(text, 21, Color("#ffe5aa"), HORIZONTAL_ALIGNMENT_CENTER)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_stack.add_child(label)
+
+
+func _add_page_indicator(current_page: int, page_count: int, color: Color) -> void:
+	var label := _make_label("%d / %d" % [current_page, page_count], 17, color, HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content_stack.add_child(label)
 
 
@@ -184,10 +209,10 @@ func _make_order_card(order: Dictionary) -> PanelContainer:
 	var can_trade := _can_fulfill_order(order)
 	card.name = "MarketOrderCard_%s" % order_id
 	card.add_theme_stylebox_override("panel", _make_order_card_style(can_trade))
-	var margin := _make_margin(16, 16, 12, 12)
+	var margin := _make_margin(14, 14, 10, 10)
 	card.add_child(margin)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 12)
 	margin.add_child(row)
 	_add_order_icon(row, order_id)
 	var text_stack := VBoxContainer.new()
@@ -197,21 +222,21 @@ func _make_order_card(order: Dictionary) -> PanelContainer:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 10)
 	text_stack.add_child(header)
-	var title := _make_label(String(order.get("Title", "Order")), 20, Color("#fff2c6"))
+	var title := _make_label(String(order.get("Title", "Order")), 19, Color("#ffe7af"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	header.add_child(_make_status_pill("Ready" if can_trade else "Missing", can_trade, order_id))
 
-	var desc := _make_label(String(order.get("Description", "")), 15, Color("#e8dfca"))
+	var desc := _make_label(String(order.get("Description", "")), 14, Color("#f0ddbd"))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_stack.add_child(desc)
-	text_stack.add_child(_make_label("Needs: %s" % _format_order_cost(order), 15, Color("#f3d57a")))
+	text_stack.add_child(_make_label("Needs: %s" % _format_order_cost(order), 14, Color("#eac46e")))
 	text_stack.add_child(_make_label("Pays: %d Coins + %d Reputation" % [
 		int(order.get("RewardCoins", 0)),
 		int(order.get("ReputationReward", 0))
-	], 15, Color("#f3d57a")))
+	], 14, Color("#eac46e")))
 
-	var status_label := _make_label(_format_order_status(order), 15, Color("#99e8ac") if can_trade else Color("#ffb6a0"))
+	var status_label := _make_label(_format_order_status(order), 14, Color("#d8f0b3") if can_trade else Color("#ffb6a0"))
 	status_label.name = "MarketOrderStatus_%s" % order_id
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_stack.add_child(status_label)
@@ -271,15 +296,18 @@ func _can_fulfill_order(order: Dictionary) -> bool:
 
 
 func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
-	var pill := _make_label(text, 14, Color("#102018") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
+	var pill := _make_label(text, 13, Color("#2b1b0e") if ready else Color("#fff2d6"), HORIZONTAL_ALIGNMENT_CENTER)
 	pill.name = "MarketOrderPill_%s" % order_id
 	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pill.custom_minimum_size = Vector2(96, 34)
+	pill.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	pill.add_theme_constant_override("shadow_offset_x", 0)
+	pill.add_theme_constant_override("shadow_offset_y", 0)
 	pill.add_theme_stylebox_override(
 		"normal",
 		_make_panel_style(
-			Color("#8ef0a6", 0.94) if ready else Color("#4a2730", 0.94),
-			Color("#f5d66f") if ready else Color("#ff9c7d"),
+			Color("#f4d36d", 0.94) if ready else Color("#4a2730", 0.90),
+			Color("#fff0aa") if ready else Color("#ff9c7d"),
 			2,
 			8
 		)
@@ -289,8 +317,8 @@ func _make_status_pill(text: String, ready: bool, order_id: String) -> Label:
 
 func _make_order_card_style(ready: bool) -> StyleBoxFlat:
 	return _make_panel_style(
-		Color(0.052, 0.060, 0.035, 0.92) if ready else Color(0.060, 0.036, 0.022, 0.88),
-		Color("#8ef0a6") if ready else Color("#8d6a33"),
+		Color(0.095, 0.058, 0.034, 0.72) if ready else Color(0.060, 0.036, 0.022, 0.64),
+		Color("#e9c46a") if ready else Color("#9f7436"),
 		3 if ready else 2,
 		10
 	)
@@ -301,6 +329,44 @@ func _on_order_pressed(order_id: String) -> void:
 	var result: Dictionary = GameState.fulfill_market_order(order_id)
 	if feedback_label:
 		feedback_label.text = String(result.get("Message", ""))
+		_refresh()
+
+
+func _add_order_pager_buttons() -> void:
+	previous_order_button = _make_pager_button("^")
+	previous_order_button.position = Vector2(435, 1232)
+	previous_order_button.pressed.connect(_on_previous_order_pressed)
+	add_child(previous_order_button)
+
+	next_order_button = _make_pager_button("v")
+	next_order_button.position = Vector2(435, 1556)
+	next_order_button.pressed.connect(_on_next_order_pressed)
+	add_child(next_order_button)
+
+
+func _make_pager_button(text: String) -> Button:
+	var button := _make_button(text)
+	button.size = Vector2(210, 50)
+	button.custom_minimum_size = Vector2(210, 50)
+	button.z_index = 80
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_NONE
+	return button
+
+
+func _on_previous_order_pressed() -> void:
+	_change_order_page(-1)
+
+
+func _on_next_order_pressed() -> void:
+	_change_order_page(1)
+
+
+func _change_order_page(direction: int) -> void:
+	SoundManager.play_click()
+	if ORDER_IDS.is_empty():
+		return
+	current_order_index = (current_order_index + direction + ORDER_IDS.size()) % ORDER_IDS.size()
 	_refresh()
 
 
@@ -312,6 +378,7 @@ func _on_back_pressed() -> void:
 
 func _clear_content() -> void:
 	for child in content_stack.get_children():
+		content_stack.remove_child(child)
 		child.queue_free()
 
 
@@ -363,9 +430,9 @@ func _make_label(text: String, font_size: int, color: Color, alignment: Horizont
 	label.horizontal_alignment = alignment
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	label.add_theme_constant_override("shadow_offset_x", 3)
-	label.add_theme_constant_override("shadow_offset_y", 3)
+	label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	return label
 
 
