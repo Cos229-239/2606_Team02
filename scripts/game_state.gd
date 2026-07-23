@@ -2670,6 +2670,7 @@ func apply_save_data(data: Dictionary) -> void:
 					var imported_position := get_pond_decoration_normalized_position(pond_decorations[imported_index])
 					pond_decorations[imported_index]["PositionX"] = imported_position.x
 					pond_decorations[imported_index]["PositionY"] = imported_position.y
+		_add_missing_default_pond_decorations()
 	var saved_slots = data.get("pond_decoration_slots", [])
 	if saved_slots is Array and saved_slots.size() > 0:
 		pond_decoration_slots.clear()
@@ -2982,7 +2983,37 @@ func _reset_pond_decorations_to_defaults() -> void:
 	pond_decorations.append(_make_pond_decoration("Flame Basin", 70, 11))
 	pond_decorations.append(_make_pond_decoration("Reed Cluster", 35, 6))
 	pond_decorations.append(_make_pond_decoration("Willow Arch", 100, 18))
+	pond_decorations.append(_make_pond_decoration("Gold Koi", 85, 14))
+	pond_decorations.append(_make_pond_decoration("Blue Koi", 85, 14))
+	pond_decorations.append(_make_pond_decoration("Pink Koi", 95, 16))
 	recalculate_pond_beauty()
+
+
+func _add_missing_default_pond_decorations() -> void:
+	var current_names := {}
+	for decoration in pond_decorations:
+		current_names[String(decoration.get("DecorationName", ""))] = true
+	var defaults := [
+		_make_pond_decoration("Moon Lantern", 25, 5),
+		_make_pond_decoration("Spirit Stone", 40, 8),
+		_make_pond_decoration("Bloom Lilypad", 30, 6),
+		_make_pond_decoration("Sacred Bridge", 75, 12),
+		_make_pond_decoration("Crystal Lotus", 90, 16),
+		_make_pond_decoration("Stone Koi Statue", 60, 10),
+		_make_pond_decoration("Crystal Pillar", 80, 14),
+		_make_pond_decoration("Moonstone Steps", 45, 7),
+		_make_pond_decoration("Fern Spring", 55, 9),
+		_make_pond_decoration("Flame Basin", 70, 11),
+		_make_pond_decoration("Reed Cluster", 35, 6),
+		_make_pond_decoration("Willow Arch", 100, 18),
+		_make_pond_decoration("Gold Koi", 85, 14),
+		_make_pond_decoration("Blue Koi", 85, 14),
+		_make_pond_decoration("Pink Koi", 95, 16)
+	]
+	for decoration in defaults:
+		var decoration_name := String(decoration.get("DecorationName", ""))
+		if not current_names.has(decoration_name):
+			pond_decorations.append(decoration)
 
 
 func _reset_flower_grid_to_defaults() -> void:
