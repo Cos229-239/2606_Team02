@@ -1385,8 +1385,12 @@ func get_save_data() -> Dictionary:
 		"has_seen_tutorial": has_seen_tutorial,
 		"tutorial_step": tutorial_step,
 		"music_volume": music_volume,
-		"sfx_volume": sfx_volume
+		"sfx_volume": sfx_volume,
+		"exploration_active": exploration_active,
+		"exploration_location_id": exploration_location_id,
+		"exploration_end_unix": exploration_end_unix
 	}
+	
 
 
 func apply_save_data(data: Dictionary) -> void:
@@ -1524,6 +1528,10 @@ func apply_save_data(data: Dictionary) -> void:
 	tutorial_step = int(data.get("tutorial_step", 0))
 	music_volume = clamp(float(data.get("music_volume", 0.75)), 0.0, 1.0)
 	sfx_volume = clamp(float(data.get("sfx_volume", 0.75)), 0.0, 1.0)
+	
+	exploration_active = bool(data.get("exploration_active", false))
+	exploration_location_id = String(data.get("exploration_location_id", ""))
+	exploration_end_unix = int(data.get("exploration_end_unix", 0))
 
 	resources_changed.emit()
 	flower_grove_changed.emit()
@@ -1654,6 +1662,9 @@ func reset_to_defaults() -> void:
 	tutorial_step = 0
 	music_volume = 0.75
 	sfx_volume = 0.75
+	exploration_active = false
+	exploration_location_id = ""
+	exploration_end_unix = 0
 	resources_changed.emit()
 	flower_grove_changed.emit()
 	sacred_pond_changed.emit()
@@ -1752,7 +1763,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Forest Trail",
 				"UnlockLevel": 3,
 				"CostMana": 30,
-				"DurationSeconds": 30,
+				"DurationSeconds": 300,
 				"RewardCoinsMin": 100,
 				"RewardCoinsMax": 100
 			}
@@ -1762,7 +1773,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Moonlit Clearing",
 				"UnlockLevel": 6,
 				"CostMana": 300,
-				"DurationSeconds": 30,
+				"DurationSeconds": 180,
 				"RewardCoinsMin": 500,
 				"RewardCoinsMax": 1000
 			}
@@ -1772,7 +1783,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Crystal Hollow",
 				"UnlockLevel": 9,
 				"CostMana": 1000,
-				"DurationSeconds": 30,
+				"DurationSeconds": 3600,
 				"RewardCoinsMin": 1000,
 				"RewardCoinsMax": 3000
 			}
@@ -1798,10 +1809,9 @@ func is_exploration_unlocked(location_id: String) -> bool:
 		return false
 	return get_exploration_gate_level() >= int(data.get("UnlockLevel", 999))
 
-
 var exploration_active: bool = false
 var exploration_location_id: String = ""
-var exploration_time_remaining: float = 0.0
+var exploration_end_unix: int = 0
 
 
 func start_exploration(location_id: String) -> Dictionary:
@@ -1820,26 +1830,26 @@ func start_exploration(location_id: String) -> Dictionary:
 	total_mana -= cost
 	exploration_active = true
 	exploration_location_id = location_id
-	exploration_time_remaining = float(data.get("DurationSeconds", 60))
+	exploration_end_unix = int(Time.get_unix_time_from_system()) + int(data.get("DurationSeconds", 60))
 	resources_changed.emit()
 	save_game()
 	return {"Success": true, "Message": "Exploring %s..." % String(data.get("Name", "location"))}
 
 
-func update_exploration(delta: float) -> void:
-	if not exploration_active or delta <= 0.0:
-		return
-	if exploration_time_remaining <= 0.0:
-		return
-	exploration_time_remaining = max(0.0, exploration_time_remaining - delta)
-
-
-func is_exploration_ready() -> bool:
-	return exploration_active and exploration_time_remaining <= 0.0
+func update_exploration(_delta: float) -> void:
+	# Time remaining is worked out from the system clock, so there is nothing to
+	# count down here. This is kept so the _process hook above stays valid.
+	pass
 
 
 func get_exploration_time_remaining() -> int:
-	return int(ceil(exploration_time_remaining))
+	if not exploration_active:
+		return 0
+	return max(0, exploration_end_unix - int(Time.get_unix_time_from_system()))
+
+
+func is_exploration_ready() -> bool:
+	return exploration_active and get_exploration_time_remaining() <= 0
 
 
 func get_active_exploration_name() -> String:
@@ -1848,13 +1858,24 @@ func get_active_exploration_name() -> String:
 	return String(get_exploration_data(exploration_location_id).get("Name", "the wilds"))
 
 
+func clear_exploration() -> void:
+	exploration_active = false
+	exploration_location_id = ""
+	exploration_end_unix = 0
+
+
 func claim_exploration_reward() -> Dictionary:
 	if not exploration_active:
 		return {"Success": false, "Message": "No exploration underway."}
-	if exploration_time_remaining > 0.0:
+	if get_exploration_time_remaining() > 0:
 		return {"Success": false, "Message": "The fairies are still exploring."}
 
 	var data := get_exploration_data(exploration_location_id)
+	if data.is_empty():
+		clear_exploration()
+		save_game()
+		return {"Success": false, "Message": "That exploration is no longer available."}
+
 	var reward_min := int(data.get("RewardCoinsMin", 0))
 	var reward_max := int(data.get("RewardCoinsMax", reward_min))
 	var reward := reward_min
@@ -1863,9 +1884,7 @@ func claim_exploration_reward() -> Dictionary:
 
 	total_coins += reward
 	var location_name := String(data.get("Name", "the grove"))
-	exploration_active = false
-	exploration_location_id = ""
-	exploration_time_remaining = 0.0
+	clear_exploration()
 
 	resources_changed.emit()
 	save_game()
