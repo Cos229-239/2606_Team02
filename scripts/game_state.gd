@@ -150,6 +150,7 @@ func _process(delta: float) -> void:
 	generate_flower_mana(delta)
 	update_fairy_tasks(delta)
 	update_potion_crafting(delta)
+	update_exploration(delta)
 
 
 func generate_flower_mana(delta: float) -> void:
@@ -3031,7 +3032,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Forest Trail",
 				"UnlockLevel": 3,
 				"CostMana": 30,
-				"DurationSeconds": 300,
+				"DurationSeconds": 30,
 				"RewardCoinsMin": 100,
 				"RewardCoinsMax": 100
 			}
@@ -3041,7 +3042,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Moonlit Clearing",
 				"UnlockLevel": 6,
 				"CostMana": 300,
-				"DurationSeconds": 1800,
+				"DurationSeconds": 30,
 				"RewardCoinsMin": 500,
 				"RewardCoinsMax": 1000
 			}
@@ -3051,7 +3052,7 @@ func get_exploration_data(location_id: String) -> Dictionary:
 				"Name": "Crystal Hollow",
 				"UnlockLevel": 9,
 				"CostMana": 1000,
-				"DurationSeconds": 3600,
+				"DurationSeconds": 30,
 				"RewardCoinsMin": 1000,
 				"RewardCoinsMax": 3000
 			}
@@ -3078,10 +3079,17 @@ func is_exploration_unlocked(location_id: String) -> bool:
 	return get_exploration_gate_level() >= int(data.get("UnlockLevel", 999))
 
 
+var exploration_active: bool = false
+var exploration_location_id: String = ""
+var exploration_time_remaining: float = 0.0
+
+
 func start_exploration(location_id: String) -> Dictionary:
 	var data := get_exploration_data(location_id)
 	if data.is_empty():
 		return {"Success": false, "Message": "Unknown location."}
+	if exploration_active:
+		return {"Success": false, "Message": "An exploration is already underway."}
 	if not is_exploration_unlocked(location_id):
 		var needed := int(data.get("UnlockLevel", 0))
 		return {"Success": false, "Message": "Locked. Needs Flower Grove and Potion Shop at level %d." % needed}
@@ -3090,10 +3098,58 @@ func start_exploration(location_id: String) -> Dictionary:
 		return {"Success": false, "Message": "Not enough Mana."}
 
 	total_mana -= cost
+	exploration_active = true
+	exploration_location_id = location_id
+	exploration_time_remaining = float(data.get("DurationSeconds", 60))
 	resources_changed.emit()
 	save_game()
-	
 	return {"Success": true, "Message": "Exploring %s..." % String(data.get("Name", "location"))}
+
+
+func update_exploration(delta: float) -> void:
+	if not exploration_active or delta <= 0.0:
+		return
+	if exploration_time_remaining <= 0.0:
+		return
+	exploration_time_remaining = max(0.0, exploration_time_remaining - delta)
+
+
+func is_exploration_ready() -> bool:
+	return exploration_active and exploration_time_remaining <= 0.0
+
+
+func get_exploration_time_remaining() -> int:
+	return int(ceil(exploration_time_remaining))
+
+
+func get_active_exploration_name() -> String:
+	if not exploration_active:
+		return ""
+	return String(get_exploration_data(exploration_location_id).get("Name", "the wilds"))
+
+
+func claim_exploration_reward() -> Dictionary:
+	if not exploration_active:
+		return {"Success": false, "Message": "No exploration underway."}
+	if exploration_time_remaining > 0.0:
+		return {"Success": false, "Message": "The fairies are still exploring."}
+
+	var data := get_exploration_data(exploration_location_id)
+	var reward_min := int(data.get("RewardCoinsMin", 0))
+	var reward_max := int(data.get("RewardCoinsMax", reward_min))
+	var reward := reward_min
+	if reward_max > reward_min:
+		reward = randi_range(reward_min, reward_max)
+
+	total_coins += reward
+	var location_name := String(data.get("Name", "the grove"))
+	exploration_active = false
+	exploration_location_id = ""
+	exploration_time_remaining = 0.0
+
+	resources_changed.emit()
+	save_game()
+	return {"Success": true, "Message": "The fairies returned from %s with %d Coins!" % [location_name, reward], "Reward": reward}
 
 
 func _get_sound_manager() -> Node:
