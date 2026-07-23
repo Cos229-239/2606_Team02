@@ -19,6 +19,8 @@ var content_stack: VBoxContainer
 var feedback_label: Label
 var card_buttons: Dictionary = {}
 var current_order_index := 0
+var previous_order_button: Button
+var next_order_button: Button
 
 
 func _ready() -> void:
@@ -37,6 +39,7 @@ func _build_panel() -> void:
 	_add_title_header()
 	_add_mode_panel()
 	_add_bottom_tabs()
+	_add_order_pager_buttons()
 
 
 func _add_background() -> void:
@@ -169,11 +172,9 @@ func _refresh() -> void:
 		"Trade", "Orders":
 			_add_banner("Fill village orders to earn Coins and reputation.")
 			current_order_index = clampi(current_order_index, 0, ORDER_IDS.size() - 1)
-			_add_order_arrow("up")
 			_add_page_indicator(current_order_index + 1, ORDER_IDS.size(), Color("#99e8ac"))
 			var order_id := String(ORDER_IDS[current_order_index])
 			content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
-			_add_order_arrow("down")
 		"Upgrades":
 			_add_banner("Upgrade routes unlock through the Arcane Forge. Market trades fund those village improvements.")
 		"Storage":
@@ -185,6 +186,9 @@ func _refresh() -> void:
 	for tab_name in card_buttons.keys():
 		var border := (card_buttons[tab_name] as Control).get_node("ActiveBorder") as PanelContainer
 		border.visible = tab_name == active_tab
+	var show_pager := active_tab in ["Trade", "Orders"] and ORDER_IDS.size() > 1
+	previous_order_button.visible = show_pager
+	next_order_button.visible = show_pager
 
 
 func _add_banner(text: String) -> void:
@@ -328,21 +332,26 @@ func _on_order_pressed(order_id: String) -> void:
 		_refresh()
 
 
-func _add_order_arrow(direction: String) -> void:
-	var is_up := direction == "up"
-	var button := _make_button("^" if is_up else "v")
-	button.custom_minimum_size = Vector2(260, 46)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.disabled = ORDER_IDS.size() <= 1
-	if is_up:
-		button.pressed.connect(_on_previous_order_pressed)
-	else:
-		button.pressed.connect(_on_next_order_pressed)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(button)
-	content_stack.add_child(row)
+func _add_order_pager_buttons() -> void:
+	previous_order_button = _make_pager_button("^")
+	previous_order_button.position = Vector2(435, 1232)
+	previous_order_button.pressed.connect(_on_previous_order_pressed)
+	add_child(previous_order_button)
+
+	next_order_button = _make_pager_button("v")
+	next_order_button.position = Vector2(435, 1556)
+	next_order_button.pressed.connect(_on_next_order_pressed)
+	add_child(next_order_button)
+
+
+func _make_pager_button(text: String) -> Button:
+	var button := _make_button(text)
+	button.size = Vector2(210, 50)
+	button.custom_minimum_size = Vector2(210, 50)
+	button.z_index = 80
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_NONE
+	return button
 
 
 func _on_previous_order_pressed() -> void:

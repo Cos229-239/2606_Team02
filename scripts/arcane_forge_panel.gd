@@ -20,6 +20,8 @@ var feedback_label: Label
 var content_stack: VBoxContainer
 var card_buttons: Dictionary = {}
 var current_upgrade_index := 0
+var previous_upgrade_button: Button
+var next_upgrade_button: Button
 
 
 func _ready() -> void:
@@ -39,6 +41,7 @@ func _build_panel() -> void:
 	_add_title_header()
 	_add_mode_panel()
 	_add_bottom_tabs()
+	_add_upgrade_pager_buttons()
 
 
 func _add_background() -> void:
@@ -179,11 +182,9 @@ func _refresh() -> void:
 		_:
 			_add_description("Spend resources on permanent upgrades that improve existing buildings.")
 			current_upgrade_index = clampi(current_upgrade_index, 0, UPGRADE_IDS.size() - 1)
-			_add_upgrade_arrow("up")
 			_add_page_indicator(current_upgrade_index + 1, UPGRADE_IDS.size(), Color("#82d9ff"))
 			var upgrade_id := String(UPGRADE_IDS[current_upgrade_index])
 			content_stack.add_child(_make_upgrade_card(GameState.get_forge_upgrade_data(upgrade_id)))
-			_add_upgrade_arrow("down")
 
 	feedback_label = _make_label("", 24, Color("#82d9ff"), HORIZONTAL_ALIGNMENT_CENTER)
 	content_stack.add_child(feedback_label)
@@ -191,6 +192,9 @@ func _refresh() -> void:
 	for tab_name in card_buttons.keys():
 		var border := (card_buttons[tab_name] as Control).get_node("ActiveBorder") as PanelContainer
 		border.visible = tab_name == active_tab
+	var show_pager := active_tab == "Upgrades" and UPGRADE_IDS.size() > 1
+	previous_upgrade_button.visible = show_pager
+	next_upgrade_button.visible = show_pager
 
 
 func _add_description(text: String) -> void:
@@ -369,21 +373,26 @@ func _on_upgrade_pressed(upgrade_id: String) -> void:
 		_refresh()
 
 
-func _add_upgrade_arrow(direction: String) -> void:
-	var is_up := direction == "up"
-	var button := _make_button("^" if is_up else "v")
-	button.custom_minimum_size = Vector2(260, 48)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.disabled = UPGRADE_IDS.size() <= 1
-	if is_up:
-		button.pressed.connect(_on_previous_upgrade_pressed)
-	else:
-		button.pressed.connect(_on_next_upgrade_pressed)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(button)
-	content_stack.add_child(row)
+func _add_upgrade_pager_buttons() -> void:
+	previous_upgrade_button = _make_pager_button("^")
+	previous_upgrade_button.position = Vector2(435, 1110)
+	previous_upgrade_button.pressed.connect(_on_previous_upgrade_pressed)
+	add_child(previous_upgrade_button)
+
+	next_upgrade_button = _make_pager_button("v")
+	next_upgrade_button.position = Vector2(435, 1436)
+	next_upgrade_button.pressed.connect(_on_next_upgrade_pressed)
+	add_child(next_upgrade_button)
+
+
+func _make_pager_button(text: String) -> Button:
+	var button := _make_button(text)
+	button.size = Vector2(210, 52)
+	button.custom_minimum_size = Vector2(210, 52)
+	button.z_index = 80
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.focus_mode = Control.FOCUS_NONE
+	return button
 
 
 func _on_previous_upgrade_pressed() -> void:
