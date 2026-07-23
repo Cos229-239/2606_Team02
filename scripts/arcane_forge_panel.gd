@@ -365,22 +365,33 @@ func _on_upgrade_pressed(upgrade_id: String) -> void:
 func _add_upgrade_arrow(direction: String) -> void:
 	var is_up := direction == "up"
 	var button := _make_button("^" if is_up else "v")
-	button.custom_minimum_size = Vector2(120, 36)
+	button.custom_minimum_size = Vector2(260, 48)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.disabled = UPGRADE_IDS.size() <= 1
-	button.pressed.connect(func() -> void:
-		_on_upgrade_arrow_pressed(-1 if is_up else 1)
-	)
+	if is_up:
+		button.pressed.connect(_on_previous_upgrade_pressed)
+	else:
+		button.pressed.connect(_on_next_upgrade_pressed)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(button)
 	content_stack.add_child(row)
 
 
-func _on_upgrade_arrow_pressed(direction: int) -> void:
+func _on_previous_upgrade_pressed() -> void:
+	_change_upgrade_page(-1)
+
+
+func _on_next_upgrade_pressed() -> void:
+	_change_upgrade_page(1)
+
+
+func _change_upgrade_page(direction: int) -> void:
 	SoundManager.play_click()
 	if UPGRADE_IDS.is_empty():
 		return
-	current_upgrade_index = wrapi(current_upgrade_index + direction, 0, UPGRADE_IDS.size())
+	current_upgrade_index = (current_upgrade_index + direction + UPGRADE_IDS.size()) % UPGRADE_IDS.size()
 	_refresh()
 
 
