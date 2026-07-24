@@ -170,15 +170,26 @@ func _refresh() -> void:
 
 	match active_tab:
 		"Craft":
-			_add_description("Crafting is routed through permanent forge projects. Use Upgrades to spend Mana, Coins, and Spirit on stronger village systems.")
-		"Gear":
-			_add_description("Gear workbench: Flower Focus %d, Potion Gilding %d, Pond Resonance %d." % [
+			_add_description("Choose a forge path, then fund its permanent upgrade from the Upgrades tab.")
+			_add_forge_route_card(
+				"Production Craft",
+				"Flower Focus",
+				"Raises Flower Grove Mana/sec so fairy gatherers have a stronger base.",
 				GameState.forge_flower_focus_level,
-				GameState.forge_potion_gilding_level,
-				GameState.forge_pond_resonance_level
-			])
+				"Open Upgrades to forge Flower Focus."
+			)
+		"Gear":
+			_add_description("Current forged gear bonuses.")
+			_add_forge_status_board()
 		"Enhance":
-			_add_description("Enhance existing buildings with forged upgrades. Each completed project raises the Forge Level and improves another building.")
+			_add_description("Enhance village systems by finishing forge projects.")
+			_add_forge_route_card(
+				"Best Next Project",
+				_get_next_forge_project_title(),
+				_get_next_forge_project_hint(),
+				_get_next_forge_project_level(),
+				_get_next_forge_project_cost()
+			)
 		_:
 			_add_description("Spend resources on permanent upgrades that improve existing buildings.")
 			current_upgrade_index = clampi(current_upgrade_index, 0, UPGRADE_IDS.size() - 1)
@@ -207,6 +218,83 @@ func _add_page_indicator(current_page: int, page_count: int, color: Color) -> vo
 	var label := _make_label("%d / %d" % [current_page, page_count], 18, color, HORIZONTAL_ALIGNMENT_CENTER)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content_stack.add_child(label)
+
+
+func _add_forge_status_board() -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.016, 0.026, 0.036, 0.90), Color("#82d9ff"), 2, 10))
+	var margin := _make_margin(16, 16, 12, 12)
+	card.add_child(margin)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 8)
+	margin.add_child(rows)
+	rows.add_child(_make_forge_status_row("Flower Focus", "Flower Grove Mana/sec", GameState.forge_flower_focus_level, GameState.get_flower_base_production_rate()))
+	rows.add_child(_make_forge_status_row("Potion Gilding", "Mana Potion value", GameState.forge_potion_gilding_level, GameState.get_potion_sell_value()))
+	rows.add_child(_make_forge_status_row("Pond Resonance", "Pond restore cost", GameState.forge_pond_resonance_level, GameState.sacred_pond_restore_cost))
+	content_stack.add_child(card)
+
+
+func _make_forge_status_row(title_text: String, detail: String, level: int, value) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var title := _make_label("%s  Lv %d / 3" % [title_text, level], 18, Color("#fff2c6"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(title)
+	var detail_label := _make_label("%s: %s" % [detail, str(value)], 16, Color("#d9f1ff"), HORIZONTAL_ALIGNMENT_RIGHT)
+	detail_label.custom_minimum_size = Vector2(260, 1)
+	row.add_child(detail_label)
+	return row
+
+
+func _add_forge_route_card(kicker: String, title_text: String, body_text: String, level: int, footer_text: String) -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.018, 0.020, 0.030, 0.90), Color("#8d6a33"), 2, 10))
+	var margin := _make_margin(16, 16, 12, 12)
+	card.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 6)
+	margin.add_child(stack)
+	stack.add_child(_make_label(kicker.to_upper(), 14, Color("#82d9ff"), HORIZONTAL_ALIGNMENT_CENTER))
+	stack.add_child(_make_label("%s  Level %d / 3" % [title_text, level], 22, Color("#fff2c6"), HORIZONTAL_ALIGNMENT_CENTER))
+	var body := _make_label(body_text, 17, Color("#e8dfca"), HORIZONTAL_ALIGNMENT_CENTER)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stack.add_child(body)
+	stack.add_child(_make_label(footer_text, 16, Color("#f3d57a"), HORIZONTAL_ALIGNMENT_CENTER))
+	content_stack.add_child(card)
+
+
+func _get_next_forge_project_title() -> String:
+	var best := _get_next_forge_upgrade()
+	return String(best.get("Title", "All Projects Complete"))
+
+
+func _get_next_forge_project_hint() -> String:
+	var best := _get_next_forge_upgrade()
+	if best.is_empty():
+		return "Every forge path is maxed. Future systems can build on this mastered forge."
+	return String(best.get("Description", "Finish another forge project to strengthen the grove."))
+
+
+func _get_next_forge_project_level() -> int:
+	return int(_get_next_forge_upgrade().get("Level", 3))
+
+
+func _get_next_forge_project_cost() -> String:
+	var best := _get_next_forge_upgrade()
+	if best.is_empty():
+		return "No active forge cost."
+	return "Needs %s." % _format_upgrade_cost(best)
+
+
+func _get_next_forge_upgrade() -> Dictionary:
+	var best: Dictionary = {}
+	var lowest_level := 999
+	for upgrade in GameState.get_forge_upgrades():
+		var level := int(upgrade.get("Level", 0))
+		if level < int(upgrade.get("MaxLevel", 3)) and level < lowest_level:
+			lowest_level = level
+			best = upgrade
+	return best
 
 
 func _make_upgrade_card(upgrade: Dictionary) -> PanelContainer:

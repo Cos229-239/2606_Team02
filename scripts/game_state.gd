@@ -1034,7 +1034,12 @@ func water_ancient_tree() -> Dictionary:
 		save_status_changed.emit(blocked_message)
 		return {"Success": false, "Message": blocked_message, "RewardText": ""}
 
+	var previous_level := ancient_tree_level
 	ancient_tree_water_timestamps.append(_get_now_unix())
+	ancient_tree_growth = min(100, ancient_tree_growth + 10)
+	update_ancient_tree_level()
+	if previous_level < 2 and ancient_tree_level >= 2:
+		add_quest_progress(QUEST_GOAL_RESTORE_TREE, 1)
 	var watering_reward := _grant_ancient_tree_watering_reward()
 	resources_changed.emit()
 	inventory_changed.emit()
@@ -1054,6 +1059,7 @@ func water_ancient_tree() -> Dictionary:
 		"RewardType": String(watering_reward.get("Type", "")),
 		"RewardAmount": int(watering_reward.get("Amount", 0)),
 		"RewardText": reward_text,
+		"Growth": ancient_tree_growth,
 		"RemainingWaters": remaining
 	}
 

@@ -176,9 +176,11 @@ func _refresh() -> void:
 			var order_id := String(ORDER_IDS[current_order_index])
 			content_stack.add_child(_make_order_card(GameState.get_market_order_data(order_id)))
 		"Upgrades":
-			_add_banner("Upgrade routes unlock through the Arcane Forge. Market trades fund those village improvements.")
+			_add_banner("Market reputation unlocks better routes and funds Forge work.")
+			_add_market_progress_card()
 		"Storage":
-			_add_banner("Storage currently holds Mana Potions and trade goods. Potions available: %d." % GameState.mana_potion_count)
+			_add_banner("Stored trade goods ready for village orders.")
+			_add_market_storage_card()
 
 	feedback_label = _make_label("", 24, Color("#99e8ac"), HORIZONTAL_ALIGNMENT_CENTER)
 	content_stack.add_child(feedback_label)
@@ -201,6 +203,91 @@ func _add_page_indicator(current_page: int, page_count: int, color: Color) -> vo
 	var label := _make_label("%d / %d" % [current_page, page_count], 17, color, HORIZONTAL_ALIGNMENT_CENTER)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	content_stack.add_child(label)
+
+
+func _add_market_progress_card() -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.060, 0.036, 0.022, 0.74), Color("#e9c46a"), 2, 10))
+	var margin := _make_margin(16, 16, 12, 12)
+	card.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
+	margin.add_child(stack)
+	stack.add_child(_make_market_row("Reputation", str(GameState.market_reputation), "Raises village trust."))
+	stack.add_child(_make_market_row("Orders Completed", str(GameState.market_orders_completed), _get_market_rank_text()))
+	stack.add_child(_make_market_row("Best Next Trade", _get_best_market_order_title(), _get_best_market_order_hint()))
+	content_stack.add_child(card)
+
+
+func _add_market_storage_card() -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.060, 0.036, 0.022, 0.74), Color("#c9954e"), 2, 10))
+	var margin := _make_margin(16, 16, 12, 12)
+	card.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
+	margin.add_child(stack)
+	stack.add_child(_make_market_row("Mana", str(GameState.total_mana), "Used for Mana Bundle trades."))
+	stack.add_child(_make_market_row("Mana Potions", str(GameState.mana_potion_count), "Used for Potion Crate trades."))
+	stack.add_child(_make_market_row("Spirit Energy", str(GameState.sacred_pond_spirit_energy), "Used for Spirit Contract trades."))
+	content_stack.add_child(card)
+
+
+func _make_market_row(label_text: String, value_text: String, detail_text: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(left)
+	left.add_child(_make_label(label_text, 17, Color("#ffe7af")))
+	var detail := _make_label(detail_text, 14, Color("#f0ddbd"))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left.add_child(detail)
+	var value := _make_label(value_text, 22, Color("#99e8ac"), HORIZONTAL_ALIGNMENT_RIGHT)
+	value.custom_minimum_size = Vector2(130, 1)
+	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(value)
+	return row
+
+
+func _get_market_rank_text() -> String:
+	if GameState.market_orders_completed >= 15:
+		return "Master trader tier reached."
+	if GameState.market_orders_completed >= 5:
+		return "Trusted route tier active. Push toward master contracts."
+	return "Complete 5 orders to feel like a trusted village trader."
+
+
+func _get_best_market_order_title() -> String:
+	var best := _get_best_market_order()
+	return String(best.get("Title", "Mana Bundle"))
+
+
+func _get_best_market_order_hint() -> String:
+	var best := _get_best_market_order()
+	if _can_fulfill_order(best):
+		return "Ready now. Trade it for %d Coins." % int(best.get("RewardCoins", 0))
+	return _format_order_status(best)
+
+
+func _get_best_market_order() -> Dictionary:
+	var best: Dictionary = {}
+	var best_reward := -1
+	for order_id in ORDER_IDS:
+		var order := GameState.get_market_order_data(String(order_id))
+		var reward := int(order.get("RewardCoins", 0))
+		if _can_fulfill_order(order) and reward > best_reward:
+			best_reward = reward
+			best = order
+	if not best.is_empty():
+		return best
+	for order_id in ORDER_IDS:
+		var order := GameState.get_market_order_data(String(order_id))
+		var reward := int(order.get("RewardCoins", 0))
+		if reward > best_reward:
+			best_reward = reward
+			best = order
+	return best
 
 
 func _make_order_card(order: Dictionary) -> PanelContainer:
